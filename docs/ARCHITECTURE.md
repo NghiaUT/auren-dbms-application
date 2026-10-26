@@ -1,11 +1,11 @@
-﻿# ARCHITECTURE - Kiến trúc hệ thống
+# ARCHITECTURE - Kiến trúc hệ thống
 
 ## 1. Tổng quan
 
 | Thành phần           | Công nghệ                                     | Ghi chú                                                 |
 | -------------------- | --------------------------------------------- | ------------------------------------------------------- |
 | Frontend             | React 18, TypeScript, Vite, React Router, Axios, Recharts | SPA, phân quyền hiển thị theo role                      |
-| Backend              | Node.ts, Express 4, TypeScript                | REST API, JSON                                          |
+| Backend              | Node.js, Express 4, TypeScript                | REST API, JSON                                          |
 | CSDL                 | MySQL 8 (InnoDB)                              | Truy cập qua `mysql2/promise`, **SQL thuần, không ORM** |
 | Xác thực             | JWT (access token) + bcrypt                   | Token gửi qua header `Authorization: Bearer`            |
 | Kiểm tra dữ liệu vào | Zod                                           | Ở tầng controller/route                                 |
