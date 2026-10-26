@@ -1,0 +1,7 @@
+-- ============================================================================
+-- File: database/seed.sql
+-- Vai trò: Chứa dữ liệu mẫu nhỏ khởi tạo ban đầu cho hệ thống (Users, Tiers,
+--          Customers, Locations, Categories, Brands, Materials, Products,
+--          Product Variants, Edition Units, Inventory, Orders, Payments, Reviews)
+--          phục vụ kiểm thử chức năng và demo luồng nghiệp vụ cơ bản.
+-- ============================================================================

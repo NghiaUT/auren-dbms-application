@@ -1,0 +1,3 @@
+{
+  "_comment": "File: backend/package.json | Vai trò: Khai báo thông tin gói, scripts khởi chạy và các thư viện phụ thuộc của Backend (express, mysql2, jsonwebtoken, bcrypt, zod, cors, helmet, morgan, express-rate-limit, dotenv)."
+}

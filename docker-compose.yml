@@ -1,0 +1,7 @@
+# ============================================================================
+# File: docker-compose.yml
+# Vai trò: Cấu hình Docker Compose để triển khai và khởi chạy 3 dịch vụ:
+#   - mysql: Cơ sở dữ liệu MySQL 8 (InnoDB), tự động nạp schema.sql và seed.sql
+#   - api:   Backend REST API (Node.js + Express 4) kết nối tới dịch vụ mysql
+#   - web:   Frontend SPA (React 18 + Vite) giao tiếp với dịch vụ api
+# ============================================================================
