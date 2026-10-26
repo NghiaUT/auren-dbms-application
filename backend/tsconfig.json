@@ -1,0 +1,3 @@
+{
+  "_comment": "File: backend/tsconfig.json | Vai trò: Cấu hình trình biên dịch TypeScript (tsc) cho Backend Node.js + Express (target ES2022, module NodeNext/ESNext, strict mode, outDir dist, rootDir src)."
+}

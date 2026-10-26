@@ -1,11 +1,11 @@
-# ARCHITECTURE - Kiến trúc hệ thống
+﻿# ARCHITECTURE - Kiến trúc hệ thống
 
 ## 1. Tổng quan
 
 | Thành phần           | Công nghệ                                     | Ghi chú                                                 |
 | -------------------- | --------------------------------------------- | ------------------------------------------------------- |
-| Frontend             | React 18, Vite, React Router, Axios, Recharts | SPA, phân quyền hiển thị theo role                      |
-| Backend              | Node.js, Express 4                            | REST API, JSON                                          |
+| Frontend             | React 18, TypeScript, Vite, React Router, Axios, Recharts | SPA, phân quyền hiển thị theo role                      |
+| Backend              | Node.ts, Express 4, TypeScript                | REST API, JSON                                          |
 | CSDL                 | MySQL 8 (InnoDB)                              | Truy cập qua `mysql2/promise`, **SQL thuần, không ORM** |
 | Xác thực             | JWT (access token) + bcrypt                   | Token gửi qua header `Authorization: Bearer`            |
 | Kiểm tra dữ liệu vào | Zod                                           | Ở tầng controller/route                                 |
@@ -45,66 +45,66 @@ Quy tắc bắt buộc: mọi câu SQL chỉ nằm trong `repository/`, dùng **
 ## 2. Cấu trúc thư mục
 
 ```
-luxury-furniture/
+dbms-application/
 ├── docker-compose.yml
 ├── database/
 │   ├── schema.sql              # DDL sinh từ ERD
 │   ├── indexes.sql             # Index cho demo Indexing (tách riêng để so sánh trước/sau)
 │   ├── seed.sql                # Dữ liệu mẫu nhỏ
-│   └── seed_large.js           # Sinh 10k-100k đơn cho demo hiệu năng
+│   └── seed_large.ts           # Sinh 10k-100k đơn cho demo hiệu năng
 ├── backend/
 │   ├── package.json
 │   ├── .env.example
 │   └── src/
-│       ├── server.js           # Khởi động HTTP
-│       ├── app.js              # Dựng Express, gắn middleware, routes
+│       ├── server.ts           # Khởi động HTTP
+│       ├── app.ts              # Dựng Express, gắn middleware, routes
 │       ├── config/
-│       │   ├── env.js
-│       │   └── db.js           # mysql2 pool, helper withTransaction
+│       │   ├── env.ts
+│       │   └── db.ts           # mysql2 pool, helper withTransaction
 │       ├── middlewares/
-│       │   ├── authenticate.js # Xác thực JWT, gắn req.user
-│       │   ├── authorize.js    # authorize('sales','admin')
-│       │   ├── validate.js     # Zod schema
-│       │   └── errorHandler.js # Chuyển AppError, lỗi MySQL sang HTTP
+│       │   ├── authenticate.ts # Xác thực JWT, gắn req.user
+│       │   ├── authorize.ts    # authorize('sales','admin')
+│       │   ├── validate.ts     # Zod schema
+│       │   └── errorHandler.ts # Chuyển AppError, lỗi MySQL sang HTTP
 │       ├── routes/
-│       │   ├── index.js
-│       │   ├── auth.routes.js
-│       │   ├── catalog.routes.js
-│       │   ├── order.routes.js
-│       │   ├── payment.routes.js
-│       │   ├── review.routes.js
-│       │   ├── sales.routes.js
-│       │   └── admin.routes.js
+│       │   ├── index.ts
+│       │   ├── auth.routes.ts
+│       │   ├── catalog.routes.ts
+│       │   ├── order.routes.ts
+│       │   ├── payment.routes.ts
+│       │   ├── review.routes.ts
+│       │   ├── sales.routes.ts
+│       │   └── admin.routes.ts
 │       ├── controllers/        # Mỗi file tương ứng một routes
 │       ├── services/
-│       │   ├── auth.service.js
-│       │   ├── catalog.service.js
-│       │   ├── order.service.js      # FR5, FR6, FR9 (transaction)
-│       │   ├── payment.service.js    # FR7
-│       │   ├── review.service.js     # FR10
-│       │   ├── sales.service.js      # FR11-13
-│       │   └── admin.service.js      # FR14-15
+│       │   ├── auth.service.ts
+│       │   ├── catalog.service.ts
+│       │   ├── order.service.ts      # FR5, FR6, FR9 (transaction)
+│       │   ├── payment.service.ts    # FR7
+│       │   ├── review.service.ts     # FR10
+│       │   ├── sales.service.ts      # FR11-13
+│       │   └── admin.service.ts      # FR14-15
 │       ├── repository/
-│       │   ├── user.repository.js
-│       │   ├── customer.repository.js
-│       │   ├── tier.repository.js
-│       │   ├── catalog.repository.js     # products, brands, categories, materials
-│       │   ├── variant.repository.js     # product_variants, variant_materials
-│       │   ├── inventory.repository.js   # inventory (optimistic locking)
-│       │   ├── edition.repository.js     # edition_units (FOR UPDATE)
-│       │   ├── order.repository.js       # orders, order_items
-│       │   ├── payment.repository.js
-│       │   ├── review.repository.js
-│       │   └── report.repository.js      # truy vấn aggregate
+│       │   ├── user.repository.ts
+│       │   ├── customer.repository.ts
+│       │   ├── tier.repository.ts
+│       │   ├── catalog.repository.ts     # products, brands, categories, materials
+│       │   ├── variant.repository.ts     # product_variants, variant_materials
+│       │   ├── inventory.repository.ts   # inventory (optimistic locking)
+│       │   ├── edition.repository.ts     # edition_units (FOR UPDATE)
+│       │   ├── order.repository.ts       # orders, order_items
+│       │   ├── payment.repository.ts
+│       │   ├── review.repository.ts
+│       │   └── report.repository.ts      # truy vấn aggregate
 │       └── utils/
-│           ├── AppError.js
-│           └── asyncHandler.js
+│           ├── AppError.ts
+│           └── asyncHandler.ts
 └── frontend/
     ├── package.json
-    ├── vite.config.js
+    ├── vite.config.ts
     └── src/
-        ├── main.jsx
-        ├── App.jsx                 # Định nghĩa route
+        ├── main.tsx
+        ├── App.tsx                 # Định nghĩa route
         ├── api/                    # axios instance + hàm gọi từng nhóm API
         ├── auth/                   # AuthContext, ProtectedRoute, useAuth
         ├── layouts/                # PublicLayout, CustomerLayout, SalesLayout, AdminLayout
@@ -124,9 +124,9 @@ luxury-furniture/
 ### 3.1 Kết nối và helper transaction
 
 ```js
-// backend/src/config/db.js
+// backend/src/config/db.ts
 import mysql from "mysql2/promise";
-import { env } from "./env.js";
+import { env } from "./env.ts";
 
 export const pool = mysql.createPool({
   host: env.DB_HOST,
@@ -164,8 +164,8 @@ export async function withTransaction(fn, isolation = "REPEATABLE READ") {
 - Tên hàm theo động từ nghiệp vụ, không theo SQL.
 
 ```js
-// backend/src/repository/inventory.repository.js
-import { pool } from "../config/db.js";
+// backend/src/repository/inventory.repository.ts
+import { pool } from "../config/db.ts";
 
 // FR5: giữ hàng bằng optimistic locking. affectedRows = 0 nghĩa là hết hàng hoặc xung đột version.
 export async function reserveStock(
@@ -209,8 +209,8 @@ export async function findLowStockVariants(threshold, conn = pool) {
 ```
 
 ```js
-// backend/src/repository/edition.repository.js
-import { pool } from "../config/db.js";
+// backend/src/repository/edition.repository.ts
+import { pool } from "../config/db.ts";
 
 // FR6: khoá dòng, hai khách không thể lấy cùng một serial. Phải gọi trong transaction.
 export async function lockAvailableUnit(variantId, conn) {
@@ -236,30 +236,30 @@ export async function assignToOrderItem(unitId, orderItemId, conn) {
 
 | File                      | Bảng chính                              | FR                  | Loại query tiêu biểu |
 | ------------------------- | --------------------------------------- | ------------------- | -------------------- |
-| `user.repository.js`      | users                                   | FR0, FR1            | a, d                 |
-| `customer.repository.js`  | customers                               | FR1, FR15           | a, c, g              |
-| `tier.repository.js`      | membership_tiers                        | FR15b               | a, c, g              |
-| `catalog.repository.js`   | products, brands, categories, materials | FR2, FR3, FR14      | d, e, f              |
-| `variant.repository.js`   | product_variants, variant_materials     | FR4, FR14           | f, a, c, b, g        |
-| `inventory.repository.js` | inventory                               | FR5, FR9, FR12      | c, f, g              |
-| `edition.repository.js`   | edition_units                           | FR6, FR9            | c                    |
-| `order.repository.js`     | orders, order_items                     | FR5, FR8, FR9, FR11 | a, b, c, d, f        |
-| `payment.repository.js`   | payments                                | FR7, FR8, FR13      | a, c, e, f           |
-| `review.repository.js`    | reviews                                 | FR10                | a, b, g              |
-| `report.repository.js`    | (nhiều bảng)                            | FR15a               | f, g, h              |
+| `user.repository.ts`      | users                                   | FR0, FR1            | a, d                 |
+| `customer.repository.ts`  | customers                               | FR1, FR15           | a, c, g              |
+| `tier.repository.ts`      | membership_tiers                        | FR15b               | a, c, g              |
+| `catalog.repository.ts`   | products, brands, categories, materials | FR2, FR3, FR14      | d, e, f              |
+| `variant.repository.ts`   | product_variants, variant_materials     | FR4, FR14           | f, a, c, b, g        |
+| `inventory.repository.ts` | inventory                               | FR5, FR9, FR12      | c, f, g              |
+| `edition.repository.ts`   | edition_units                           | FR6, FR9            | c                    |
+| `order.repository.ts`     | orders, order_items                     | FR5, FR8, FR9, FR11 | a, b, c, d, f        |
+| `payment.repository.ts`   | payments                                | FR7, FR8, FR13      | a, c, e, f           |
+| `review.repository.ts`    | reviews                                 | FR10                | a, b, g              |
+| `report.repository.ts`    | (nhiều bảng)                            | FR15a               | f, g, h              |
 
 ---
 
 ## 4. Tầng Service: ví dụ giao dịch đặt hàng (FR5)
 
 ```js
-// backend/src/services/order.service.js
-import { withTransaction } from "../config/db.js";
-import * as orderRepo from "../repository/order.repository.js";
-import * as invRepo from "../repository/inventory.repository.js";
-import * as variantRepo from "../repository/variant.repository.js";
-import * as customerRepo from "../repository/customer.repository.js";
-import { AppError } from "../utils/AppError.js";
+// backend/src/services/order.service.ts
+import { withTransaction } from "../config/db.ts";
+import * as orderRepo from "../repository/order.repository.ts";
+import * as invRepo from "../repository/inventory.repository.ts";
+import * as variantRepo from "../repository/variant.repository.ts";
+import * as customerRepo from "../repository/customer.repository.ts";
+import { AppError } from "../utils/AppError.ts";
 
 export async function placeOrder(user, { items, shippingAddress }) {
   return withTransaction(async (conn) => {
@@ -324,7 +324,7 @@ export async function placeOrder(user, { items, shippingAddress }) {
 5. Đăng xuất: client xoá token khỏi bộ nhớ. Nếu muốn thu hồi ngay, thêm bảng blacklist hoặc dùng token ngắn hạn (ngoài phạm vi ERD 16 bảng).
 
 ```js
-// order.routes.js
+// order.routes.ts
 router.post(
   "/",
   authenticate,
@@ -438,7 +438,7 @@ Quy ước tránh deadlock: luôn khoá tài nguyên theo cùng thứ tự (vari
 | Indexing                  | `database/indexes.sql`, chạy `EXPLAIN` cho `product.repository` (FR3) và `report.repository` (FR15) trước/sau khi tạo index |
 | Query processing          | Cùng truy vấn FR3, FR15 với `EXPLAIN ANALYZE`, so sánh JOIN và subquery                                                     |
 | Transaction               | `order.service.placeOrder`, `cancelOrder`                                                                                   |
-| Concurrency control       | Mục 7. Script đa luồng `scripts/concurrency_demo.js` gọi song song `POST /api/orders/limited`                               |
+| Concurrency control       | Mục 7. Script đa luồng `scripts/concurrency_demo.ts` gọi song song `POST /api/orders/limited`                               |
 | Backup & recovery         | `mysqldump`, binary log (`mysqlbinlog`), không cần code app                                                                 |
 
 ### So sánh với NoSQL
