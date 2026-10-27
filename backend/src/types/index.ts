@@ -6,3 +6,17 @@
 //   - Kiểu dữ liệu thực thể ánh xạ 16 bảng CSDL (User, Customer, Product, Order...)
 //   - Kiểu dữ liệu DTO / Query Params cho các tầng Controller, Service, Repository
 // ============================================================================
+export type UserRole = 'customer' | 'sales' | 'admin';
+export interface AuthUser {
+  id: number;
+  email: string;
+  role: UserRole;
+  customerId?: number; // Chỉ có khi role === 'customer'
+}
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
+}
