@@ -87,7 +87,11 @@ export async function withTransaction<T>(
     return result;
   } catch (error) {
     // Tự động Rollback nếu có lỗi nghiệp vụ hoặc lỗi SQL
-    await conn.rollback();
+    try {
+      await conn.rollback();
+    } catch (err) {
+      throw err;
+    }
     throw error;
   } finally {
     // Luôn trả kết nối lại cho pool dù thành công hay lỗi
