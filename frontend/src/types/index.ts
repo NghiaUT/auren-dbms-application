@@ -212,3 +212,83 @@ export interface ApiError {
     details?: Array<{ field?: string; message: string }>;
   };
 }
+
+export type OrderStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'in_production'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled';
+
+export type PaymentType = 'deposit' | 'installment' | 'final';
+export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'refunded';
+
+export interface OrderItemDetail {
+  id: number;
+  variantId: number;
+  productName: string;
+  sku: string;
+  finish: string;
+  size: string;
+  locationId?: number;
+  locationName?: string;
+  quantity: number;
+  unitPrice: number;
+  customization?: Record<string, any> | null;
+  serialNo?: string | null;
+}
+
+export interface PaymentDetail {
+  id: number;
+  orderId?: number;
+  type: PaymentType;
+  amount: number;
+  dueDate: string | null;
+  paidAt?: string | null;
+  method?: string | null;
+  status: PaymentStatus;
+}
+
+export interface OrderSummary {
+  id: number;
+  orderDate: string;
+  status: OrderStatus;
+  subtotal: number;
+  discount: number;
+  total: number;
+  shippingAddress: string;
+  deliveryDate?: string | null;
+  itemCount: number;
+  paidAmount: number;
+}
+
+export interface OrderDetail {
+  id: number;
+  customerId: number;
+  customerName: string;
+  customerEmail: string;
+  salesUserId?: number | null;
+  orderDate: string;
+  status: OrderStatus;
+  subtotal: number;
+  discount: number;
+  total: number;
+  shippingAddress: string;
+  deliveryDate?: string | null;
+  items: OrderItemDetail[];
+  payments: PaymentDetail[];
+}
+
+export interface PlaceOrderItemPayload {
+  variantId: number;
+  locationId: number;
+  quantity: number;
+  customization?: Record<string, any> | null;
+}
+
+export interface PlaceOrderPayload {
+  shippingAddress: string;
+  deliveryDate?: string | null;
+  items: PlaceOrderItemPayload[];
+}

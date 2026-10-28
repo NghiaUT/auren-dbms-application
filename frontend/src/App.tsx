@@ -17,6 +17,9 @@ import { P05_RegisterPage } from './pages/public/P05_RegisterPage';
 import { Forbidden403Page } from './pages/public/Forbidden403Page';
 import { NotFound404Page } from './pages/public/NotFound404Page';
 import { ProtectedRoute } from './auth/ProtectedRoute';
+import { C01_CartPage } from './pages/customer/C01_CartPage';
+import { C02_CheckoutPage } from './pages/customer/C02_CheckoutPage';
+import { C05_ConfirmationPage } from './pages/customer/C05_ConfirmationPage';
 import { C04_MyOrdersPage } from './pages/customer/C04_MyOrdersPage';
 import { S01_SalesDashboardPage } from './pages/sales/S01_SalesDashboardPage';
 import { A01_AdminDashboardPage } from './pages/admin/A01_AdminDashboardPage';
@@ -41,9 +44,40 @@ const App: React.FC = () => {
         {/* P05: Đăng ký thành viên */}
         <Route path="/register" element={<P05_RegisterPage />} />
 
+        {/* C01: Túi hàng (Shopping Bag) */}
+        <Route path="/cart" element={<C01_CartPage />} />
+
+        {/* C02: Thanh toán & Giao nhận White-Glove (Protected) */}
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <C02_CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* C05: Niêm phong đơn hàng thành công (Protected) */}
+        <Route
+          path="/checkout/success"
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <C05_ConfirmationPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Màn hình Customer được bảo vệ */}
         <Route
           path="/account/orders"
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <C04_MyOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <C04_MyOrdersPage />
