@@ -7,11 +7,15 @@
 import { Router } from 'express';
 import authRouter from './auth.routes.js';
 import catalogRouter from './catalog.routes.js';
+import orderRouter from './order.routes.js';
+import paymentRouter from './payment.routes.js';
 
 const apiRouter = Router();
 
 apiRouter.use('/auth', authRouter);
 apiRouter.use(catalogRouter);
+apiRouter.use('/orders', orderRouter);
+apiRouter.use('/payments', paymentRouter);
 
 // Test root endpoint /api
 apiRouter.get('/', (_req, res) => {
