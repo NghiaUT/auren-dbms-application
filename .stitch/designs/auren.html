@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AUREN — Furniture for spaces that endure</title>
+
+  <!-- Google Fonts: Cormorant Garamond (Serif Display) & Manrope (Clean Modern UI Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─────────────────────────────────────────────────────────────
+       1. DESIGN TOKENS (DESIGN.md specification in OKLCH)
+    ───────────────────────────────────────────────────────────── */
+    :root {
+      --background:          oklch(0.965 0.012 81);       /* Warm ivory base */
+      --foreground:          oklch(0.215 0.012 65);       /* Espresso / near-black text */
+      --card:                oklch(0.975 0.009 82);       /* Slightly lighter card backing */
+      --primary:             oklch(0.26 0.03 58);         /* Deep walnut tone for buttons */
+      --primary-foreground:  oklch(0.975 0.009 82);       /* Ivory text on dark/primary surfaces */
+      --secondary:           oklch(0.91 0.018 78);        /* Subtle warm secondary tint */
+      --muted:               oklch(0.925 0.014 80);       /* Soft separator background */
+      --muted-foreground:    oklch(0.47 0.018 65);        /* Mid-tone muted description */
+      --accent:              oklch(0.62 0.063 76);        /* Light bronze accent */
+      --border:              oklch(0.81 0.018 77);        /* Delicate sand/tan border */
+      --input:               oklch(0.81 0.018 77);        /* Input borders */
+      --ring:                oklch(0.48 0.04 70);         /* Focus ring */
+      --walnut:              oklch(0.31 0.054 55);        /* Brand Walnut: Materials & Mobile Nav */
+      --brass:               oklch(0.61 0.066 79);        /* Brand Brass: Selection & subtle cues */
+      --overlay:             oklch(0.12 0.018 55 / 46%);  /* 46% dark warm overlay on hero/showroom */
+      --radius:              0.125rem;                    /* 2px architectural near-sharp corners */
+
+      /* Typography tokens */
+      --font-display:        'Cormorant Garamond', Garamond, Georgia, serif;
+      --font-sans:           'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Selection token as mandated in DESIGN.md */
+    ::selection {
+      background-color: var(--brass);
+      color: var(--foreground);
+    }
+
+    /* Reset & Base */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      background: none;
+      border: none;
+      font-family: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       2. TYPOGRAPHIC UTILITIES (Exact specifications in DESIGN.md)
+    ───────────────────────────────────────────────────────────── */
+    .font-display { font-family: var(--font-display); }
+    .font-sans    { font-family: var(--font-sans); }
+
+    /* Eyebrow & section metadata label */
+    .eyebrow {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--muted-foreground);
+    }
+
+    .eyebrow-light {
+      color: oklch(0.975 0.009 82 / 65%);
+    }
+
+    /* ArrowLink utility with hover line animation */
+    .arrow-link {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      position: relative;
+      padding-bottom: 2px;
+      transition: color 300ms ease;
+    }
+
+    .arrow-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: currentColor;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .arrow-link:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    /* link-line: standard link underline animation */
+    .link-line {
+      position: relative;
+      display: inline-block;
+      padding-bottom: 2px;
+    }
+
+    .link-line::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: currentColor;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .link-line:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    /* image-quiet: restrained editorial scale on hover */
+    .image-quiet {
+      overflow: hidden;
+      border-radius: var(--radius);
+      background-color: var(--secondary);
+    }
+
+    .image-quiet img {
+      transition: transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+      will-change: transform;
+    }
+
+    .group:hover .image-quiet img,
+    .image-quiet:hover img {
+      transform: scale(1.025);
+    }
+
+    /* Separators */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background-color: var(--border);
+    }
+
+    .divider-light {
+      background-color: oklch(0.975 0.009 82 / 18%);
+    }
+
+    /* Container rules: max-w-[1600px], gutters px-5 sm:px-8 lg:px-12 */
+    .site-container {
+      max-width: 1600px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: clamp(1.25rem, 3.5vw, 3rem);
+      padding-right: clamp(1.25rem, 3.5vw, 3rem);
+    }
+
+    /* Section vertical rhythm: py-24 md:py-36 */
+    .section-spacing {
+      padding-top: clamp(6rem, 10vw, 9rem);
+      padding-bottom: clamp(6rem, 10vw, 9rem);
+    }
+
+    /* Reduced Motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       3. HEADER & NAVIGATION (Absolute, transparent, 1px white border)
+    ───────────────────────────────────────────────────────────── */
+    .site-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      border-bottom: 1px solid oklch(0.975 0.009 82 / 15%);
+      transition: background-color 400ms ease, border-color 400ms ease;
+    }
+
+    .site-header.is-scrolled {
+      position: fixed;
+      background: oklch(0.965 0.012 81 / 92%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      color: var(--foreground);
+    }
+
+    .site-header.is-scrolled .site-logo,
+    .site-header.is-scrolled .nav-link,
+    .site-header.is-scrolled .util-link {
+      color: var(--foreground);
+    }
+
+    .site-header.is-scrolled .nav-toggle span {
+      background-color: var(--foreground);
+    }
+
+    .header-inner {
+      display: grid;
+      grid-template-columns: 200px 1fr 200px;
+      align-items: center;
+      height: 80px;
+    }
+
+    .site-logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      letter-spacing: 0.18em;
+      font-weight: 500;
+      text-transform: uppercase;
+      color: var(--primary-foreground);
+      transition: opacity 300ms ease;
+    }
+
+    .site-logo:hover { opacity: 0.85; }
+
+    .desktop-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2.75rem;
+      list-style: none;
+    }
+
+    .nav-link {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--primary-foreground);
+      opacity: 0.9;
+      transition: opacity 300ms ease;
+    }
+
+    .nav-link:hover { opacity: 1; }
+
+    .header-utils {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 1.75rem;
+    }
+
+    .util-link {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--primary-foreground);
+      opacity: 0.9;
+      transition: opacity 300ms ease;
+    }
+
+    .util-link:hover { opacity: 1; }
+
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+    }
+
+    .nav-toggle span {
+      display: block;
+      width: 100%;
+      height: 1px;
+      background-color: var(--primary-foreground);
+      transition: transform 300ms ease, opacity 300ms ease;
+    }
+
+    .nav-toggle.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle.active span:nth-child(2) { opacity: 0; }
+    .nav-toggle.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* Mobile menu: background --walnut, display serif 3xl */
+    .mobile-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background-color: var(--walnut);
+      color: var(--primary-foreground);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 7rem clamp(1.25rem, 5vw, 3rem) 3rem;
+      transform: translateY(-100%);
+      transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .mobile-menu.open {
+      transform: translateY(0);
+    }
+
+    .mobile-menu-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .mobile-menu-links a {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 7vw, 3.25rem);
+      line-height: 1.1;
+      font-weight: 400;
+      color: var(--primary-foreground);
+    }
+
+    .mobile-menu-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 2rem;
+      border-top: 1px solid oklch(0.975 0.009 82 / 20%);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       4. HERO SECTION (Full-bleed, 850px min-height, 12-col bottom anchor)
+    ───────────────────────────────────────────────────────────── */
+    .hero-section {
+      position: relative;
+      min-height: clamp(760px, 90vh, 920px);
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      color: var(--primary-foreground);
+    }
+
+    .hero-bg-media {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .hero-bg-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 38%;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--overlay);
+      z-index: 2;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      padding-bottom: clamp(3.5rem, 7vw, 5.5rem);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+      align-items: flex-end;
+    }
+
+    .hero-left {
+      grid-column: span 7;
+    }
+
+    .hero-h1 {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 5.8vw, 4.75rem);
+      line-height: 0.96;
+      font-weight: 400;
+      letter-spacing: -0.015em;
+      margin-top: 1rem;
+      color: var(--primary-foreground);
+    }
+
+    .hero-right {
+      grid-column: 9 / span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .hero-desc {
+      font-size: 14px;
+      line-height: 1.8;
+      font-weight: 400;
+      color: oklch(0.975 0.009 82 / 82%);
+      max-width: 360px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 2.25rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-solid-light {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.95rem 2rem;
+      background-color: var(--primary-foreground);
+      color: var(--foreground);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      border-radius: var(--radius);
+      transition: background-color 300ms ease, color 300ms ease, transform 300ms ease;
+    }
+
+    .btn-solid-light:hover {
+      background-color: var(--card);
+      transform: translateY(-1px);
+    }
+
+    .hero-link-secondary {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--primary-foreground);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       5. 01 — THE COLLECTION (Asymmetric 12-column editorial grid)
+    ───────────────────────────────────────────────────────────── */
+    .collection-header-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+      align-items: flex-end;
+      padding-bottom: 2.5rem;
+    }
+
+    .collection-header-left {
+      grid-column: span 7;
+    }
+
+    .section-h2 {
+      font-family: var(--font-display);
+      font-size: clamp(2.75rem, 4.5vw, 3.85rem);
+      line-height: 1.0;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      margin-top: 0.75rem;
+      color: var(--foreground);
+    }
+
+    .collection-header-right {
+      grid-column: 9 / span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .lead-paragraph {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--muted-foreground);
+    }
+
+    .collection-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      column-gap: 1.5rem;
+      row-gap: clamp(3.5rem, 6vw, 5.5rem);
+      margin-top: 3.5rem;
+    }
+
+    /* Asymmetric column spans and proportions */
+    .col-item-7 { grid-column: span 7; }
+    .col-item-5 { grid-column: span 5; }
+    .col-item-4 { grid-column: span 4; }
+
+    /* Product card specifics */
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+    }
+
+    .product-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      margin-top: 1.25rem;
+    }
+
+    .product-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      line-height: 1.2;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    .product-material {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted-foreground);
+      margin-top: 0.35rem;
+    }
+
+    .product-price {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--foreground);
+      white-space: nowrap;
+    }
+
+    .product-action-row {
+      margin-top: 0.5rem;
+    }
+
+    /* Varied aspect ratios */
+    .ratio-4-5  { aspect-ratio: 4 / 5; }
+    .ratio-16-10{ aspect-ratio: 16 / 10; }
+    .ratio-3-4  { aspect-ratio: 3 / 4; }
+    .ratio-1-1  { aspect-ratio: 1 / 1; }
+    .ratio-16-9 { aspect-ratio: 16 / 9; }
+    .ratio-4-3  { aspect-ratio: 4 / 3; }
+
+    /* ─────────────────────────────────────────────────────────────
+       6. 02 — MATERIALS (Split 50/50: image left, --walnut background right)
+    ───────────────────────────────────────────────────────────── */
+    .materials-section {
+      background-color: var(--walnut);
+      color: var(--primary-foreground);
+      overflow: hidden;
+    }
+
+    .materials-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 850px;
+    }
+
+    .materials-photo-pane {
+      position: relative;
+      height: 100%;
+      min-height: 850px;
+    }
+
+    .materials-photo-pane img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .materials-content-pane {
+      padding: clamp(4rem, 8vw, 7.5rem) clamp(2rem, 5vw, 5.5rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .materials-h2 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 4vw, 3.5rem);
+      line-height: 1.05;
+      font-weight: 400;
+      color: var(--primary-foreground);
+      margin-top: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .materials-intro {
+      font-size: 14px;
+      line-height: 1.8;
+      color: oklch(0.975 0.009 82 / 80%);
+      margin-bottom: 3.5rem;
+      max-width: 520px;
+    }
+
+    /* Numbered material table (01-05) */
+    .materials-table {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid oklch(0.975 0.009 82 / 20%);
+    }
+
+    .material-row {
+      display: grid;
+      grid-template-columns: 48px 160px 1fr;
+      align-items: baseline;
+      padding: 1.4rem 0;
+      border-bottom: 1px solid oklch(0.975 0.009 82 / 16%);
+      gap: 1.25rem;
+      transition: background-color 300ms ease;
+    }
+
+    .material-num {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: oklch(0.975 0.009 82 / 50%);
+    }
+
+    .material-name {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--primary-foreground);
+      font-weight: 500;
+    }
+
+    .material-desc {
+      font-size: 13px;
+      line-height: 1.7;
+      color: oklch(0.975 0.009 82 / 75%);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       7. 03 — OUR APPROACH (Asymmetric: 7 cols image, 4 cols text)
+    ───────────────────────────────────────────────────────────── */
+    .approach-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .approach-image-pane {
+      grid-column: span 7;
+    }
+
+    .approach-text-pane {
+      grid-column: 9 / span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .approach-body {
+      font-size: 14px;
+      line-height: 1.85;
+      color: var(--muted-foreground);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       8. 04 — JOURNAL (Bordered top/bottom, 1 large 6-col + 2 3-col)
+    ───────────────────────────────────────────────────────────── */
+    .journal-wrapper {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .journal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 2.75rem;
+    }
+
+    .journal-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+    }
+
+    .journal-article-lead {
+      grid-column: span 6;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .journal-article-side {
+      grid-column: span 3;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .story-meta {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted-foreground);
+      margin-top: 1.25rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .story-title-lead {
+      font-family: var(--font-display);
+      font-size: 1.85rem;
+      line-height: 1.2;
+      font-weight: 400;
+      color: var(--foreground);
+      margin-bottom: 0.75rem;
+    }
+
+    .story-title-side {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      line-height: 1.25;
+      font-weight: 400;
+      color: var(--foreground);
+      margin-bottom: 0.75rem;
+    }
+
+    .story-excerpt {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted-foreground);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       9. SHOWROOM (Full-bleed photo, --overlay, text anchored bottom)
+    ───────────────────────────────────────────────────────────── */
+    .showroom-section {
+      position: relative;
+      min-height: 640px;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      color: var(--primary-foreground);
+    }
+
+    .showroom-media {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .showroom-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--overlay);
+      z-index: 2;
+    }
+
+    .showroom-content {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      padding-bottom: clamp(3.5rem, 7vw, 5.5rem);
+    }
+
+    .showroom-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+      align-items: flex-end;
+    }
+
+    .showroom-left {
+      grid-column: span 7;
+    }
+
+    .showroom-right {
+      grid-column: 9 / span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    .showroom-h2 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 4.5vw, 3.75rem);
+      line-height: 1.05;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      margin-top: 0.75rem;
+      color: var(--primary-foreground);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       10. FOOTER (Inverted: background --foreground, text --background)
+    ───────────────────────────────────────────────────────────── */
+    .site-footer {
+      background-color: var(--foreground);
+      color: var(--background);
+      padding-top: clamp(5rem, 8vw, 7rem);
+      padding-bottom: 3rem;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 2rem;
+      row-gap: 3.5rem;
+      padding-bottom: clamp(3.5rem, 6vw, 5rem);
+    }
+
+    .footer-col-brand {
+      grid-column: span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      letter-spacing: 0.18em;
+      font-weight: 400;
+      text-transform: uppercase;
+      color: var(--background);
+    }
+
+    .footer-tagline {
+      font-size: 13px;
+      line-height: 1.8;
+      color: oklch(0.965 0.012 81 / 60%);
+      max-width: 320px;
+    }
+
+    .footer-col-nav {
+      grid-column: span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .footer-col-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: oklch(0.965 0.012 81 / 45%);
+    }
+
+    .footer-link-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .footer-link {
+      font-size: 13px;
+      color: oklch(0.965 0.012 81 / 75%);
+      transition: color 250ms ease;
+    }
+
+    .footer-link:hover {
+      color: var(--background);
+    }
+
+    .footer-col-newsletter {
+      grid-column: 9 / span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .footer-newsletter-p {
+      font-size: 13px;
+      line-height: 1.75;
+      color: oklch(0.965 0.012 81 / 65%);
+    }
+
+    .newsletter-form {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid oklch(0.965 0.012 81 / 30%);
+      padding-bottom: 0.6rem;
+      transition: border-color 300ms ease;
+    }
+
+    .newsletter-form:focus-within {
+      border-color: var(--background);
+    }
+
+    .newsletter-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--background);
+    }
+
+    .newsletter-input::placeholder {
+      color: oklch(0.965 0.012 81 / 40%);
+    }
+
+    .newsletter-submit-btn {
+      font-size: 14px;
+      padding: 0 0.5rem;
+      color: var(--background);
+      transition: transform 250ms ease;
+    }
+
+    .newsletter-submit-btn:hover {
+      transform: translateX(4px);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 2rem;
+      border-top: 1px solid oklch(0.965 0.012 81 / 15%);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-copyright {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: oklch(0.965 0.012 81 / 45%);
+    }
+
+    .footer-legal-links {
+      display: flex;
+      gap: 1.75rem;
+    }
+
+    .footer-legal-link {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: oklch(0.965 0.012 81 / 45%);
+      transition: color 200ms ease;
+    }
+
+    .footer-legal-link:hover {
+      color: oklch(0.965 0.012 81 / 80%);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       11. RESPONSIVE BREAKPOINTS (Per DESIGN.md Section 7)
+    ───────────────────────────────────────────────────────────── */
+    /* Tablet (< 1024px) */
+    @media (max-width: 1023px) {
+      .desktop-nav,
+      .header-utils {
+        display: none;
+      }
+
+      .nav-toggle {
+        display: flex;
+      }
+
+      .header-inner {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-left,
+      .hero-right {
+        grid-column: span 1;
+      }
+
+      .collection-header-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .collection-header-left,
+      .collection-header-right {
+        grid-column: span 1;
+      }
+
+      .collection-grid {
+        grid-template-columns: repeat(6, 1fr);
+      }
+
+      .col-item-7 { grid-column: span 6; }
+      .col-item-5 { grid-column: span 6; }
+      .col-item-4 { grid-column: span 3; }
+
+      .materials-split {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .materials-photo-pane {
+        min-height: 480px;
+      }
+
+      .approach-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .approach-image-pane,
+      .approach-text-pane {
+        grid-column: span 1;
+      }
+
+      .journal-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .journal-article-lead {
+        grid-column: span 2;
+      }
+
+      .journal-article-side {
+        grid-column: span 1;
+      }
+
+      .showroom-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .showroom-left,
+      .showroom-right {
+        grid-column: span 1;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .footer-col-brand { grid-column: span 2; }
+      .footer-col-newsletter { grid-column: span 2; }
+    }
+
+    /* Mobile (< 768px) */
+    @media (max-width: 767px) {
+      .collection-grid {
+        grid-template-columns: 1fr;
+        gap: 3.5rem;
+      }
+
+      .col-item-7,
+      .col-item-5,
+      .col-item-4 {
+        grid-column: span 1;
+      }
+
+      .material-row {
+        grid-template-columns: 36px 1fr;
+        gap: 0.5rem;
+      }
+
+      .material-desc {
+        grid-column: 2 / span 1;
+      }
+
+      .journal-grid {
+        grid-template-columns: 1fr;
+        gap: 3.5rem;
+      }
+
+      .journal-article-lead,
+      .journal-article-side {
+        grid-column: span 1;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-col-brand,
+      .footer-col-nav,
+      .footer-col-newsletter {
+        grid-column: span 1;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═════════════════════════════════════════════════════════════
+       1. HEADER (Absolute on hero, 1px white border, minimal nav)
+  ═════════════════════════════════════════════════════════════ -->
+  <header class="site-header" id="siteHeader">
+    <div class="site-container">
+      <div class="header-inner">
+        <!-- Brand Logo -->
+        <a href="#" class="site-logo">AUREN</a>
+
+        <!-- Desktop Navigation -->
+        <nav class="desktop-nav" aria-label="Main Navigation">
+          <a href="#collection" class="nav-link link-line">Collection</a>
+          <a href="#materials" class="nav-link link-line">Materials</a>
+          <a href="#craft" class="nav-link link-line">Our Approach</a>
+          <a href="#journal" class="nav-link link-line">Journal</a>
+          <a href="#showroom" class="nav-link link-line">Showroom</a>
+        </nav>
+
+        <!-- Header Utilities -->
+        <div class="header-utils">
+          <a href="#" class="util-link link-line">Search</a>
+          <a href="#" class="util-link link-line">Bag (0)</a>
+        </div>
+
+        <!-- Mobile Hamburger Toggle -->
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Menu (Background --walnut, display serif 3xl per DESIGN.md) -->
+  <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+    <div class="mobile-menu-links">
+      <p class="eyebrow eyebrow-light" style="margin-bottom: 0.5rem;">Navigation</p>
+      <a href="#collection" class="mobile-link">01 / Collection</a>
+      <a href="#materials" class="mobile-link">02 / Materials</a>
+      <a href="#craft" class="mobile-link">03 / Our Approach</a>
+      <a href="#journal" class="mobile-link">04 / Journal</a>
+      <a href="#showroom" class="mobile-link">05 / Showroom</a>
+    </div>
+
+    <div class="mobile-menu-footer">
+      <div style="display: flex; gap: 1.5rem;">
+        <a href="#" class="eyebrow eyebrow-light">Search</a>
+        <a href="#" class="eyebrow eyebrow-light">Bag (0)</a>
+      </div>
+      <span class="eyebrow eyebrow-light">Stockholm</span>
+    </div>
+  </div>
+
+  <main>
+    <!-- ═════════════════════════════════════════════════════════════
+         2. HERO SECTION (Warm interior photo, 12-col bottom anchored)
+    ═════════════════════════════════════════════════════════════ -->
+    <section class="hero-section" id="hero">
+      <div class="hero-bg-media">
+        <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=2160&q=88&auto=format&fit=crop"
+             alt="Calm architectural interior with natural light, warm walnut millwork and linen upholstery"
+             fetchpriority="high">
+      </div>
+      <div class="hero-overlay"></div>
+
+      <div class="hero-content">
+        <div class="site-container">
+          <div class="hero-grid">
+            <!-- Left 7 columns: Headline -->
+            <div class="hero-left">
+              <span class="eyebrow eyebrow-light">Architectural Furnishings · Est. 2019</span>
+              <h1 class="hero-h1">Furniture for spaces that endure.</h1>
+            </div>
+
+            <!-- Right 4 columns: Description + Dual CTAs -->
+            <div class="hero-right">
+              <p class="hero-desc">
+                Thoughtfully crafted pieces shaped by material, proportion, and time. Conceived for quiet dwellings and architectural spaces.
+              </p>
+              <div class="hero-actions">
+                <a href="#collection" class="btn-solid-light">Explore Collection</a>
+                <a href="#craft" class="hero-link-secondary arrow-link">Discover Our Craft →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════════════════════════════════════════════════════
+         3. 01 — THE COLLECTION (Asymmetric 12-col editorial layout)
+    ═════════════════════════════════════════════════════════════ -->
+    <section class="section-spacing" id="collection">
+      <div class="site-container">
+        <!-- Section Header -->
+        <div class="collection-header-grid">
+          <div class="collection-header-left">
+            <span class="eyebrow">01 — Selected pieces</span>
+            <h2 class="section-h2">The Collection</h2>
+          </div>
+          <div class="collection-header-right">
+            <p class="lead-paragraph">
+              Each piece is an architectural study in balance, handcrafted from sustainable hardwoods, honest stone, and natural fiber textiles.
+            </p>
+            <div>
+              <a href="#collection" class="arrow-link">View all 18 designs →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Asymmetric Product Grid -->
+        <div class="collection-grid">
+
+          <!-- Product 1: Auren Lounge Chair (Span 7 cols, 4:5 ratio) -->
+          <article class="col-item-7 product-card group">
+            <div class="image-quiet ratio-4-5">
+              <img src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=1400&q=85&auto=format&fit=crop"
+                   alt="Auren Lounge Chair in solid walnut and vegetable-tanned leather" loading="lazy">
+            </div>
+            <div class="product-meta-row">
+              <div>
+                <h3 class="product-title">Auren Lounge Chair</h3>
+                <p class="product-material">Solid American Walnut · Saddle Leather</p>
+              </div>
+              <span class="product-price">$3,850</span>
+            </div>
+            <div class="product-action-row">
+              <span class="arrow-link">View details →</span>
+            </div>
+          </article>
+
+          <!-- Product 2: Noma Sofa (Span 5 cols, 3:4 ratio) -->
+          <article class="col-item-5 product-card group">
+            <div class="image-quiet ratio-3-4">
+              <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1100&q=85&auto=format&fit=crop"
+                   alt="Noma Sofa upholstered in natural unbleached Belgian linen" loading="lazy">
+            </div>
+            <div class="product-meta-row">
+              <div>
+                <h3 class="product-title">Noma Sofa</h3>
+                <p class="product-material">Belgian Flax Linen · Smoked Oak Base</p>
+              </div>
+              <span class="product-price">$7,600</span>
+            </div>
+            <div class="product-action-row">
+              <span class="arrow-link">View details →</span>
+            </div>
+          </article>
+
+          <!-- Product 3: Sora Side Table (Span 4 cols, 1:1 square ratio) -->
+          <article class="col-item-4 product-card group">
+            <div class="image-quiet ratio-1-1">
+              <img src="https://images.unsplash.com/photo-1530018607912-eff2daa1bac4?w=800&q=85&auto=format&fit=crop"
+                   alt="Sora Side Table monolithic honed travertine" loading="lazy">
+            </div>
+            <div class="product-meta-row">
+              <div>
+                <h3 class="product-title">Sora Side Table</h3>
+                <p class="product-material">Honed Italian Travertine Monolith</p>
+              </div>
+              <span class="product-price">$1,650</span>
+            </div>
+            <div class="product-action-row">
+              <span class="arrow-link">View details →</span>
+            </div>
+          </article>
+
+          <!-- Product 4: Kiso Lounge Chair (Span 4 cols, 4:5 ratio) -->
+          <article class="col-item-4 product-card group">
+            <div class="image-quiet ratio-4-5">
+              <img src="https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=800&q=85&auto=format&fit=crop"
+                   alt="Kiso Lounge Chair in white oak with woven wool cushion" loading="lazy">
+            </div>
+            <div class="product-meta-row">
+              <div>
+                <h3 class="product-title">Kiso Lounge Chair</h3>
+                <p class="product-material">Quarter-sawn White Oak · Raw Wool</p>
+              </div>
+              <span class="product-price">$3,200</span>
+            </div>
+            <div class="product-action-row">
+              <span class="arrow-link">View details →</span>
+            </div>
+          </article>
+
+          <!-- Product 5: Atelier Dining Table (Span 4 cols, 16:10 ratio) -->
+          <article class="col-item-4 product-card group">
+            <div class="image-quiet ratio-16-10">
+              <img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=900&q=85&auto=format&fit=crop"
+                   alt="Atelier Dining Table solid walnut top with patinated brass fittings" loading="lazy">
+            </div>
+            <div class="product-meta-row">
+              <div>
+                <h3 class="product-title">Atelier Dining Table</h3>
+                <p class="product-material">Solid Walnut · Muted Patinated Brass</p>
+              </div>
+              <span class="product-price">$5,400</span>
+            </div>
+            <div class="product-action-row">
+              <span class="arrow-link">View details →</span>
+            </div>
+          </article>
+
+          <!-- Product 6: Forma Bed (Span 7 cols, 16:9 ratio) -->
+          <article class="col-item-7 product-card group">
+            <div class="image-quiet ratio-16-9">
+              <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1400&q=85&auto=format&fit=crop"
+                   alt="Forma Bed low platform solid walnut frame" loading="lazy">
+            </div>
+            <div class="product-meta-row">
+              <div>
+                <h3 class="product-title">Forma Platform Bed</h3>
+                <p class="product-material">American Walnut · Woven Linen Headboard</p>
+              </div>
+              <span class="product-price">$6,200</span>
+            </div>
+            <div class="product-action-row">
+              <span class="arrow-link">View details →</span>
+            </div>
+          </article>
+
+          <!-- Product 7: Noma Sectional Studio Edition (Span 5 cols, 4:3 ratio) -->
+          <article class="col-item-5 product-card group">
+            <div class="image-quiet ratio-4-3">
+              <img src="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=1100&q=85&auto=format&fit=crop"
+                   alt="Noma Modular Sectional in architectural apartment setting" loading="lazy">
+            </div>
+            <div class="product-meta-row">
+              <div>
+                <h3 class="product-title">Noma Modular Sectional</h3>
+                <p class="product-material">Bouclé Wool Blend · Concealed Joinery</p>
+              </div>
+              <span class="product-price">$8,900</span>
+            </div>
+            <div class="product-action-row">
+              <span class="arrow-link">View details →</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════════════════════════════════════════════════════
+         4. 02 — MATERIALS (Split 50/50: Photo Left, --walnut Right)
+    ═════════════════════════════════════════════════════════════ -->
+    <section class="materials-section" id="materials">
+      <div class="materials-split">
+        <!-- Left Pane: Full-height atmospheric material craft photo -->
+        <div class="materials-photo-pane">
+          <img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1400&q=85&auto=format&fit=crop"
+               alt="Close-up of premium raw walnut hardwood showing fine longitudinal grain" loading="lazy">
+        </div>
+
+        <!-- Right Pane: Background --walnut with numbered catalog -->
+        <div class="materials-content-pane">
+          <span class="eyebrow eyebrow-light">02 — Materiality</span>
+          <h2 class="materials-h2">Made to be lived with.</h2>
+          <p class="materials-intro">
+            Every surface tells a story of where it began. We choose materials not for temporary perfection, but for their structural truth and their quiet capacity to grow warmer and richer across years of daily ritual.
+          </p>
+
+          <!-- Numbered material table -->
+          <div class="materials-table">
+            <!-- 01 Walnut -->
+            <div class="material-row">
+              <span class="material-num">01</span>
+              <h3 class="material-name">American Walnut</h3>
+              <p class="material-desc">
+                Sustainably harvested dark heartwood with intricate figuring that softens into a warm amber luster over decades.
+              </p>
+            </div>
+
+            <!-- 02 Oak -->
+            <div class="material-row">
+              <span class="material-num">02</span>
+              <h3 class="material-name">White Oak</h3>
+              <p class="material-desc">
+                Quarter-sawn for architectural stability, revealing fine medullary rays and tactile, open-pore warmth.
+              </p>
+            </div>
+
+            <!-- 03 Travertine -->
+            <div class="material-row">
+              <span class="material-num">03</span>
+              <h3 class="material-name">Honed Travertine</h3>
+              <p class="material-desc">
+                Natural sedimentary limestone from Tuscan quarries, left unpolished to preserve its organic porous voids.
+              </p>
+            </div>
+
+            <!-- 04 Linen -->
+            <div class="material-row">
+              <span class="material-num">04</span>
+              <h3 class="material-name">Belgian Linen</h3>
+              <p class="material-desc">
+                Heavyweight long-staple flax fiber, unbleached and breathable, designed to soften gracefully with use.
+              </p>
+            </div>
+
+            <!-- 05 Leather -->
+            <div class="material-row">
+              <span class="material-num">05</span>
+              <h3 class="material-name">Vegetable Leather</h3>
+              <p class="material-desc">
+                Cured slowly with oak bark tannins without harsh heavy metals, recording an indelible amber patina.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════════════════════════════════════════════════════
+         5. 03 — OUR APPROACH (Asymmetric: 7 cols image, 4 cols text)
+    ═════════════════════════════════════════════════════════════ -->
+    <section class="section-spacing" id="craft">
+      <div class="site-container">
+        <div class="approach-grid">
+          <!-- Left 7 cols: Workshop Image (4:3) -->
+          <div class="approach-image-pane">
+            <div class="image-quiet ratio-4-3">
+              <img src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=1400&q=85&auto=format&fit=crop"
+                   alt="AUREN artisan atelier with natural daylight and precision hand plane joinery" loading="lazy">
+            </div>
+          </div>
+
+          <!-- Right 4 cols: Narrative Text (Vertically centered) -->
+          <div class="approach-text-pane">
+            <span class="eyebrow">03 — Our approach</span>
+            <h2 class="section-h2" style="font-size: clamp(2.25rem, 3.5vw, 3.1rem);">Objects with a sense of place.</h2>
+            <p class="approach-body">
+              AUREN was founded upon a quiet conviction: the objects that inhabit our domestic sanctum should command stillness rather than noise. Every dimension is derived from classical architectural proportions, allowing each piece to settle naturally within contemporary or historic volumes.
+            </p>
+            <p class="approach-body">
+              We refuse the accelerated cycle of seasonal trends. By combining precision multi-axis joinery with hand-rubbed oil finishes, our furniture is built for continuous daily life and intergenerational inheritance.
+            </p>
+            <div>
+              <a href="#showroom" class="arrow-link">Discover our approach →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═════════════════════════════════════════════════════════════
+         6. 04 — JOURNAL (Bordered top/bottom, 1 large 6-col + 2 3-col)
+    ═════════════════════════════════════════════════════════════ -->
+    <div class="journal-wrapper section-spacing" id="journal">
+      <div class="site-container">
+        <div class="journal-header">
+          <div>
+            <span class="eyebrow">04 — Studio Archive</span>
+            <h2 class="section-h2">Journal</h2>
+          </div>
+          <a href="#journal" class="arrow-link">All essays (24) →</a>
+        </div>
+
+        <div class="journal-grid">
+          <!-- Story 1: Large lead (6 columns, 4:3) -->
+          <article class="journal-article-lead group">
+            <div class="image-quiet ratio-4-3">
+              <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1100&q=85&auto=format&fit=crop"
+                   alt="Architectural interior with soft morning light and refined minimal furniture" loading="lazy">
+            </div>
+            <p class="story-meta">Interiors · 6 min read</p>
+            <h3 class="story-title-lead">The architecture of quiet spaces</h3>
+            <p class="story-excerpt">
+              How disciplined restraint, natural illumination, and honest materials collaborate to create rooms that inspire contemplative living.
+            </p>
+            <div>
+              <span class="arrow-link">Read essay →</span>
+            </div>
+          </article>
+
+          <!-- Story 2: Supporting (3 columns, 3:4) -->
+          <article class="journal-article-side group">
+            <div class="image-quiet ratio-3-4">
+              <img src="https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=800&q=85&auto=format&fit=crop"
+                   alt="Detail of aged walnut timber with natural hand-rubbed oil finish" loading="lazy">
+            </div>
+            <p class="story-meta">Materiality · 4 min read</p>
+            <h3 class="story-title-side">Why natural materials age beautifully</h3>
+            <p class="story-excerpt">
+              The physical biology and aesthetic philosophy behind timber, stone, and leather that gain patina rather than wear down.
+            </p>
+            <div>
+              <span class="arrow-link">Read essay →</span>
+            </div>
+          </article>
+
+          <!-- Story 3: Supporting (3 columns, 3:4) -->
+          <article class="journal-article-side group">
+            <div class="image-quiet ratio-3-4">
+              <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=85&auto=format&fit=crop"
+                   alt="Solitary lounge chair defining the geometry and circulation of an open room" loading="lazy">
+            </div>
+            <p class="story-meta">Practice · 5 min read</p>
+            <h3 class="story-title-side">Designing a room around one exceptional piece</h3>
+            <p class="story-excerpt">
+              Architect Marta Nilsson on how establishing a singular, definitive anchor dictates lighting, sightlines, and daily calm.
+            </p>
+            <div>
+              <span class="arrow-link">Read essay →</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════
+         7. SHOWROOM (Full-bleed, --overlay, text anchored bottom)
+    ═════════════════════════════════════════════════════════════ -->
+    <section class="showroom-section" id="showroom">
+      <div class="showroom-media">
+        <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=2160&q=88&auto=format&fit=crop"
+             alt="AUREN studio showroom in Stockholm with curated solid timber pieces and ambient light" loading="lazy">
+      </div>
+      <div class="showroom-overlay"></div>
+
+      <div class="showroom-content">
+        <div class="site-container">
+          <div class="showroom-grid">
+            <div class="showroom-left">
+              <span class="eyebrow eyebrow-light">Stockholm · Milan · London · By appointment</span>
+              <h2 class="showroom-h2">Come see the collection.</h2>
+            </div>
+            <div class="showroom-right">
+              <p class="hero-desc">
+                Experience each piece in person — feel the tactile weight of solid walnut, the softness of washed linen, and how natural daylight animates architectural form.
+              </p>
+              <div class="hero-actions">
+                <a href="mailto:concierge@auren-studio.com" class="btn-solid-light">Book Private Appointment</a>
+                <a href="mailto:concierge@auren-studio.com" class="hero-link-secondary arrow-link">Contact Concierge →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═════════════════════════════════════════════════════════════
+       8. FOOTER (Inverted: background --foreground, text --background)
+  ═════════════════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="site-container">
+      <div class="footer-grid">
+        <!-- Brand Col (4 cols) -->
+        <div class="footer-col-brand">
+          <a href="#" class="footer-logo">AUREN</a>
+          <p class="footer-tagline">
+            Contemporary architectural furniture shaped by material, proportion, and time. Designed in Stockholm, handcrafted in Northern Europe.
+          </p>
+          <span class="eyebrow eyebrow-light" style="opacity: 0.4;">Stockholm Studio — Skeppargatan 24</span>
+        </div>
+
+        <!-- Navigation Col 1 (2 cols) -->
+        <div class="footer-col-nav">
+          <span class="footer-col-title">Collection</span>
+          <ul class="footer-link-list">
+            <li><a href="#collection" class="footer-link link-line">Seating</a></li>
+            <li><a href="#collection" class="footer-link link-line">Tables & Desks</a></li>
+            <li><a href="#collection" class="footer-link link-line">Beds & Storage</a></li>
+            <li><a href="#collection" class="footer-link link-line">Architectural Lighting</a></li>
+            <li><a href="#materials" class="footer-link link-line">Material Swatches</a></li>
+          </ul>
+        </div>
+
+        <!-- Navigation Col 2 (2 cols) -->
+        <div class="footer-col-nav">
+          <span class="footer-col-title">Studio</span>
+          <ul class="footer-link-list">
+            <li><a href="#craft" class="footer-link link-line">Our Approach</a></li>
+            <li><a href="#journal" class="footer-link link-line">Journal</a></li>
+            <li><a href="#showroom" class="footer-link link-line">Showrooms</a></li>
+            <li><a href="#showroom" class="footer-link link-line">Trade & Architects</a></li>
+            <li><a href="https://instagram.com" target="_blank" rel="noreferrer" class="footer-link link-line">Instagram</a></li>
+          </ul>
+        </div>
+
+        <!-- Newsletter Col (4 cols) -->
+        <div class="footer-col-newsletter">
+          <span class="footer-col-title">Studio Dispatch</span>
+          <p class="footer-newsletter-p">
+            Quiet notes on newly released editions, architectural studies, and material provenance. Delivered monthly without promotional urgency.
+          </p>
+          <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Thank you. You have been added to the AUREN Studio dispatch.');">
+            <input type="email" class="newsletter-input" placeholder="Enter your email" required aria-label="Email address for newsletter">
+            <button type="submit" class="newsletter-submit-btn" aria-label="Subscribe to newsletter">→</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="footer-bottom">
+        <span class="footer-copyright">
+          © 2025 AUREN Studio AB. All rights reserved. Registered architectural brand.
+        </span>
+        <div class="footer-legal-links">
+          <a href="#" class="footer-legal-link link-line">Privacy Policy</a>
+          <a href="#" class="footer-legal-link link-line">Terms of Service</a>
+          <a href="#" class="footer-legal-link link-line">Material Transparency</a>
+          <a href="#" class="footer-legal-link link-line">FSC® Forest Certification</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═════════════════════════════════════════════════════════════
+       INTERACTIVE BEHAVIOR (Mobile Menu & Scroll state)
+  ═════════════════════════════════════════════════════════════ -->
+  <script>
+    // Header background state on scroll
+    const siteHeader = document.getElementById('siteHeader');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 80) {
+        siteHeader.classList.add('is-scrolled');
+      } else {
+        siteHeader.classList.remove('is-scrolled');
+      }
+    }, { passive: true });
+
+    // Mobile Navigation Toggle
+    const navToggle = document.getElementById('navToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+
+    function toggleMenu() {
+      const isOpen = mobileMenu.classList.toggle('open');
+      navToggle.classList.toggle('active', isOpen);
+      navToggle.setAttribute('aria-expanded', isOpen);
+      mobileMenu.setAttribute('aria-hidden', !isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    navToggle.addEventListener('click', toggleMenu);
+
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        if (mobileMenu.classList.contains('open')) {
+          toggleMenu();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

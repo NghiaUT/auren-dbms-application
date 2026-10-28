@@ -1,0 +1,275 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────
+   AUREN Architectural Design System Tokens & Utilities
+───────────────────────────────────────────────────────────── */
+
+:root {
+  --surface-canvas: #FCF9F3;
+  --surface-ivory: #F7F4EE;
+  --surface-card: #FAF8F3;
+  --surface-quiet: #EAE4D9;
+  --surface-espresso: #271E18;
+  --surface-walnut: #503625;
+  --primary: #0D0703;
+  --text-foreground: #372A22;
+  --text-muted: #7B6E64;
+  --border-sand: #D2C8BA;
+  --accent-brass: #A7824B;
+  --accent-bronze: #A58548;
+}
+
+/* Custom Selection */
+::selection {
+  background-color: #A7824B;
+  color: #FAF8F3;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+  background-color: var(--surface-canvas);
+  color: var(--text-foreground);
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--surface-canvas);
+  color: var(--text-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Aspect Ratios for Fine Architectural Photography */
+.ratio-4-5 { aspect-ratio: 4 / 5; }
+.ratio-3-4 { aspect-ratio: 3 / 4; }
+.ratio-1-1 { aspect-ratio: 1 / 1; }
+.ratio-16-10 { aspect-ratio: 16 / 10; }
+.ratio-16-9 { aspect-ratio: 16 / 9; }
+.ratio-4-3 { aspect-ratio: 4 / 3; }
+
+/* Eyebrow Label */
+.eyebrow {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.625rem; /* 10px */
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.eyebrow-light {
+  color: rgba(250, 248, 243, 0.72);
+}
+
+/* Editorial Arrow Link */
+.arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: inherit;
+  transition: opacity 0.2s ease;
+  position: relative;
+}
+
+.arrow-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.arrow-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Underline Animation on Navigation Links */
+.link-line {
+  position: relative;
+  display: inline-block;
+}
+
+.link-line::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.link-line:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Architectural Solid Buttons */
+.btn-auren-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-espresso);
+  color: #FAF8F3;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.85rem 2rem;
+  border-radius: 0.125rem; /* 2px */
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-auren-solid:hover:not(:disabled) {
+  background-color: #0D0703;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(39, 30, 24, 0.12);
+}
+
+.btn-auren-solid:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-auren-solid:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Light Button Variant */
+.btn-auren-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #FAF8F3;
+  color: var(--surface-espresso);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.85rem 2rem;
+  border-radius: 0.125rem;
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-auren-light:hover:not(:disabled) {
+  background-color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+/* Outline Button Variant */
+.btn-auren-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--surface-espresso);
+  border: 1px solid var(--border-sand);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.85rem 2rem;
+  border-radius: 0.125rem;
+  transition: border-color 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-auren-outline:hover:not(:disabled) {
+  border-color: var(--surface-espresso);
+  color: #0D0703;
+}
+
+/* Architectural Input: Single Horizontal Rule with Deferred Validation */
+.auren-input {
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-sand);
+  border-radius: 0;
+  padding: 0.75rem 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.875rem;
+  color: var(--surface-espresso);
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+.auren-input::placeholder {
+  color: rgba(123, 110, 100, 0.5);
+}
+
+.auren-input:focus {
+  border-bottom-color: var(--surface-espresso);
+}
+
+/* Modern Web Guidance: Validate Input After Interaction (:user-invalid) */
+.auren-input:user-invalid {
+  border-bottom-color: #BA1A1A;
+}
+
+.auren-input:user-valid:not(:placeholder-shown) {
+  border-bottom-color: #0D9488;
+}
+
+/* Dark Surface Inputs */
+.auren-input-dark {
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(247, 244, 238, 0.24);
+  border-radius: 0;
+  padding: 0.75rem 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.875rem;
+  color: #FAF8F3;
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+.auren-input-dark::placeholder {
+  color: rgba(247, 244, 238, 0.4);
+}
+
+.auren-input-dark:focus {
+  border-bottom-color: #FAF8F3;
+}
+
+/* Hairline Divider */
+.hairline-divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-sand);
+  opacity: 0.6;
+}

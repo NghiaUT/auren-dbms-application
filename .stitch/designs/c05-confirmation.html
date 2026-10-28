@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-walnut": "#503625", "on-tertiary-fixed": "#291800", "text-inverse": "#FAF8F3", "surface-dim": "#dcdad4", "inverse-surface": "#31312d", "surface-container-high": "#ebe8e2", "on-primary-container": "#93857c", "tertiary-fixed": "#ffddb1", "on-error": "#ffffff", "on-tertiary-fixed-variant": "#5e4110", "text-muted": "#7B6E64", "surface-bright": "#fcf9f3", "border-sand": "#D2C8BA", "primary-container": "#271e18", "on-primary": "#ffffff", "primary": "#0d0703", "on-surface-variant": "#4e4540", "surface-tint": "#685c54", "on-secondary-container": "#795a47", "surface-muted": "#ECE7DC", "on-primary-fixed": "#221a14", "error": "#ba1a1a", "surface-card": "#FAF8F3", "tertiary": "#0e0600", "on-surface": "#1c1c18", "tertiary-fixed-dim": "#eac083", "secondary": "#765845", "secondary-container": "#fed5bc", "on-background": "#1c1c18", "surface-espresso": "#271E18", "primary-fixed-dim": "#d4c3ba", "outline-variant": "#d1c4bd", "surface-quiet": "#EAE4D9", "secondary-fixed-dim": "#e6bfa7", "on-tertiary": "#ffffff", "surface-container": "#f0eee8", "on-secondary-fixed-variant": "#5c412f", "error-container": "#ffdad6", "inverse-on-surface": "#f3f0ea", "secondary-fixed": "#ffdbc7", "surface-variant": "#e5e2dc", "accent-bronze": "#A58548", "on-tertiary-container": "#a6814a", "surface-ivory": "#F7F4EE", "on-secondary": "#ffffff", "primary-fixed": "#f1dfd5", "surface-container-lowest": "#ffffff", "surface": "#fcf9f3", "background": "#fcf9f3", "text-foreground": "#372A22", "surface-container-low": "#f6f3ed", "on-primary-fixed-variant": "#50453d", "on-secondary-fixed": "#2b1608", "outline": "#7f756f", "on-error-container": "#93000a", "inverse-primary": "#d4c3ba", "surface-container-highest": "#e5e2dc", "accent-brass": "#A7824B", "tertiary-container": "#2e1c00", "overlay-dark": "rgba(25, 20, 16, 0.46)" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1.5rem", "space-md": "1rem", "space-sm": "0.5rem", "margin-mobile": "1.25rem", "space-xs": "0.25rem", "gutter": "1.5rem", "gutter-tablet": "1rem", "margin-tablet": "2rem", "gutter-mobile": "0.75rem", "margin": "3rem", "space-xl": "2.5rem" }, "fontFamily": { "headline-md": [ "EB Garamond" ], "headline-lg-mobile": [ "EB Garamond" ], "headline-lg": [ "EB Garamond" ], "headline-xl": [ "EB Garamond" ], "label-legal": [ "Manrope" ], "headline-sm": [ "EB Garamond" ], "label-action": [ "Manrope" ], "body-strong": [ "Manrope" ], "headline-xl-mobile": [ "EB Garamond" ], "body-default": [ "Manrope" ], "headline-md-mobile": [ "EB Garamond" ], "label-eyebrow": [ "Manrope" ], "body-lead": [ "Manrope" ], "label-nav": [ "Manrope" ] }, "fontSize": { "headline-md": [ "2.25rem", { "lineHeight": "1.15", "letterSpacing": "0em", "fontWeight": "400" } ], "headline-lg-mobile": [ "2.5rem", { "lineHeight": "1.05", "letterSpacing": "-0.01em", "fontWeight": "400" } ], "headline-lg": [ "3.85rem", { "lineHeight": "1.0", "letterSpacing": "-0.01em", "fontWeight": "400" } ], "headline-xl": [ "4.75rem", { "lineHeight": "0.96", "letterSpacing": "-0.015em", "fontWeight": "400" } ], "label-legal": [ "0.625rem", { "lineHeight": "1.5", "letterSpacing": "0.04em", "fontWeight": "400" } ], "headline-sm": [ "1.5rem", { "lineHeight": "1.25", "letterSpacing": "0em", "fontWeight": "500" } ], "label-action": [ "0.6875rem", { "lineHeight": "1.2", "letterSpacing": "0.16em", "fontWeight": "600" } ], "body-strong": [ "0.8125rem", { "lineHeight": "1.7", "letterSpacing": "0.04em", "fontWeight": "500" } ], "headline-xl-mobile": [ "3rem", { "lineHeight": "1.0", "letterSpacing": "-0.01em", "fontWeight": "400" } ], "body-default": [ "0.8125rem", { "lineHeight": "1.75", "letterSpacing": "0em", "fontWeight": "400" } ], "headline-md-mobile": [ "1.75rem", { "lineHeight": "1.2", "letterSpacing": "0em", "fontWeight": "400" } ], "label-eyebrow": [ "0.625rem", { "lineHeight": "1.2", "letterSpacing": "0.2em", "fontWeight": "600" } ], "body-lead": [ "0.875rem", { "lineHeight": "1.8", "letterSpacing": "0em", "fontWeight": "400" } ], "label-nav": [ "0.6875rem", { "lineHeight": "1.2", "letterSpacing": "0.14em", "fontWeight": "500" } ] } } } }</script></head><body class="bg-surface font-body-default text-body-default text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.03)] border-b border-border-sand/40"><div class="h-20 max-w-[1600px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin flex items-center justify-between"><div class="flex items-center gap-space-lg"><a class="font-headline-sm text-headline-sm tracking-widest text-primary uppercase select-none" data-path="home" href="#">AUREN</a></div><nav class="hidden lg:flex items-center gap-space-lg" data-active-classes="text-primary border-b border-primary font-body-strong"><a class="font-label-nav text-label-nav text-on-surface-variant hover:text-on-surface transition-colors py-1 uppercase tracking-widest" data-path="collection" href="#">Collection</a><a class="font-label-nav text-label-nav text-on-surface-variant hover:text-on-surface transition-colors py-1 uppercase tracking-widest" data-path="materials" href="#">Materials</a><a class="font-label-nav text-label-nav text-on-surface-variant hover:text-on-surface transition-colors py-1 uppercase tracking-widest" data-path="our-approach" href="#">Our Approach</a><a class="font-label-nav text-label-nav text-on-surface-variant hover:text-on-surface transition-colors py-1 uppercase tracking-widest" data-path="journal" href="#">Journal</a><a class="font-label-nav text-label-nav text-on-surface-variant hover:text-on-surface transition-colors py-1 uppercase tracking-widest" data-path="showroom" href="#">Showroom</a></nav><div class="flex items-center gap-space-md"><button aria-label="Search Archive" class="text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center p-space-xs"><span class="material-symbols-outlined text-[20px]">search</span></button><a aria-label="Shopping Bag" class="relative text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center p-space-xs" data-path="cart" href="#"><span class="material-symbols-outlined text-[20px]">shopping_bag</span><span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-surface-walnut text-text-inverse font-label-legal text-[9px] flex items-center justify-center leading-none">2</span></a><a class="hidden sm:inline-flex font-label-action text-label-action text-on-surface-variant hover:text-on-surface transition-colors uppercase py-1 border-b border-transparent hover:border-on-surface" data-path="account" href="#">Concierge</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-20rem)]"><div class="flex flex-col w-full">
+<!-- Status Stepper Bar -->
+<section class="w-full bg-surface-container-low/70 py-6 border-b border-border-sand/40">
+<div class="max-w-[1600px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin">
+<nav aria-label="Acquisition Progress" class="flex flex-wrap items-center justify-between gap-y-4 text-label-action tracking-[0.18em] uppercase">
+<div class="flex items-center gap-2 text-text-muted">
+<span class="w-1.5 h-1.5 rounded-full bg-border-sand"></span>
+<span class="font-label-action">01 Bag</span>
+</div>
+<span class="hidden md:inline text-border-sand text-xs">—</span>
+<div class="flex items-center gap-2 text-text-muted">
+<span class="w-1.5 h-1.5 rounded-full bg-border-sand"></span>
+<span class="font-label-action">02 Delivery &amp; Logistics</span>
+</div>
+<span class="hidden md:inline text-border-sand text-xs">—</span>
+<div class="flex items-center gap-2 text-text-muted">
+<span class="w-1.5 h-1.5 rounded-full bg-border-sand"></span>
+<span class="font-label-action">03 Settlement</span>
+</div>
+<span class="hidden md:inline text-border-sand text-xs">—</span>
+<div class="flex items-center gap-2 text-primary font-body-strong">
+<span class="w-2 h-2 rounded-full bg-accent-bronze animate-pulse"></span>
+<span class="font-label-action tracking-[0.2em]">04 Confirmation [Sealed]</span>
+</div>
+</nav>
+</div>
+</section>
+<!-- Hero / Success Announcement Header -->
+<section class="w-full pt-16 pb-12 lg:pt-24 lg:pb-16 bg-surface">
+<div class="max-w-[1600px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin">
+<div class="max-w-4xl space-y-6">
+<div class="inline-flex items-center gap-3">
+<span class="w-2.5 h-2.5 bg-accent-bronze"></span>
+<p class="font-label-eyebrow text-label-eyebrow text-accent-bronze tracking-[0.24em] uppercase">
+            Commission Confirmed · Architectural Provenance Registered
+          </p>
+</div>
+<h1 class="font-headline-xl text-headline-xl-mobile md:text-headline-xl text-primary font-normal tracking-tight">
+          Your Acquisition has Been Sealed.
+        </h1>
+<p class="font-body-lead text-body-lead text-on-surface-variant max-w-2xl leading-relaxed">
+          Commission No. <strong class="text-primary font-semibold">AUR-2025-0842</strong> registered to Helena Lindqvist. Our Copenhagen atelier master artisans have recorded this acquisition into the seasonal carving ledger.
+        </p>
+<div class="pt-2 flex flex-wrap items-center gap-4 text-label-legal text-text-muted">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-accent-brass">verified</span>
+            Registry Key: 8820-CPH-WALNUT
+          </span>
+<span class="text-border-sand">•</span>
+<span>Ledger Folio: Book VII · Summer Solstice Cycle</span>
+<span class="text-border-sand">•</span>
+<span class="text-secondary font-medium">Digital Certificate Transmitted</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Architectural Commission Layout: Split Screen (Receipt / Architectural Ledger & Dossier) -->
+<section class="w-full pb-24 lg:pb-32 bg-surface">
+<div class="max-w-[1600px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+<!-- Left Column: The Architectural Provenance Deed (Monolithic Paper Document) -->
+<div class="lg:col-span-7 bg-surface-card p-6 md:p-10 lg:p-12 shadow-sm relative">
+<!-- Subtle corner registration marks (Architectural CAD styling) -->
+<div class="absolute top-3 left-3 w-3 h-3 border-t border-l border-border-sand/60"></div>
+<div class="absolute top-3 right-3 w-3 h-3 border-t border-r border-border-sand/60"></div>
+<div class="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-border-sand/60"></div>
+<div class="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-border-sand/60"></div>
+<!-- Document Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-8 border-b border-border-sand/50 gap-4">
+<div>
+<span class="font-headline-sm text-headline-sm tracking-widest text-primary uppercase block">AUREN ATELIER</span>
+<p class="font-label-legal text-label-legal text-text-muted mt-1 uppercase tracking-widest">
+                Certificate of Commission &amp; Fiscal Settlement
+              </p>
+</div>
+<div class="flex items-center gap-3 bg-surface-quiet px-3.5 py-2">
+<span class="material-symbols-outlined text-[18px] text-accent-bronze">workspace_premium</span>
+<span class="font-label-action text-label-action text-primary tracking-widest uppercase">Verified Authentic</span>
+</div>
+</div>
+<!-- Commission Metadata Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 py-8 border-b border-border-sand/50">
+<div>
+<p class="font-label-eyebrow text-label-eyebrow text-text-muted tracking-widest uppercase">Commission Reference</p>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="font-body-strong text-body-strong text-primary tracking-wide">AUR-2025-0842</span>
+<button class="text-text-muted hover:text-primary transition-colors flex items-center p-0.5" id="copy-btn" onclick="navigator.clipboard.writeText('AUR-2025-0842'); this.innerText='done'; setTimeout(()=&gt;this.innerText='content_copy', 1800);" title="Copy Reference">
+<span class="material-symbols-outlined text-[15px]">content_copy</span>
+</button>
+</div>
+</div>
+<div>
+<p class="font-label-eyebrow text-label-eyebrow text-text-muted tracking-widest uppercase">Settlement Date</p>
+<p class="font-body-strong text-body-strong text-primary mt-1.5">May 21, 2025 · 14:32 CET</p>
+</div>
+<div>
+<p class="font-label-eyebrow text-label-eyebrow text-text-muted tracking-widest uppercase">Patron of Record</p>
+<p class="font-body-strong text-body-strong text-primary mt-1.5">Helena Lindqvist</p>
+<p class="font-label-legal text-label-legal text-text-muted">Karlavägen 72, 114 49 Stockholm, Sweden</p>
+</div>
+<div>
+<p class="font-label-eyebrow text-label-eyebrow text-text-muted tracking-widest uppercase">Fulfillment Method</p>
+<p class="font-body-strong text-body-strong text-primary mt-1.5">White-Glove Architectural Ingress</p>
+<p class="font-label-legal text-label-legal text-accent-brass font-medium">Est. Placement: June 18 – 24, 2025</p>
+</div>
+</div>
+<!-- Commissioned Works Itemized -->
+<div class="py-8 space-y-8">
+<h2 class="font-label-eyebrow text-label-eyebrow text-primary tracking-[0.2em] uppercase">
+              Commissioned Spatial Works (02)
+            </h2>
+<!-- Item 01 -->
+<div class="flex flex-col sm:flex-row gap-6 pt-2">
+<div class="w-full sm:w-28 sm:h-36 bg-surface-quiet relative shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Sculptural Scandinavian lounge chair crafted in solid Nordic walnut with ecru wool bouclé upholstery, photographed in natural side light against a minimalist plaster wall." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFWebPzjd-N9wiwDOzTvtysK6WeLEWAu0uwUyoXfsguC6gTneHCAUi1iKywD6ft6MDeuEGnnnjzXXjkSXaESBJA2a_0QGDZMwhiVmtO9j-gR1-0UspvsTh-UDpPMG2wrLakBUW0jMg1drzzy7r2sUs3nmwMnkXqPEVPE9Db7N9IA7ZlFRkmU9u4DavMBWDLJIojbhN3UTKmnbJm1DznE4jOzPVkWiU4o5Uq1LtQIOYNjD-YDuK80GNlQ"/>
+<span class="absolute bottom-1 right-1 text-[9px] font-label-legal uppercase bg-surface-espresso/80 text-text-inverse px-1 py-0.5 tracking-wider">Ed. 08/25</span>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div class="space-y-1.5">
+<div class="flex items-start justify-between">
+<h3 class="font-headline-sm text-headline-sm text-primary">Auren Lounge Chair</h3>
+<span class="font-body-strong text-body-strong text-primary">$3,850.00</span>
+</div>
+<p class="font-body-default text-body-default text-text-muted">
+                    Solid Nordic Walnut · Natural Linseed Oil Rub · Kvadrat Ecru Wool Bouclé Cushion
+                  </p>
+<div class="inline-flex items-center gap-2 bg-surface-quiet/60 px-2 py-1 mt-2">
+<span class="material-symbols-outlined text-[13px] text-accent-bronze">edit_note</span>
+<span class="font-label-legal text-label-legal text-text-foreground">Bespoke Inset Brass Plaque: "H.L. — 2025"</span>
+</div>
+</div>
+<div class="pt-3 flex items-center justify-between text-label-legal text-text-muted border-t border-border-sand/30 mt-3">
+<span>Atelier Joinery Lot: CPH-802</span>
+<span>Handcrafted in Denmark</span>
+</div>
+</div>
+</div>
+<!-- Item 02 -->
+<div class="flex flex-col sm:flex-row gap-6 pt-6 border-t border-border-sand/40">
+<div class="w-full sm:w-28 sm:h-36 bg-surface-quiet relative shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Monolithic low coffee table carved from Roman travertine with natural tactile porous veining and honed finish in an airy high-ceiling architectural gallery setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL_lfRVuKE2DoXszmEAlnNSN17BsFVtDeCX2DEyAOULdSEmZe_bBsh1ZPEUuDAUyFkHLvdHdkQeU3n5HTC02UVWZDmcaWqIY7NM0D_wf4cr3AGG58_ZB09LFL46HXMmKmgujz7r7HzRemR8V3r0zQ4BzPYimhAPqoOOSDP-r2sjdI9M7QafHHerNtkcK7BLjp-O8rbdWWjuHeqP00n33C--8nE4t4gziZVgiOSWZa2UtJgIEXKf3rgKQ"/>
+<span class="absolute bottom-1 right-1 text-[9px] font-label-legal uppercase bg-surface-espresso/80 text-text-inverse px-1 py-0.5 tracking-wider">Monolith</span>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div class="space-y-1.5">
+<div class="flex items-start justify-between">
+<h3 class="font-headline-sm text-headline-sm text-primary">Sora Low Table</h3>
+<span class="font-body-strong text-body-strong text-primary">$1,650.00</span>
+</div>
+<p class="font-body-default text-body-default text-text-muted">
+                    Roman Travertine Monolith · Deep Honed Matte Silky Finish · Hand-Relieved Chamfer
+                  </p>
+<div class="inline-flex items-center gap-2 bg-surface-quiet/60 px-2 py-1 mt-2">
+<span class="material-symbols-outlined text-[13px] text-accent-bronze">straighten</span>
+<span class="font-label-legal text-label-legal text-text-foreground">Dimensions: 1400 × 720 × 290 mm · 94 kg</span>
+</div>
+</div>
+<div class="pt-3 flex items-center justify-between text-label-legal text-text-muted border-t border-border-sand/30 mt-3">
+<span>Quarry Origin: Tivoli, Italy</span>
+<span>Hand-Finished in Copenhagen</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Financial Settlement Breakdown -->
+<div class="pt-8 border-t border-border-sand/60 space-y-3.5">
+<div class="flex justify-between font-body-default text-body-default text-on-surface-variant">
+<span>Subtotal Commission</span>
+<span>$5,500.00</span>
+</div>
+<div class="flex justify-between font-body-default text-body-default text-on-surface-variant">
+<span class="flex items-center gap-1.5">
+                White-Glove Architectural Logistics &amp; Ingress
+                <span class="text-[10px] font-label-legal tracking-wider uppercase text-accent-bronze bg-surface-quiet px-1.5 py-0.5">Complimentary</span>
+</span>
+<span>$0.00</span>
+</div>
+<div class="flex justify-between font-body-default text-body-default text-on-surface-variant">
+<span>Import Tariffs, Custom Clearances &amp; VAT (Included)</span>
+<span>$440.00</span>
+</div>
+<div class="pt-4 border-t border-border-sand/50 flex justify-between items-baseline">
+<div>
+<span class="font-headline-sm text-headline-sm text-primary">Total Settled Balance</span>
+<p class="font-label-legal text-label-legal text-text-muted mt-0.5 uppercase tracking-wider">SEPA Wire Transfer · Escrow Vault #ESC-9941</p>
+</div>
+<span class="font-headline-md text-headline-md text-primary">$5,940.00 <span class="font-label-action text-[11px] text-text-muted">USD</span></span>
+</div>
+</div>
+<!-- Sign-Off Seal & Watermark Area -->
+<div class="mt-10 pt-8 border-t border-border-sand/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-full border border-accent-bronze/60 flex items-center justify-center p-1 text-center">
+<span class="font-label-legal text-[8px] leading-tight text-accent-bronze tracking-tighter uppercase font-semibold">AUREN<br/>SIGIL<br/>2025</span>
+</div>
+<div>
+<p class="font-body-strong text-body-strong text-primary">Klaus Lindemann</p>
+<p class="font-label-legal text-label-legal text-text-muted">Master of Carpentry &amp; Chief Curator</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-legal text-label-legal text-text-muted uppercase tracking-widest">Permanent Archive Key</p>
+<p class="font-mono text-[10px] text-on-surface-variant mt-0.5 tracking-wider">SHA-256: 7f8c92a40e1189c4d92e</p>
+</div>
+</div>
+</div>
+<!-- Right Column: Concierge Dossier & Architectural Placement Path -->
+<div class="lg:col-span-5 space-y-8">
+<!-- Dedicated Courier Liaison Card -->
+<div class="bg-surface-espresso text-text-inverse p-8 relative overflow-hidden">
+<div class="space-y-6 relative z-10">
+<div class="flex items-center justify-between">
+<span class="font-label-eyebrow text-label-eyebrow text-accent-bronze tracking-[0.2em] uppercase">Private Atelier Concierge</span>
+<span class="w-2 h-2 bg-accent-brass rounded-full"></span>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-full overflow-hidden bg-surface-walnut shrink-0 border border-border-sand/20">
+<img class="w-full h-full object-cover" data-alt="Portrait of a distinguished Scandinavian bespoke furniture logistics specialist wearing a tailored linen dark jacket in a Copenhagen design office with soft architectural natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC33JwiNJ6gESZImud-_F0M0UVKV4SM4RSdIoUx-bLHsnAPGfmKWltBfUv3FVQ46wA6Q9hyWi8w9zdwdWR8brXlyJVtKbix7-xjLmjXxp6M7mz5J4V69p50AMKB-hUmlgHA7qbXBSrmhAWdVCmPNogKMhesg7u10oIn6InMspCHHxayzXafVtGjdsJaXFMY_MeKD0eb3eSSr_nPVAauh58neUsSg7MSlMmtl5OPzMRxUK_aUdW6V8Cf4g"/>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-text-inverse">Frederik Dahl</h3>
+<p class="font-label-action text-label-action text-accent-brass tracking-wider uppercase mt-0.5">Master Courier Liaison</p>
+</div>
+</div>
+<p class="font-body-default text-body-default text-text-inverse/80 leading-relaxed">
+                "I have personally been assigned to steward your acquisition from the initial timber selection through to the final white-glove leveling on Karlavägen."
+              </p>
+<div class="pt-4 border-t border-text-inverse/10 space-y-2">
+<div class="flex items-center justify-between font-label-legal text-label-legal">
+<span class="text-text-inverse/60 uppercase tracking-wider">Direct Telephone</span>
+<a class="text-text-inverse hover:text-accent-brass transition-colors tracking-wide" href="tel:+46708912240">+46 70 891 22 40</a>
+</div>
+<div class="flex items-center justify-between font-label-legal text-label-legal">
+<span class="text-text-inverse/60 uppercase tracking-wider">Encrypted Dispatch</span>
+<a class="text-text-inverse hover:text-accent-brass transition-colors tracking-wide" href="mailto:f.dahl@atelier-auren.com">f.dahl@atelier-auren.com</a>
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full bg-text-inverse text-surface-espresso hover:bg-surface-ivory transition-colors py-3.5 px-6 font-label-action text-label-action uppercase tracking-[0.16em] flex items-center justify-center gap-2" onclick="alert('Liaison request logged. Frederik Dahl will contact you within 2 business hours.');">
+<span class="material-symbols-outlined text-[16px]">chat_bubble</span>
+                  Initiate Concierge Telegram
+                </button>
+</div>
+</div>
+</div>
+<!-- The Path to Placement: Architectural Timeline -->
+<div class="bg-surface-card p-8 border border-border-sand/40 space-y-6">
+<div class="flex items-baseline justify-between border-b border-border-sand/40 pb-4">
+<h2 class="font-label-eyebrow text-label-eyebrow text-primary tracking-[0.2em] uppercase">
+                The Path to Placement
+              </h2>
+<span class="font-label-legal text-label-legal text-text-muted">4-Stage Chronology</span>
+</div>
+<!-- Milestone Steps -->
+<div class="space-y-7 relative before:absolute before:left-3.5 before:top-2 before:bottom-3 before:w-px before:bg-border-sand/60">
+<!-- Milestone 01 (Active) -->
+<div class="flex gap-4 relative">
+<div class="w-7 h-7 rounded-full bg-accent-bronze text-text-inverse flex items-center justify-center shrink-0 text-[11px] font-mono font-medium z-10">
+                  01
+                </div>
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-body-strong text-body-strong text-primary">Material Sourcing &amp; Kiln Acclimation</span>
+<span class="font-label-legal text-[9px] uppercase px-1.5 py-0.5 bg-accent-bronze/10 text-accent-bronze font-semibold">Active</span>
+</div>
+<p class="font-label-legal text-label-legal text-text-muted">Days 1–5 · Copenhagen Atelier</p>
+<p class="font-body-default text-body-default text-on-surface-variant text-[13px] pt-1 leading-relaxed">
+                    Aged European walnut slabs inspected for density and grain symmetry matching the humidity parameters of Stockholm interiors.
+                  </p>
+</div>
+</div>
+<!-- Milestone 02 -->
+<div class="flex gap-4 relative">
+<div class="w-7 h-7 rounded-full bg-surface-quiet border border-border-sand text-on-surface-variant flex items-center justify-center shrink-0 text-[11px] font-mono font-medium z-10">
+                  02
+                </div>
+<div class="space-y-1">
+<span class="font-body-strong text-body-strong text-primary">Precision Joinery &amp; Hand-Finishing</span>
+<p class="font-label-legal text-label-legal text-text-muted">Days 6–21 · Atelier Workshops</p>
+<p class="font-body-default text-body-default text-on-surface-variant text-[13px] pt-1 leading-relaxed">
+                    Mortise &amp; tenon structural framing, numbered brass plaque engraving, and five hand-rubbed organic linseed oil applications.
+                  </p>
+</div>
+</div>
+<!-- Milestone 03 -->
+<div class="flex gap-4 relative">
+<div class="w-7 h-7 rounded-full bg-surface-quiet border border-border-sand text-on-surface-variant flex items-center justify-center shrink-0 text-[11px] font-mono font-medium z-10">
+                  03
+                </div>
+<div class="space-y-1">
+<span class="font-body-strong text-body-strong text-primary">Spatial Survey &amp; Ingress Pre-Audit</span>
+<p class="font-label-legal text-label-legal text-text-muted">Day 22 · Logistics Coordination</p>
+<p class="font-body-default text-body-default text-on-surface-variant text-[13px] pt-1 leading-relaxed">
+                    Liaison verifies building service elevator dimensions, stair turn clearances, and floor protection protocols for Karlavägen 72.
+                  </p>
+</div>
+</div>
+<!-- Milestone 04 -->
+<div class="flex gap-4 relative">
+<div class="w-7 h-7 rounded-full bg-surface-quiet border border-border-sand text-on-surface-variant flex items-center justify-center shrink-0 text-[11px] font-mono font-medium z-10">
+                  04
+                </div>
+<div class="space-y-1">
+<span class="font-body-strong text-body-strong text-primary">White-Glove Placement &amp; Deed Handover</span>
+<p class="font-label-legal text-label-legal text-accent-brass font-medium">Estimated: June 18 – 24, 2025</p>
+<p class="font-body-default text-body-default text-on-surface-variant text-[13px] pt-1 leading-relaxed">
+                    Two-man specialized installation team, laser spirit level positioning, eco packaging removal, and official physical ledger seal presentation.
+                  </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Documentation & Practical Actions Box -->
+<div class="bg-surface-quiet/70 p-8 space-y-4">
+<h3 class="font-label-eyebrow text-label-eyebrow text-primary tracking-[0.2em] uppercase">Documentation &amp; Calendar Actions</h3>
+<div class="space-y-3">
+<a class="w-full bg-surface-espresso text-text-inverse hover:bg-surface-walnut transition-colors py-3.5 px-6 font-label-action text-label-action uppercase tracking-[0.16em] flex items-center justify-between text-left" href="#" onclick="event.preventDefault(); alert('Generating Archival PDF Specification Deed (Includes high-res CAD drawings and material authenticity certificates)...');">
+<span>Download Provenance Deed &amp; CAD Spec</span>
+<span class="material-symbols-outlined text-[18px]">download</span>
+</a>
+<button class="w-full bg-surface-card border border-border-sand text-primary hover:bg-surface-container-high transition-colors py-3.5 px-6 font-label-action text-label-action uppercase tracking-[0.16em] flex items-center justify-between text-left" onclick="alert('Calendar file (.ics) downloaded for June 18–24 delivery window.');">
+<span>Add Delivery Window to Calendar</span>
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+</button>
+</div>
+<div class="pt-4 flex items-center justify-between text-label-legal text-text-muted">
+<a class="hover:text-primary transition-colors flex items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-[14px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                Return to Collection Catalog
+              </a>
+<a class="hover:text-primary transition-colors underline underline-offset-4" href="#">
+                Client Portal Access
+              </a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Atmospheric Atelier Gallery Quote Banner -->
+<section class="w-full bg-surface-container-high border-t border-border-sand/40 py-16 lg:py-24">
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin text-center space-y-6">
+<span class="material-symbols-outlined text-[32px] text-accent-bronze">architecture</span>
+<blockquote class="font-headline-md text-headline-md-mobile md:text-headline-md text-primary font-normal italic max-w-3xl mx-auto leading-relaxed">
+        "True luxury does not clamor for attention. It rests quietly in the integrity of the joinery, the density of honest timber, and the harmony it brings to human living space."
+      </blockquote>
+<div class="pt-2">
+<p class="font-label-eyebrow text-label-eyebrow text-text-muted tracking-[0.25em] uppercase">
+          Auren Master Cabinetmakers · København
+        </p>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-low border-t border-border-sand/40 pt-16 pb-12"><div class="max-w-[1600px] mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-gutter pb-16"><div class="lg:col-span-4 flex flex-col justify-between pr-space-lg"><div class="space-y-space-md"><span class="font-headline-sm text-headline-sm tracking-widest text-primary uppercase select-none block">AUREN</span><p class="font-body-lead text-body-lead text-on-surface-variant max-w-sm">Architectural furniture grounded in Nordic and Mediterranean quiet luxury. Sculptural joinery, honest natural materials, and permanent spatial presence.</p></div><div class="mt-space-lg"><span class="font-label-eyebrow text-label-eyebrow text-text-muted uppercase tracking-widest block">Atelier &amp; Gallery</span><p class="font-body-default text-body-default text-on-surface-variant mt-1">Strandgade 44, 1401 København • Rue de Turenne, 75003 Paris</p></div></div><div class="lg:col-span-2 space-y-space-md"><h2 class="font-label-eyebrow text-label-eyebrow text-primary uppercase tracking-widest">Collection</h2><ul class="space-y-space-sm"><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Seating &amp; Lounge</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Tables &amp; Desks</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Storage &amp; Credenzas</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Lighting Sculptures</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Architectural Hardware</a></li></ul></div><div class="lg:col-span-2 space-y-space-md"><h2 class="font-label-eyebrow text-label-eyebrow text-primary uppercase tracking-widest">Studio</h2><ul class="space-y-space-sm"><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Our Approach</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Material Provenance</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Private Commissions</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Trade &amp; Architects</a></li><li class="font-body-default text-body-default"><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Press &amp; Monograph</a></li></ul></div><div class="lg:col-span-4 space-y-space-md"><h2 class="font-label-eyebrow text-label-eyebrow text-primary uppercase tracking-widest">Newsletter • Editions</h2><p class="font-body-default text-body-default text-on-surface-variant">Private notices regarding seasonal releases, archive acquisitions, and spatial installations.</p><form class="flex items-center border-b border-border-sand pb-2 focus-within:border-primary transition-colors"><input class="w-full bg-transparent font-body-default text-body-default text-on-surface placeholder:text-text-muted focus:outline-none" placeholder="Enter your correspondence email" type="email"/><button aria-label="Subscribe" class="text-on-surface-variant hover:text-primary transition-transform hover:translate-x-1 pl-2" type="submit"><span class="material-symbols-outlined text-[18px]">arrow_forward</span></button></form><div class="pt-2"><p class="font-label-legal text-label-legal text-text-muted leading-relaxed">By registering, you consent to our curated dispatches. Unsubscribe at discretion.</p></div></div></div><div class="pt-8 border-t border-border-sand/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md"><p class="font-label-legal text-label-legal text-text-muted">© 2025 AUREN Atelier S.A. All architectural rights reserved.</p><div class="flex items-center gap-space-md"><a class="font-label-legal text-label-legal text-text-muted hover:text-on-surface transition-colors" href="#">Terms of Acquisition</a><span class="text-border-sand">•</span><a class="font-label-legal text-label-legal text-text-muted hover:text-on-surface transition-colors" href="#">Privacy Architecture</a><span class="text-border-sand">•</span><a class="font-label-legal text-label-legal text-text-muted hover:text-on-surface transition-colors" href="#">Material Care</a></div></div></div></footer></body></html>

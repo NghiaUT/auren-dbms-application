@@ -1,8 +1,214 @@
 // ============================================================================
 // File: frontend/src/types/index.ts
 // Vai trò: Khai báo các kiểu dữ liệu TypeScript (Interfaces, Types, Enums) dùng chung
-//          cho Frontend:
-//   - Mô hình dữ liệu trả về từ REST API (Product, Variant, Order, Payment, Review...)
-//   - Kiểu trạng thái giỏ hàng (CartItem, CustomizationSpec)
-//   - Kiểu thông tin người dùng đăng nhập (AuthUser, UserRole)
+//          cho Frontend AUREN:
+//   - Mô hình dữ liệu REST API (Auth, User, Product, Category, Tier, etc.)
+//   - Kiểu trạng thái xác thực và payload đăng nhập / đăng ký
 // ============================================================================
+
+export type UserRole = 'customer' | 'sales' | 'admin';
+
+export interface Tier {
+  id: number;
+  name: string;
+  minSpent: number;
+  discountPct: number;
+}
+
+export interface CustomerProfile {
+  id: number;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  totalSpent: number;
+  tier: Tier;
+  nextTier: Tier | null;
+}
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  customer?: CustomerProfile;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  expiresIn?: number;
+  user: AuthUser;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+}
+
+export interface Category {
+  id: number;
+  parentId: number | null;
+  name: string;
+  slug: string;
+}
+
+export interface Brand {
+  id: number;
+  name: string;
+  country: string | null;
+  foundedYear: number | null;
+}
+
+export interface Material {
+  id: number;
+  name: string;
+  type: string;
+  origin: string | null;
+}
+
+export interface Location {
+  id: number;
+  name: string;
+  type: 'showroom' | 'warehouse';
+  city: string | null;
+}
+
+export interface ProductSummary {
+  id: number;
+  name: string;
+  collectionName: string | null;
+  designerName: string | null;
+  isLimited: boolean;
+  isMadeToOrder: boolean;
+  brand: { id: number; name: string };
+  category: { id: number; name: string };
+  minPrice: number;
+  avgRating: number | null;
+  reviewCount: number;
+  imageUrl?: string;
+  materialNote?: string;
+  aspectRatio?: '4-5' | '3-4' | '1-1' | '16-10' | '16-9' | '4-3';
+  colSpan?: 4 | 5 | 7 | 12;
+}
+
+export interface PageMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface VariantMaterial {
+  materialId: number;
+  name: string;
+  type: string;
+  origin: string | null;
+  pct: number | null;
+}
+
+export interface StockByLocation {
+  locationId: number;
+  locationName: string;
+  locationType: 'showroom' | 'warehouse';
+  city: string | null;
+  inStock: boolean;
+  available: number | null; // null for guest, number for auth (FR4)
+}
+
+export interface Variant {
+  id: number;
+  sku: string;
+  finish: string;
+  size: string;
+  price: number;
+  leadTimeDays: number;
+  editionLimit: number | null;
+  editionRemaining: number | null;
+  materials: VariantMaterial[];
+  stock: StockByLocation[];
+}
+
+export interface Review {
+  id: number;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  createdAt: string;
+  authorName: string;
+}
+
+export interface ProductDetail {
+  id: number;
+  name: string;
+  collectionName: string | null;
+  designerName: string | null;
+  description: string;
+  dimensions: string | null;
+  isLimited: boolean;
+  isMadeToOrder: boolean;
+  minPrice: number;
+  brand: {
+    id: number;
+    name: string;
+    country: string | null;
+    foundedYear: number | null;
+  };
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  variants: Variant[];
+  reviews: {
+    items: Review[];
+    avgRating: number | null;
+    totalCount: number;
+  };
+  images: string[];
+}
+
+export interface CatalogMeta {
+  categories: Category[];
+  brands: Brand[];
+  materials: Material[];
+  locations: Location[];
+  priceRange: {
+    min: number;
+    max: number;
+  };
+}
+
+export interface ProductFilterParams {
+  page?: number;
+  limit?: number;
+  q?: string;
+  categoryId?: number;
+  brandId?: number | number[];
+  materialId?: number | number[];
+  minPrice?: number;
+  maxPrice?: number;
+  isLimited?: boolean;
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'name';
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  meta?: PageMeta;
+}
+
+export interface ApiError {
+  error: {
+    code: string;
+    message: string;
+    details?: Array<{ field?: string; message: string }>;
+  };
+}

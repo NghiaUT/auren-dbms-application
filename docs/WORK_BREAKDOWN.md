@@ -61,9 +61,9 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 
 **Giai đoạn 1 (giao sớm, ưu tiên cao nhất)**
 
-- [ ] Khởi tạo repo, cấu trúc thư mục, ESLint/Prettier, `.env.example`
-- [ ] `docker-compose.yml` (mysql, api, web), nạp `schema.sql`
-- [ ] Backend: `db.js` (pool, `withTransaction`), `authenticate`, `authorize`, `validate`, `errorHandler`, `AppError`, `res.ok()` + `camelize()`
+- [x] Khởi tạo repo, cấu trúc thư mục, ESLint/Prettier, `.env.example`
+- [] `docker-compose.yml` (mysql, api, web), nạp `schema.sql`
+- [x] Backend: `db.js` (pool, `withTransaction`), `authenticate`, `authorize`, `validate`, `errorHandler`, `AppError`, `res.ok()` + `camelize()`
 - [ ] Frontend: Vite + Router, axios client (gắn token, bắt `TOKEN_EXPIRED`), `AuthContext`, `ProtectedRoute`, 4 layout, `StatusBadge`, `DataTable`, `Toast`, `ConfirmDialog`
 - [ ] `seed.sql`: tài khoản demo (xem `ROLE_MATRIX.md` mục 6), danh mục, thương hiệu, vài sản phẩm, kho, hạng thành viên
 - [ ] Hàm dùng chung: `customer.repository` (findWithTierByUserId, addSpent)
@@ -159,7 +159,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 | **4. Demo DBMS**          | ~1 tuần (chạy **song song** với 2-3) | Mỗi TV hoàn thiện demo topic trên MySQL và MongoDB, thu số liệu                                    | Mỗi TV                                                           | Mỗi topic có script chạy lại được và bảng so sánh         |
 | **5. Báo cáo, trình bày** | ~1 tuần                              | Viết báo cáo, tập thuyết trình, đóng gói zip                                                       | Cả nhóm                                                          | Zip nộp, rehearsal có bấm giờ                             |
 
-Phần demo DBMS (Giai đoạn 4) phụ thuộc dữ liệu lớn của `seed_large.js`, nên **TV1 phải xong `seed_large.js` ngay đầu Giai đoạn 2**.
+<!-- Phần demo DBMS (Giai đoạn 4) phụ thuộc dữ liệu lớn của `seed_large.js`, nên **TV1 phải xong `seed_large.js` ngay đầu Giai đoạn 2**. -->
 
 ---
 

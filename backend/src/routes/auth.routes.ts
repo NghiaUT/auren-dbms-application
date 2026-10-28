@@ -24,12 +24,7 @@ const authRouter = Router();
  * - authLimiter: Giới hạn tần suất gọi API từ cùng một IP (chống brute-force / spam)
  * - validate(registerSchema): Kiểm tra tính hợp lệ của dữ liệu đầu vào bằng Zod
  */
-authRouter.post(
-  '/register',
-  authLimiter,
-  validate(registerSchema),
-  authController.register,
-);
+authRouter.post('/register', authLimiter, validate(registerSchema), authController.register);
 
 /**
  * [2] POST /api/auth/login
@@ -38,12 +33,7 @@ authRouter.post(
  * - authLimiter: Giới hạn tần suất đăng nhập từ cùng một IP
  * - validate(loginSchema): Kiểm tra định dạng email và mật khẩu
  */
-authRouter.post(
-  '/login',
-  authLimiter,
-  validate(loginSchema),
-  authController.login,
-);
+authRouter.post('/login', authLimiter, validate(loginSchema), authController.login);
 
 /**
  * [3] POST /api/auth/logout
@@ -51,11 +41,7 @@ authRouter.post(
  * Middleware:
  * - authenticate: Yêu cầu JWT token hợp lệ trong header Authorization: Bearer <token>
  */
-authRouter.post(
-  '/logout',
-  authenticate,
-  authController.logout,
-);
+authRouter.post('/logout', authenticate, authController.logout);
 
 /**
  * [2.2] GET /api/auth/me (Dự phòng theo API_CONTRACT.md)
@@ -63,10 +49,6 @@ authRouter.post(
  * Middleware:
  * - authenticate: Yêu cầu JWT token hợp lệ
  */
-authRouter.get(
-  '/me',
-  authenticate,
-  authController.getMe,
-);
+authRouter.get('/me', authenticate, authController.getMe);
 
 export default authRouter;

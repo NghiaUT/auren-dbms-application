@@ -6,10 +6,13 @@
 
 import { Router } from 'express';
 import authRouter from './auth.routes.js';
+import catalogRouter from './catalog.routes.js';
 
 const apiRouter = Router();
 
 apiRouter.use('/auth', authRouter);
+apiRouter.use(catalogRouter);
+
 // Test root endpoint /api
 apiRouter.get('/', (_req, res) => {
   res.json({
