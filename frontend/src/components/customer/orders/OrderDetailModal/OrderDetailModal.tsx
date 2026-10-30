@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { OrderDetail } from '../../../../types';
 import { formatVND } from '../../../../utils/formatVND';
-import { formatDate } from '../../../../utils/formatDate';
+import { formatDate, formatDateTime } from '../../../../utils/formatDate';
 import { ORDER_STATUS_MAP } from '../OrderCardList';
 
 export interface OrderDetailModalProps {
@@ -60,7 +60,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             </span>
           </div>
           <p className="font-sans text-xs text-[#7B6E64] mt-1">
-            Khách hàng: {order.customerName} • Ngày ủy thác: {formatDate(order.orderDate)}
+            Khách hàng: {order.customerName} • Ngày ủy thác: {formatDateTime(order.orderDate)}
           </p>
           <p className="font-sans text-xs text-[#4E4540] mt-0.5">
             Địa chỉ giao nhận: {order.shippingAddress}
@@ -145,7 +145,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                     </div>
                     <p className="text-[#7B6E64] text-[11px] mt-0.5">
                       Hạn trả: {p.dueDate ? formatDate(p.dueDate) : 'Khi giao hàng'}
-                      {p.paidAt && ` • Đã nạp lúc ${formatDate(p.paidAt)} (${p.method})`}
+                      {p.paidAt && ` • Đã nạp lúc ${formatDateTime(p.paidAt)} (${p.method})`}
                     </p>
                   </div>
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { OrderStatus, OrderSummary } from '../../../../types';
 import { formatVND } from '../../../../utils/formatVND';
-import { formatDate } from '../../../../utils/formatDate';
+import { formatDateTime } from '../../../../utils/formatDate';
 
 export const ORDER_STATUS_MAP: Record<OrderStatus, { label: string; class: string }> = {
   pending: { label: 'Chờ duyệt', class: 'bg-amber-100 text-amber-900 border-amber-300' },
@@ -82,7 +82,7 @@ export const OrderCardList: React.FC<OrderCardListProps> = ({
               </div>
 
               <p className="font-sans text-xs text-[#7B6E64]">
-                Ngày ủy thác: {formatDate(ord.orderDate)} • Số tác phẩm: {ord.itemCount}
+                Ngày ủy thác: {formatDateTime(ord.orderDate)} • Số tác phẩm: {ord.itemCount}
               </p>
 
               <p className="font-sans text-xs text-[#4E4540] truncate max-w-lg">

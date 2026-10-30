@@ -12,6 +12,7 @@ import { SalesHeaderNav } from '../../components/layout';
 import { getSalesOrderDetailApi, createPaymentScheduleApi } from '../../api/sales.api';
 import type { OrderDetail, PaymentDetail, PaymentType } from '../../types';
 import { formatVND } from '../../utils/formatVND';
+import { formatDate, formatDateTime, getTodayDateString } from '../../utils/formatDate';
 
 export const S04_OrderPaymentSchedulePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -272,10 +273,10 @@ export const S04_OrderPaymentSchedulePage: React.FC = () => {
                         {formatVND(p.amount)}
                       </td>
                       <td className="py-4 px-4 text-[#7B6E64]">
-                        {p.dueDate ? new Date(p.dueDate).toLocaleDateString('vi-VN') : '—'}
+                        {p.dueDate ? formatDate(p.dueDate) : '—'}
                       </td>
                       <td className="py-4 px-4 text-[#7B6E64]">
-                        {p.paidAt ? new Date(p.paidAt).toLocaleDateString('vi-VN') : '—'}
+                        {p.paidAt ? formatDateTime(p.paidAt) : '—'}
                       </td>
                       <td className="py-4 px-4 text-[#7B6E64] font-mono uppercase text-[10px]">
                         {p.method || '—'}
@@ -356,7 +357,7 @@ export const S04_OrderPaymentSchedulePage: React.FC = () => {
                 </label>
                 <input
                   type="date"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={getTodayDateString()}
                   value={newDueDate}
                   onChange={(e) => setNewDueDate(e.target.value)}
                   className="w-full text-xs p-2.5 bg-white border border-[#D2C8BA] rounded-[2px] text-[#0D0703] focus:outline-none focus:border-[#271E18]"

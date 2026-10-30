@@ -12,6 +12,7 @@ import { SalesHeaderNav } from '../../components/layout';
 import { getSalesReceivablesApi, markOverdueApi } from '../../api/sales.api';
 import type { PageMeta, ReceivableItem } from '../../types';
 import { formatVND } from '../../utils/formatVND';
+import { formatDate } from '../../utils/formatDate';
 
 export const S07_ReceivablesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -210,7 +211,7 @@ export const S07_ReceivablesPage: React.FC = () => {
                         {formatVND(r.amount)}
                       </td>
                       <td className="py-4 px-4 text-[#7B6E64]">
-                        {r.dueDate ? new Date(r.dueDate).toLocaleDateString('vi-VN') : '—'}
+                        {r.dueDate ? formatDate(r.dueDate) : '—'}
                       </td>
                       <td className="py-4 px-4 text-center">
                         {r.daysOverdue > 0 ? (

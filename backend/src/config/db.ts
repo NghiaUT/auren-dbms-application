@@ -59,7 +59,8 @@ export const pool: Pool = mysql.createPool({
   namedPlaceholders: false, // Sử dụng dấu ? truyền thống
   enableKeepAlive: true, // Duy trì kết nối socket TCP
   keepAliveInitialDelay: 0,
-  timezone: '+00:00', // Đảm bảo đồng bộ múi giờ UTC
+  timezone: '+07:00', // Đồng bộ múi giờ Việt Nam (ICT, UTC+7) với MySQL và máy chủ
+  dateStrings: ['DATE'], // Các cột DATE (due_date, delivery_date) trả về string YYYY-MM-DD thuần túy, tránh lệch múi giờ
 });
 
 // ============================================================================

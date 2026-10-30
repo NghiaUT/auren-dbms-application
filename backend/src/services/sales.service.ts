@@ -17,6 +17,7 @@ import * as inventoryRepo from '../repository/inventory.repository.js';
 import * as editionRepo from '../repository/edition.repository.js';
 import * as paymentRepo from '../repository/payment.repository.js';
 import { BadRequestError, ConflictError, NotFoundError } from '../utils/AppError.js';
+import { getVietnamDateString } from '../utils/dateUtils.js';
 import type { AuthUser, OrderStatus } from '../types/index.js';
 
 export interface UpdateOrderStatusPayload {
@@ -284,8 +285,8 @@ export async function createPaymentSchedule(
   const existingPayments = await paymentRepo.findPaymentsByOrderId(orderId);
   const activeExistingPayments = existingPayments.filter((p) => p.status !== 'refunded');
 
-  // Kiểm tra ngày thanh toán và tính tổng
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Kiểm tra ngày thanh toán và tính tổng (theo ngày Việt Nam)
+  const todayStr = getVietnamDateString();
   let newFinalCount = 0;
   let newAmountSum = 0;
 

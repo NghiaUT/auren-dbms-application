@@ -9,6 +9,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import type { OrderDetail, OrderStatus } from '../../../../types';
+import { formatDateTime } from '../../../../utils/formatDate';
 
 const STATUS_STEPS: Array<{ key: OrderStatus; label: string; icon: any }> = [
   { key: 'pending', label: 'Chờ duyệt', icon: Clock },
@@ -63,14 +64,7 @@ export const OrderStatusWorkflow: React.FC<OrderStatusWorkflowProps> = ({
               </span>
             </div>
             <p className="font-sans text-xs text-[#7B6E64] mt-1.5">
-              Ngày đặt:{' '}
-              {new Date(order.orderDate).toLocaleDateString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              Ngày đặt: {formatDateTime(order.orderDate)}
             </p>
           </div>
 

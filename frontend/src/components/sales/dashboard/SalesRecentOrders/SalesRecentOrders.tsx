@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { SalesOrderQueueItem } from '../../../../types';
 import { formatVND } from '../../../../utils/formatVND';
+import { formatDateTime } from '../../../../utils/formatDate';
 
 export interface SalesRecentOrdersProps {
   loading: boolean;
@@ -73,13 +74,7 @@ export const SalesRecentOrders: React.FC<SalesRecentOrdersProps> = ({
                     #AUR-2026-{String(order.id).padStart(4, '0')}
                   </td>
                   <td className="py-4 px-4 text-[#7B6E64]">
-                    {new Date(order.orderDate).toLocaleDateString('vi-VN', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {formatDateTime(order.orderDate)}
                   </td>
                   <td className="py-4 px-4">
                     <span className="font-semibold text-[#0D0703] block">{order.customerName}</span>

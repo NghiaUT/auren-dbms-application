@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { User, MapPin, Calendar } from 'lucide-react';
 import type { OrderDetail } from '../../../../types';
 import { formatVND } from '../../../../utils/formatVND';
+import { formatDate } from '../../../../utils/formatDate';
 
 export interface OrderCustomerSpatialCardProps {
   order: OrderDetail;
@@ -44,7 +45,7 @@ export const OrderCustomerSpatialCard: React.FC<OrderCustomerSpatialCardProps> =
                 <Calendar className="w-3 h-3 text-[#246A38]" /> Hạn bàn giao dự kiến
               </span>
               <span className="font-serif font-medium text-sm text-[#246A38] block mt-0.5">
-                {new Date(order.deliveryDate).toLocaleDateString('vi-VN')}
+                {formatDate(order.deliveryDate)}
               </span>
             </div>
           )}

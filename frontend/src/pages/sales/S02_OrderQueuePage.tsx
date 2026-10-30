@@ -14,6 +14,7 @@ import { SalesHeaderNav } from '../../components/layout';
 import { getSalesOrderQueueApi, claimOrderApi } from '../../api/sales.api';
 import type { OrderStatus, PageMeta, SalesOrderQueueItem } from '../../types';
 import { formatVND } from '../../utils/formatVND';
+import { formatDateTime } from '../../utils/formatDate';
 
 const STATUS_LABELS: Record<OrderStatus, { label: string; bg: string; text: string; border: string }> = {
   pending: { label: 'Chờ duyệt', bg: 'bg-[#FFF8E1]', text: 'text-[#8D6E63]', border: 'border-[#FFE082]' },
@@ -250,11 +251,7 @@ export const S02_OrderQueuePage: React.FC = () => {
                           #AUR-2026-{String(order.id).padStart(4, '0')}
                         </td>
                         <td className="py-4 px-4 text-[#7B6E64]">
-                          {new Date(order.orderDate).toLocaleDateString('vi-VN', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })}
+                          {formatDateTime(order.orderDate)}
                         </td>
                         <td className="py-4 px-4">
                           <span className="font-semibold text-[#0D0703] block">{order.customerName}</span>

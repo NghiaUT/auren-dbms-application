@@ -20,6 +20,7 @@ import { AdminLayout } from '../../layouts/AdminLayout';
 import { getRevenueReportApi } from '../../api/admin.api';
 import type { RevenueReportItem } from '../../types';
 import { formatVND } from '../../utils/formatVND';
+import { getTodayDateString } from '../../utils/formatDate';
 
 export const A02_RevenueReportPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -69,7 +70,7 @@ export const A02_RevenueReportPage: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Auren_Revenue_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Auren_Revenue_Report_${getTodayDateString()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

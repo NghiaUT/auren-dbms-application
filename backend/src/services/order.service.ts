@@ -19,6 +19,7 @@ import * as editionRepo from '../repository/edition.repository.js';
 import * as paymentRepo from '../repository/payment.repository.js';
 import * as customerRepo from '../repository/customer.repository.js';
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../utils/AppError.js';
+import { getVietnamDateString, getVietnamFutureDateString } from '../utils/dateUtils.js';
 import type { AuthUser } from '../types/index.js';
 
 export interface PlaceOrderItemPayload {
@@ -182,20 +183,20 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
     const depositAmount = Math.round(total * 0.5);
     const finalAmount = total - depositAmount;
 
-    // Khoản 1: Đặt cọc (Deposit) - hạn trả ngay hôm nay
+    // Khoản 1: Đặt cọc (Deposit) - hạn trả ngay hôm nay (theo ngày giờ Việt Nam)
     const depositId = await paymentRepo.createPayment(
       {
         orderId,
         type: 'deposit',
         amount: depositAmount,
-        dueDate: new Date().toISOString().split('T')[0],
+        dueDate: getVietnamDateString(),
         status: 'pending',
       },
       conn,
     );
 
     // Khoản 2: Quyết toán (Final) - hạn trả sau 30 ngày hoặc theo ngày giao
-    const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const thirtyDaysLater = getVietnamFutureDateString(30);
     const finalId = await paymentRepo.createPayment(
       {
         orderId,

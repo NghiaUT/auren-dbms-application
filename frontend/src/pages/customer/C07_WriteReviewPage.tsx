@@ -17,6 +17,7 @@ import {
 } from '../../api/review.api';
 import type { OrderDetail, OrderItemDetail } from '../../types';
 import { formatVND } from '../../utils/formatVND';
+import { formatDate } from '../../utils/formatDate';
 
 const RATING_LABELS: Record<number, string> = {
   1: '1 sao: Chưa đáp ứng kỳ vọng thẩm mỹ',
@@ -258,7 +259,7 @@ export const C07_WriteReviewPage: React.FC = () => {
                     Đã đăng cảm nhận nghệ thuật
                   </span>
                   <span className="text-xs text-[#7B6E64] font-sans ml-3">
-                    Ngày đăng: {new Date(existingReview.createdAt).toLocaleDateString('vi-VN')}
+                    Ngày đăng: {formatDate(existingReview.createdAt)}
                   </span>
                 </div>
 
