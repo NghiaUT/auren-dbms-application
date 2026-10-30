@@ -9,6 +9,12 @@
 
 export type UserRole = 'customer' | 'sales' | 'admin';
 
+export type OrderStatus = 'pending' | 'confirmed' | 'in_production' | 'shipped' | 'delivered' | 'cancelled';
+
+export type PaymentType = 'deposit' | 'installment' | 'final';
+
+export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'refunded';
+
 export interface AuthUser {
   id: number;
   email: string;

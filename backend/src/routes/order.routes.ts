@@ -13,6 +13,7 @@ import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 import { validate } from '../middlewares/validate.js';
 import * as orderController from '../controllers/order.controller.js';
+import * as salesController from '../controllers/sales.controller.js';
 
 const orderRouter = Router();
 
@@ -48,5 +49,16 @@ orderRouter.get('/:id', orderController.getOrderDetail);
  * Hủy đơn hàng và giải phóng tồn kho
  */
 orderRouter.post('/:id/cancel', orderController.cancelOrder);
+
+/**
+ * [10] POST /api/orders/:id/payments
+ * Lập lịch thanh toán cho đơn hàng (Sales phụ trách)
+ */
+orderRouter.post(
+  '/:id/payments',
+  authorize('sales'),
+  validate(salesController.createPaymentScheduleSchema),
+  salesController.createPaymentSchedule,
+);
 
 export default orderRouter;
