@@ -357,12 +357,30 @@ export async function updateVariantWithMaterials(
   const fields: string[] = [];
   const params: any[] = [];
 
-  if (data.sku !== undefined) { fields.push('sku = ?'); params.push(data.sku); }
-  if (data.size !== undefined) { fields.push('size = ?'); params.push(data.size); }
-  if (data.finish !== undefined) { fields.push('finish = ?'); params.push(data.finish); }
-  if (data.price !== undefined) { fields.push('price = ?'); params.push(data.price); }
-  if (data.leadTimeDays !== undefined) { fields.push('lead_time_days = ?'); params.push(data.leadTimeDays); }
-  if (data.status !== undefined) { fields.push('status = ?'); params.push(data.status); }
+  if (data.sku !== undefined) {
+    fields.push('sku = ?');
+    params.push(data.sku);
+  }
+  if (data.size !== undefined) {
+    fields.push('size = ?');
+    params.push(data.size);
+  }
+  if (data.finish !== undefined) {
+    fields.push('finish = ?');
+    params.push(data.finish);
+  }
+  if (data.price !== undefined) {
+    fields.push('price = ?');
+    params.push(data.price);
+  }
+  if (data.leadTimeDays !== undefined) {
+    fields.push('lead_time_days = ?');
+    params.push(data.leadTimeDays);
+  }
+  if (data.status !== undefined) {
+    fields.push('status = ?');
+    params.push(data.status);
+  }
 
   if (fields.length > 0) {
     params.push(id);
@@ -407,10 +425,9 @@ export async function deleteVariantSafe(
 
   if (result.affectedRows === 0) {
     // Kiểm tra xem biến thể có tồn tại không
-    const [existing]: any = await conn.execute(
-      'SELECT id FROM product_variants WHERE id = ?',
-      [id],
-    );
+    const [existing]: any = await conn.execute('SELECT id FROM product_variants WHERE id = ?', [
+      id,
+    ]);
     if (existing && existing.length > 0) {
       throw new ConflictError(
         'Không thể xoá biến thể vì đã từng phát sinh đơn hàng (vui lòng chuyển trạng thái sang discontinued)',

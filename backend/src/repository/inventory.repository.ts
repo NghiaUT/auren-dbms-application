@@ -61,7 +61,7 @@ export async function findInventoryByVariantAndLocation(
 /**
  * [FR5] Giữ hàng bằng Optimistic Locking qua cột version
  * Chỉ cập nhật thành công nếu version khớp và số lượng khả dụng (qty_on_hand - qty_reserved) >= quantity.
- * 
+ *
  * @returns affectedRows: 1 nếu thành công, 0 nếu xung đột version hoặc hết hàng
  */
 export async function checkAndReserveStock(

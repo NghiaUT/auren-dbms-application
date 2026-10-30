@@ -15,7 +15,7 @@ import { NotFoundError } from '../utils/AppError.js';
  * Trả về thông tin biến thể và danh sách ma trận số serial khả dụng
  */
 export const getVariantEditionUnits = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const variantId = parseInt(req.params.variantId, 10);
+  const variantId = parseInt(String(req.params.variantId), 10);
   if (isNaN(variantId)) {
     throw new NotFoundError('Mã biến thể tác phẩm không hợp lệ');
   }

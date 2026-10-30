@@ -41,7 +41,7 @@ async function runCustomerExtendedTests() {
       console.log(`  - Tác phẩm: ${summary?.variant.productName} (SKU: ${summary?.variant.sku})`);
       console.log(`  - Tổng số bản phát hành: ${summary?.edition.total}`);
       console.log(`  - Số bản còn khả dụng: ${summary?.edition.available}`);
-      console.log(`  - Số bản đã niêm phong/sở hữu: ${summary?.edition.sold + summary?.edition.reserved}`);
+      console.log(`  - Số bản đã niêm phong/sở hữu: ${(summary?.edition.sold || 0) + (summary?.edition.reserved || 0)}`);
       console.log(`  - Bản số tiếp theo sẽ cấp: ${summary?.edition.nextAvailableSerial}`);
 
       if (summary && summary.edition.units.length > 0) {
@@ -55,10 +55,10 @@ async function runCustomerExtendedTests() {
     // --------------------------------------------------------------------------
     console.log('▶ [Test 2] Kiểm tra đánh giá sản phẩm (FR10: Insert, Subquery, Delete)...');
 
-    // Tìm tài khoản customer demo
-    const customerUser = await userRepo.findByEmail('customer@luxury.vn');
+    // Tìm tài khoản customer demo (ví dụ customer.gold@gmail.com)
+    const customerUser = await userRepo.findByEmail('customer.gold@gmail.com');
     if (!customerUser) {
-      throw new Error('Không tìm thấy tài khoản customer@luxury.vn trong database');
+      throw new Error('Không tìm thấy tài khoản customer.gold@gmail.com trong database');
     }
 
     const customerProfile = await customerRepo.findWithTierByUserId(customerUser.id);

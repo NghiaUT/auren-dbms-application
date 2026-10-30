@@ -41,7 +41,7 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response): Pr
     throw new UnauthorizedError('Yêu cầu đăng nhập để thực hiện thao tác.');
   }
 
-  const reviewId = parseInt(req.params.id, 10);
+  const reviewId = parseInt(String(req.params.id), 10);
   if (isNaN(reviewId)) {
     throw new BadRequestError('Mã bài đánh giá không hợp lệ');
   }
@@ -59,7 +59,7 @@ export const getOrderItemReview = asyncHandler(async (req: Request, res: Respons
     throw new UnauthorizedError('Yêu cầu đăng nhập.');
   }
 
-  const orderItemId = parseInt(req.params.orderItemId, 10);
+  const orderItemId = parseInt(String(req.params.orderItemId), 10);
   if (isNaN(orderItemId)) {
     throw new BadRequestError('Mã dòng sản phẩm không hợp lệ');
   }

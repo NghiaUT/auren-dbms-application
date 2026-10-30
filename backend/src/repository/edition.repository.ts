@@ -63,6 +63,15 @@ export async function releaseUnitsByOrderId(
   orderId: number,
   conn: DbConnection,
 ): Promise<number> {
+  const [result] = await conn.execute<ResultSetHeader>(
+    `UPDATE edition_units eu
+     JOIN order_items oi ON eu.order_item_id = oi.id
+     SET eu.order_item_id = NULL,
+         eu.status = 'available'
+     WHERE oi.order_id = ? AND eu.status = 'reserved'`,
+    [orderId],
+  );
+
   return result.affectedRows;
 }
 
@@ -77,7 +86,6 @@ export interface VariantEditionHeaderRow extends RowDataPacket {
   variantId: number;
   sku: string;
   price: number;
-  color: string | null;
   size: string | null;
   finish: string | null;
   leadTimeDays: number;
@@ -120,7 +128,6 @@ export async function getEditionSummaryByVariantId(
        pv.id AS variantId,
        pv.sku,
        pv.price,
-       pv.color,
        pv.size,
        pv.finish,
        pv.lead_time_days AS leadTimeDays,
