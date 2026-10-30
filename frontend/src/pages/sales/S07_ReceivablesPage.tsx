@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CreditCard, AlertCircle, RefreshCw, CheckCircle2, Filter, AlertTriangle } from 'lucide-react';
-import { SalesHeaderNav } from '../../components/SalesHeaderNav';
+import { SalesHeaderNav } from '../../components/layout';
 import { getSalesReceivablesApi, markOverdueApi } from '../../api/sales.api';
 import type { PageMeta, ReceivableItem } from '../../types';
 import { formatVND } from '../../utils/formatVND';

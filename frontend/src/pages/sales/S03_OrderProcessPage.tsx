@@ -9,7 +9,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { SalesHeaderNav } from '../../components/SalesHeaderNav';
+import { SalesHeaderNav } from '../../components/layout';
 import {
   getSalesOrderDetailApi,
   updateOrderStatusApi,

@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Boxes, AlertTriangle, RefreshCw, Filter, ArrowUpRight } from 'lucide-react';
-import { SalesHeaderNav } from '../../components/SalesHeaderNav';
+import { SalesHeaderNav } from '../../components/layout';
 import { getSalesInventoryApi } from '../../api/sales.api';
 import type { InventoryItem, PageMeta } from '../../types';
 

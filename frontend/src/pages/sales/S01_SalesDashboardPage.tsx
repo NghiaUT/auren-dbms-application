@@ -7,7 +7,7 @@
 // ============================================================================
 
 import React, { useEffect, useState } from 'react';
-import { SalesHeaderNav } from '../../components/SalesHeaderNav';
+import { SalesHeaderNav } from '../../components/layout';
 import { getSalesSummaryApi, getSalesOrderQueueApi, claimOrderApi } from '../../api/sales.api';
 import type { SalesDashboardSummary, SalesOrderQueueItem } from '../../types';
 import { SalesKpiCards, SalesRecentOrders } from '../../components/sales/dashboard';

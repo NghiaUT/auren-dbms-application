@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, CheckCircle, Clock, AlertCircle, DollarSign, Calendar } from 'lucide-react';
-import { SalesHeaderNav } from '../../components/SalesHeaderNav';
+import { SalesHeaderNav } from '../../components/layout';
 import { getSalesOrderDetailApi, createPaymentScheduleApi } from '../../api/sales.api';
 import type { OrderDetail, PaymentDetail, PaymentType } from '../../types';
 import { formatVND } from '../../utils/formatVND';

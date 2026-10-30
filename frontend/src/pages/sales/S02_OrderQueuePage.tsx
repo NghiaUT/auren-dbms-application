@@ -10,7 +10,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, Inbox, UserCheck, ChevronRight, RefreshCw, Filter } from 'lucide-react';
-import { SalesHeaderNav } from '../../components/SalesHeaderNav';
+import { SalesHeaderNav } from '../../components/layout';
 import { getSalesOrderQueueApi, claimOrderApi } from '../../api/sales.api';
 import type { OrderStatus, PageMeta, SalesOrderQueueItem } from '../../types';
 import { formatVND } from '../../utils/formatVND';

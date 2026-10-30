@@ -9,7 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { AlertTriangle, Plus, RefreshCw, CheckCircle2, ArrowLeft, ShieldAlert } from 'lucide-react';
-import { SalesHeaderNav } from '../../components/SalesHeaderNav';
+import { SalesHeaderNav } from '../../components/layout';
 import { getSalesLowStockApi, restockInventoryApi } from '../../api/sales.api';
 import type { InventoryItem } from '../../types';
 
