@@ -12,7 +12,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ProductCard } from '../../components/ProductCard';
+import { ProductCard } from '../../components/common';
 import {
   FEATURED_COLLECTION,
   JOURNAL_ARTICLES,
