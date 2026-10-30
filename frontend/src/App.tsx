@@ -29,6 +29,13 @@ import { S05_InventoryPage } from './pages/sales/S05_InventoryPage';
 import { S06_LowStockRestockPage } from './pages/sales/S06_LowStockRestockPage';
 import { S07_ReceivablesPage } from './pages/sales/S07_ReceivablesPage';
 import { A01_AdminDashboardPage } from './pages/admin/A01_AdminDashboardPage';
+import { A02_RevenueReportPage } from './pages/admin/A02_RevenueReportPage';
+import { A03_BrandSalesReportPage } from './pages/admin/A03_BrandSalesReportPage';
+import { A04_CustomerInsightsPage } from './pages/admin/A04_CustomerInsightsPage';
+import { A05_ProductManagementPage } from './pages/admin/A05_ProductManagementPage';
+import { A06_VariantManagementPage } from './pages/admin/A06_VariantManagementPage';
+import { A07_CatalogReferencePage } from './pages/admin/A07_CatalogReferencePage';
+import { A08_MembershipTiersPage } from './pages/admin/A08_MembershipTiersPage';
 
 const App: React.FC = () => {
   return (
@@ -149,20 +156,75 @@ const App: React.FC = () => {
           }
         />
 
-        {/* Màn hình Admin được bảo vệ */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <A01_AdminDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-
         {/* Trang lỗi hệ thống */}
         <Route path="/403" element={<Forbidden403Page />} />
         <Route path="*" element={<NotFound404Page />} />
       </Route>
+      {/* Màn hình Admin được bảo vệ (A01 - A08 | FR14, FR15a, FR15b) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A01_AdminDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports/revenue"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A02_RevenueReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports/brands"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A03_BrandSalesReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports/insights"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A04_CustomerInsightsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/products"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A05_ProductManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/products/:id/variants"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A06_VariantManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/catalog"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A07_CatalogReferencePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/tiers"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <A08_MembershipTiersPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

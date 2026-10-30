@@ -348,3 +348,130 @@ export interface CreatePaymentScheduleItem {
   amount: number;
   dueDate: string;
 }
+
+// ============================================================================
+// ADMIN PORTAL TYPES (A01 - A08 | FR14, FR15a, FR15b)
+// ============================================================================
+
+export interface AdminProduct {
+  id: number;
+  name: string;
+  description: string | null;
+  collectionName: string | null;
+  designerName: string | null;
+  isLimited: boolean;
+  isMadeToOrder: boolean;
+  brandId: number;
+  brandName: string;
+  categoryId: number;
+  categoryName: string;
+  categorySlug?: string;
+  avgRating?: number | null;
+  reviewCount?: number;
+  createdAt: string;
+  variants?: AdminVariant[];
+}
+
+export interface AdminVariantMaterial {
+  materialId: number;
+  name?: string;
+  type?: string;
+  portion?: number | null;
+  finishNote?: string | null;
+}
+
+export interface AdminVariant {
+  id: number;
+  productId: number;
+  productName?: string;
+  sku: string;
+  finish: string | null;
+  size: string | null;
+  price: number;
+  leadTimeDays: number;
+  status: 'active' | 'discontinued';
+  isLimited?: boolean;
+  isMadeToOrder?: boolean;
+  materials: AdminVariantMaterial[];
+}
+
+export interface CreateProductInput {
+  brandId: number;
+  categoryId: number;
+  name: string;
+  description?: string;
+  collectionName?: string;
+  designerName?: string;
+  isLimited?: boolean;
+  isMadeToOrder?: boolean;
+}
+
+export interface UpdateProductInput extends Partial<CreateProductInput> {}
+
+export interface CreateVariantInput {
+  sku: string;
+  size?: string;
+  finish?: string;
+  price: number;
+  leadTimeDays?: number;
+  status?: 'active' | 'discontinued';
+  materials?: { materialId: number; portion?: number; finishNote?: string }[];
+  editionSize?: number;
+}
+
+export interface UpdateVariantInput extends Partial<CreateVariantInput> {}
+
+export interface ReportSummary {
+  revenue: number;
+  orderCount: number;
+  newCustomers: number;
+  avgOrderValue: number;
+  revenueByMonth: { month: string; revenue: number; orderCount: number }[];
+}
+
+export interface RevenueReportItem {
+  month: string;
+  revenue: number;
+  orderCount: number;
+}
+
+export interface BrandSalesReportItem {
+  brandId: number;
+  brandName: string;
+  revenue: number;
+  unitsSold: number;
+}
+
+export interface RatingReportItem {
+  productId: number;
+  productName: string;
+  avgRating: number;
+  reviewCount: number;
+}
+
+export interface TopCustomerReportItem {
+  customerId: number;
+  fullName: string;
+  tierName: string;
+  totalSpent: number;
+}
+
+export interface TopCustomersReportResult {
+  averageSpent: number;
+  customers: TopCustomerReportItem[];
+}
+
+export interface AdminTier {
+  id: number;
+  name: string;
+  minSpent: number;
+  discountPct: number;
+  customerCount: number;
+}
+
+export interface RecalculateTiersResult {
+  dryRun: boolean;
+  affected: number;
+  changes: { tierId: number; tierName: string; count: number }[];
+}
+
