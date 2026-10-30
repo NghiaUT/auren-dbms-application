@@ -10,6 +10,9 @@ import catalogRouter from './catalog.routes.js';
 import orderRouter from './order.routes.js';
 import paymentRouter from './payment.routes.js';
 import salesRouter from './sales.routes.js';
+import { adminRouter } from './admin.routes.js';
+import reviewRouter from './review.routes.js';
+import limitedRouter from './limited.routes.js';
 
 const apiRouter = Router();
 
@@ -18,6 +21,9 @@ apiRouter.use(catalogRouter);
 apiRouter.use('/orders', orderRouter);
 apiRouter.use('/payments', paymentRouter);
 apiRouter.use('/sales', salesRouter);
+apiRouter.use('/admin', adminRouter);
+apiRouter.use('/reviews', reviewRouter);
+apiRouter.use('/limited', limitedRouter);
 
 // Test root endpoint /api
 apiRouter.get('/', (_req, res) => {

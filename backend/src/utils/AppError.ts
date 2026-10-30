@@ -39,6 +39,8 @@ export class BadRequestError extends AppError {
   }
 }
 
+export const ValidationError = BadRequestError;
+
 /**
  * 401 - Lỗi xác thực tài khoản chung
  */

@@ -218,3 +218,37 @@ export async function getProfile(userId: number): Promise<UserProfile> {
     ...(customerProfile && { customer: customerProfile }),
   };
 }
+
+export interface UpdateProfileInput {
+  fullName?: string;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+}
+
+/**
+ * Cập nhật thông tin hồ sơ của tài khoản đang đăng nhập
+ */
+export async function updateProfile(userId: number, input: UpdateProfileInput): Promise<UserProfile> {
+  const user = await userRepo.findById(userId);
+  if (!user) {
+    throw new NotFoundError('Tài khoản người dùng không tồn tại');
+  }
+
+  // 1. Cập nhật fullName trong bảng users nếu có
+  if (input.fullName && input.fullName.trim()) {
+    await userRepo.updateUserFullName(userId, input.fullName.trim());
+  }
+
+  // 2. Cập nhật thông tin khách hàng trong bảng customers nếu là role customer
+  if (user.role === 'customer') {
+    await customerRepo.updateCustomerProfile(userId, {
+      phone: input.phone !== undefined ? (input.phone?.trim() || null) : undefined,
+      address: input.address !== undefined ? (input.address?.trim() || null) : undefined,
+      city: input.city !== undefined ? (input.city?.trim() || null) : undefined,
+    });
+  }
+
+  // 3. Trả về thông tin hồ sơ mới nhất
+  return getProfile(userId);
+}

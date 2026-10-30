@@ -51,4 +51,15 @@ authRouter.post('/logout', authenticate, authController.logout);
  */
 authRouter.get('/me', authenticate, authController.getMe);
 
+/**
+ * [C08] PATCH /api/auth/me
+ * Cập nhật thông tin hồ sơ của tài khoản đang đăng nhập
+ */
+authRouter.patch(
+  '/me',
+  authenticate,
+  validate(authController.updateMeSchema),
+  authController.updateMe,
+);
+
 export default authRouter;

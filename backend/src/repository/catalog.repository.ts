@@ -9,7 +9,8 @@
 // ============================================================================
 
 import type { PoolConnection, RowDataPacket } from 'mysql2/promise';
-import { pool } from '../config/db.js';
+import { pool, type DbConnection } from '../config/db.js';
+import { ConflictError } from '../utils/AppError.js';
 
 export interface ProductFilterParams {
   q?: string;
@@ -495,3 +496,321 @@ export async function getCatalogMeta(conn?: PoolConnection) {
     },
   };
 }
+
+/**
+ * [FR14] Tạo sản phẩm mới (Admin)
+ */
+export async function createProduct(
+  data: {
+    brandId: number;
+    categoryId: number;
+    name: string;
+    description?: string;
+    collectionName?: string;
+    designerName?: string;
+    isLimited?: boolean;
+    isMadeToOrder?: boolean;
+  },
+  conn: DbConnection = pool,
+): Promise<number> {
+  const sql = `
+    INSERT INTO products (
+      brand_id, category_id, name, description, 
+      collection_name, designer_name, is_limited, is_made_to_order
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+  const [result]: any = await conn.execute(sql, [
+    data.brandId,
+    data.categoryId,
+    data.name,
+    data.description || null,
+    data.collectionName || null,
+    data.designerName || null,
+    data.isLimited ? 1 : 0,
+    data.isMadeToOrder ? 1 : 0,
+  ]);
+  return result.insertId;
+}
+
+/**
+ * [FR14] Cập nhật thông tin sản phẩm (Admin)
+ */
+export async function updateProduct(
+  id: number,
+  data: {
+    brandId?: number;
+    categoryId?: number;
+    name?: string;
+    description?: string;
+    collectionName?: string;
+    designerName?: string;
+    isLimited?: boolean;
+    isMadeToOrder?: boolean;
+  },
+  conn: DbConnection = pool,
+): Promise<number> {
+  const fields: string[] = [];
+  const params: any[] = [];
+
+  if (data.brandId !== undefined) {
+    fields.push('brand_id = ?');
+    params.push(data.brandId);
+  }
+  if (data.categoryId !== undefined) {
+    fields.push('category_id = ?');
+    params.push(data.categoryId);
+  }
+  if (data.name !== undefined) {
+    fields.push('name = ?');
+    params.push(data.name);
+  }
+  if (data.description !== undefined) {
+    fields.push('description = ?');
+    params.push(data.description);
+  }
+  if (data.collectionName !== undefined) {
+    fields.push('collection_name = ?');
+    params.push(data.collectionName);
+  }
+  if (data.designerName !== undefined) {
+    fields.push('designer_name = ?');
+    params.push(data.designerName);
+  }
+  if (data.isLimited !== undefined) {
+    fields.push('is_limited = ?');
+    params.push(data.isLimited ? 1 : 0);
+  }
+  if (data.isMadeToOrder !== undefined) {
+    fields.push('is_made_to_order = ?');
+    params.push(data.isMadeToOrder ? 1 : 0);
+  }
+
+  if (fields.length === 0) return 0;
+
+  params.push(id);
+  const sql = `UPDATE products SET ${fields.join(', ')} WHERE id = ?`;
+  const [result]: any = await conn.execute(sql, params);
+  return result.affectedRows;
+}
+
+/**
+ * [FR14] Kiểm tra ràng buộc và xoá sản phẩm an toàn (Admin)
+ */
+export async function deleteProductSafe(
+  id: number,
+  conn: DbConnection = pool,
+): Promise<boolean> {
+  // 1. Kiểm tra xem sản phẩm có tồn tại không
+  const [prodRows]: any = await conn.execute('SELECT id FROM products WHERE id = ?', [id]);
+  if (!prodRows || prodRows.length === 0) {
+    return false;
+  }
+
+  // 2. Kiểm tra xem có biến thể nào đã bán chưa
+  const [soldRows]: any = await conn.execute(
+    `SELECT 1 FROM order_items oi 
+     JOIN product_variants pv ON oi.variant_id = pv.id
+     WHERE pv.product_id = ? LIMIT 1`,
+    [id],
+  );
+  if (soldRows && soldRows.length > 0) {
+    throw new ConflictError('Không thể xoá sản phẩm vì đã có biến thể phát sinh đơn hàng');
+  }
+
+  // 3. Kiểm tra xem có đánh giá nào chưa
+  const [reviewRows]: any = await conn.execute('SELECT 1 FROM reviews WHERE product_id = ? LIMIT 1', [id]);
+  if (reviewRows && reviewRows.length > 0) {
+    throw new ConflictError('Không thể xoá sản phẩm vì đã có khách hàng đánh giá');
+  }
+
+  // 4. Xóa các biến thể chưa bán (sẽ xóa kèm materials, inventory, edition_units theo cascade)
+  await conn.execute('DELETE FROM product_variants WHERE product_id = ?', [id]);
+
+  // 5. Xóa sản phẩm
+  const [result]: any = await conn.execute('DELETE FROM products WHERE id = ?', [id]);
+  return result.affectedRows > 0;
+}
+
+/**
+ * [FR14] Kiểm tra chu trình vòng lặp cho phân cấp danh mục
+ */
+export async function hasCategoryCycle(
+  categoryId: number,
+  targetParentId: number | null,
+  conn: DbConnection = pool,
+): Promise<boolean> {
+  if (!targetParentId) return false;
+  if (categoryId === targetParentId) return true;
+
+  let currentId: number | null = targetParentId;
+  const visited = new Set<number>([categoryId]);
+
+  while (currentId) {
+    if (visited.has(currentId)) return true;
+    visited.add(currentId);
+
+    const [rows]: any = await conn.execute(
+      'SELECT parent_id AS parentId FROM categories WHERE id = ?',
+      [currentId],
+    );
+    if (!rows || rows.length === 0) break;
+    currentId = rows[0].parentId;
+  }
+
+  return false;
+}
+
+/**
+ * [FR14] CRUD Dữ liệu tham chiếu: Tạo mới (categories, brands, materials)
+ */
+export async function createReferenceResource(
+  resource: 'categories' | 'brands' | 'materials',
+  data: Record<string, any>,
+  conn: DbConnection = pool,
+): Promise<any> {
+  if (resource === 'categories') {
+    const [result]: any = await conn.execute(
+      'INSERT INTO categories (name, slug, parent_id) VALUES (?, ?, ?)',
+      [data.name, data.slug, data.parentId || null],
+    );
+    const [rows]: any = await conn.execute(
+      'SELECT id, parent_id AS parentId, name, slug FROM categories WHERE id = ?',
+      [result.insertId],
+    );
+    return rows[0];
+  }
+
+  if (resource === 'brands') {
+    const [result]: any = await conn.execute(
+      'INSERT INTO brands (name, country, founded_year) VALUES (?, ?, ?)',
+      [data.name, data.country || null, data.foundedYear || null],
+    );
+    const [rows]: any = await conn.execute(
+      'SELECT id, name, country, founded_year AS foundedYear FROM brands WHERE id = ?',
+      [result.insertId],
+    );
+    return rows[0];
+  }
+
+  if (resource === 'materials') {
+    const [result]: any = await conn.execute(
+      'INSERT INTO materials (name, type, origin) VALUES (?, ?, ?)',
+      [data.name, data.type, data.origin || null],
+    );
+    const [rows]: any = await conn.execute(
+      'SELECT id, name, type, origin FROM materials WHERE id = ?',
+      [result.insertId],
+    );
+    return rows[0];
+  }
+
+  throw new Error(`Invalid resource: ${resource}`);
+}
+
+/**
+ * [FR14] CRUD Dữ liệu tham chiếu: Cập nhật
+ */
+export async function updateReferenceResource(
+  resource: 'categories' | 'brands' | 'materials',
+  id: number,
+  data: Record<string, any>,
+  conn: DbConnection = pool,
+): Promise<any> {
+  if (resource === 'categories') {
+    const fields: string[] = [];
+    const params: any[] = [];
+    if (data.name !== undefined) { fields.push('name = ?'); params.push(data.name); }
+    if (data.slug !== undefined) { fields.push('slug = ?'); params.push(data.slug); }
+    if (data.parentId !== undefined) { fields.push('parent_id = ?'); params.push(data.parentId || null); }
+    if (fields.length > 0) {
+      params.push(id);
+      await conn.execute(`UPDATE categories SET ${fields.join(', ')} WHERE id = ?`, params);
+    }
+    const [rows]: any = await conn.execute(
+      'SELECT id, parent_id AS parentId, name, slug FROM categories WHERE id = ?',
+      [id],
+    );
+    return rows[0] || null;
+  }
+
+  if (resource === 'brands') {
+    const fields: string[] = [];
+    const params: any[] = [];
+    if (data.name !== undefined) { fields.push('name = ?'); params.push(data.name); }
+    if (data.country !== undefined) { fields.push('country = ?'); params.push(data.country || null); }
+    if (data.foundedYear !== undefined) { fields.push('founded_year = ?'); params.push(data.foundedYear || null); }
+    if (fields.length > 0) {
+      params.push(id);
+      await conn.execute(`UPDATE brands SET ${fields.join(', ')} WHERE id = ?`, params);
+    }
+    const [rows]: any = await conn.execute(
+      'SELECT id, name, country, founded_year AS foundedYear FROM brands WHERE id = ?',
+      [id],
+    );
+    return rows[0] || null;
+  }
+
+  if (resource === 'materials') {
+    const fields: string[] = [];
+    const params: any[] = [];
+    if (data.name !== undefined) { fields.push('name = ?'); params.push(data.name); }
+    if (data.type !== undefined) { fields.push('type = ?'); params.push(data.type); }
+    if (data.origin !== undefined) { fields.push('origin = ?'); params.push(data.origin || null); }
+    if (fields.length > 0) {
+      params.push(id);
+      await conn.execute(`UPDATE materials SET ${fields.join(', ')} WHERE id = ?`, params);
+    }
+    const [rows]: any = await conn.execute(
+      'SELECT id, name, type, origin FROM materials WHERE id = ?',
+      [id],
+    );
+    return rows[0] || null;
+  }
+
+  throw new Error(`Invalid resource: ${resource}`);
+}
+
+/**
+ * [FR14] CRUD Dữ liệu tham chiếu: Xóa an toàn
+ */
+export async function deleteReferenceResource(
+  resource: 'categories' | 'brands' | 'materials',
+  id: number,
+  conn: DbConnection = pool,
+): Promise<boolean> {
+  if (resource === 'categories') {
+    // Kiểm tra danh mục con
+    const [subCats]: any = await conn.execute('SELECT 1 FROM categories WHERE parent_id = ? LIMIT 1', [id]);
+    if (subCats && subCats.length > 0) {
+      throw new ConflictError('Không thể xoá danh mục vì có danh mục con đang phụ thuộc');
+    }
+    // Kiểm tra sản phẩm
+    const [prods]: any = await conn.execute('SELECT 1 FROM products WHERE category_id = ? LIMIT 1', [id]);
+    if (prods && prods.length > 0) {
+      throw new ConflictError('Không thể xoá danh mục vì có sản phẩm đang thuộc danh mục này');
+    }
+    const [res]: any = await conn.execute('DELETE FROM categories WHERE id = ?', [id]);
+    return res.affectedRows > 0;
+  }
+
+  if (resource === 'brands') {
+    const [prods]: any = await conn.execute('SELECT 1 FROM products WHERE brand_id = ? LIMIT 1', [id]);
+    if (prods && prods.length > 0) {
+      throw new ConflictError('Không thể xoá thương hiệu vì có sản phẩm đang thuộc thương hiệu này');
+    }
+    const [res]: any = await conn.execute('DELETE FROM brands WHERE id = ?', [id]);
+    return res.affectedRows > 0;
+  }
+
+  if (resource === 'materials') {
+    const [variants]: any = await conn.execute('SELECT 1 FROM variant_materials WHERE material_id = ? LIMIT 1', [id]);
+    if (variants && variants.length > 0) {
+      throw new ConflictError('Không thể xoá chất liệu vì có biến thể sản phẩm đang sử dụng chất liệu này');
+    }
+    const [res]: any = await conn.execute('DELETE FROM materials WHERE id = ?', [id]);
+    return res.affectedRows > 0;
+  }
+
+  throw new Error(`Invalid resource: ${resource}`);
+}
+

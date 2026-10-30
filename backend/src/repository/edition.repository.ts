@@ -63,14 +63,102 @@ export async function releaseUnitsByOrderId(
   orderId: number,
   conn: DbConnection,
 ): Promise<number> {
-  const [result] = await conn.execute<ResultSetHeader>(
-    `UPDATE edition_units eu
-     JOIN order_items oi ON eu.order_item_id = oi.id
-     SET eu.order_item_id = NULL,
-         eu.status = 'available'
-     WHERE oi.order_id = ? AND eu.status = 'reserved'`,
-    [orderId],
+  return result.affectedRows;
+}
+
+export interface EditionUnitItemRow extends RowDataPacket {
+  id: number;
+  variantId: number;
+  serialNo: string;
+  status: 'available' | 'reserved' | 'sold';
+}
+
+export interface VariantEditionHeaderRow extends RowDataPacket {
+  variantId: number;
+  sku: string;
+  price: number;
+  color: string | null;
+  size: string | null;
+  finish: string | null;
+  leadTimeDays: number;
+  productId: number;
+  productName: string;
+  productDescription: string | null;
+  isLimited: boolean;
+  collectionName: string | null;
+  brandName: string | null;
+  categoryName: string | null;
+}
+
+/**
+ * Lấy toàn bộ danh sách bản khắc Limited Edition theo variantId
+ */
+export async function getUnitsByVariantId(
+  variantId: number,
+  conn: DbConnection = pool,
+): Promise<EditionUnitItemRow[]> {
+  const [rows] = await conn.execute<EditionUnitItemRow[]>(
+    `SELECT id, variant_id AS variantId, serial_no AS serialNo, status
+     FROM edition_units
+     WHERE variant_id = ?
+     ORDER BY id ASC`,
+    [variantId],
+  );
+  return rows;
+}
+
+/**
+ * Lấy thông tin tổng hợp của bản Limited Edition và variant tương ứng
+ */
+export async function getEditionSummaryByVariantId(
+  variantId: number,
+  conn: DbConnection = pool,
+) {
+  // Lấy thông tin variant & product
+  const [headerRows] = await conn.execute<VariantEditionHeaderRow[]>(
+    `SELECT 
+       pv.id AS variantId,
+       pv.sku,
+       pv.price,
+       pv.color,
+       pv.size,
+       pv.finish,
+       pv.lead_time_days AS leadTimeDays,
+       p.id AS productId,
+       p.name AS productName,
+       p.description AS productDescription,
+       p.is_limited AS isLimited,
+       p.collection_name AS collectionName,
+       b.name AS brandName,
+       c.name AS categoryName
+     FROM product_variants pv
+     JOIN products p ON pv.product_id = p.id
+     LEFT JOIN brands b ON p.brand_id = b.id
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE pv.id = ?
+     LIMIT 1`,
+    [variantId],
   );
 
-  return result.affectedRows;
+  const header = headerRows[0] || null;
+  if (!header) return null;
+
+  const units = await getUnitsByVariantId(variantId, conn);
+  const total = units.length;
+  const available = units.filter((u) => u.status === 'available').length;
+  const reserved = units.filter((u) => u.status === 'reserved').length;
+  const sold = units.filter((u) => u.status === 'sold').length;
+  const nextAvailable = units.find((u) => u.status === 'available')?.serialNo || null;
+
+  return {
+    variant: header,
+    edition: {
+      total,
+      available,
+      reserved,
+      sold,
+      nextAvailableSerial: nextAvailable,
+      units,
+    },
+  };
 }

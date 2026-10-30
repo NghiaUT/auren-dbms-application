@@ -96,3 +96,38 @@ export async function findWithTierByUserId(
     },
   };
 }
+
+/**
+ * Cập nhật thông tin liên hệ và địa chỉ giao nhận của khách hàng
+ */
+export async function updateCustomerProfile(
+  userId: number,
+  data: { phone?: string | null; address?: string | null; city?: string | null },
+  conn: DbConnection = pool,
+): Promise<number> {
+  const fields: string[] = [];
+  const params: any[] = [];
+
+  if (data.phone !== undefined) {
+    fields.push('phone = ?');
+    params.push(data.phone);
+  }
+  if (data.address !== undefined) {
+    fields.push('address = ?');
+    params.push(data.address);
+  }
+  if (data.city !== undefined) {
+    fields.push('city = ?');
+    params.push(data.city);
+  }
+
+  if (fields.length === 0) return 0;
+
+  params.push(userId);
+  const [result] = await conn.execute<ResultSetHeader>(
+    `UPDATE customers SET ${fields.join(', ')} WHERE user_id = ?`,
+    params,
+  );
+
+  return result.affectedRows;
+}

@@ -103,3 +103,18 @@ export const getMe = asyncHandler(async (req: Request, res: Response): Promise<v
   const result = await authService.getProfile(req.user!.id);
   sendSuccessRes(res, result, 'Lấy thông tin thành công.', 200);
 });
+
+export const updateMeSchema = z.object({
+  fullName: z.string().min(2, 'Họ và tên tối thiểu 2 ký tự').max(120, 'Họ và tên tối đa 120 ký tự').optional(),
+  phone: z.string().max(20, 'Số điện thoại tối đa 20 ký tự').optional().nullable(),
+  address: z.string().max(255, 'Địa chỉ tối đa 255 ký tự').optional().nullable(),
+  city: z.string().max(100, 'Tỉnh/Thành phố tối đa 100 ký tự').optional().nullable(),
+});
+
+/**
+ * Xử lý yêu cầu cập nhật thông tin hồ sơ của tài khoản đang đăng nhập (PATCH /api/auth/me)
+ */
+export const updateMe = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const result = await authService.updateProfile(req.user!.id, req.body);
+  sendSuccessRes(res, result, 'Cập nhật thông tin hồ sơ thành công.', 200);
+});

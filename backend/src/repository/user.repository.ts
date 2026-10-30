@@ -88,3 +88,18 @@ export async function createUser(
 
   return result.insertId;
 }
+
+/**
+ * Cập nhật họ tên của người dùng
+ */
+export async function updateUserFullName(
+  id: number,
+  fullName: string,
+  conn: DbConnection = pool,
+): Promise<number> {
+  const [result] = await conn.execute<ResultSetHeader>(
+    `UPDATE users SET full_name = ? WHERE id = ?`,
+    [fullName, id],
+  );
+  return result.affectedRows;
+}
