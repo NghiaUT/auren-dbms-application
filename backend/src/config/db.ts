@@ -1,12 +1,20 @@
-﻿// ============================================================================
+// ============================================================================
 // File: backend/src/config/db.ts
 // Vai trò:
 //   - Khởi tạo connection pool kết nối tới MySQL 8 thông qua mysql2/promise
 //   - Cung cấp hàm tiện ích withTransaction(fn, isolation) để quản lý giao dịch
 //     (SET TRANSACTION ISOLATION LEVEL, BEGIN, COMMIT và tự động ROLLBACK khi lỗi)
+//   - Tích hợp Terminal SQL Colorized Logger (Proposal 3) phục vụ trình diễn và bảo vệ đồ án DBMS
 // ============================================================================
 import mysql, { type Pool, type PoolConnection } from 'mysql2/promise';
+import { performance } from 'node:perf_hooks';
 import { env } from './env.js';
+import {
+  logQueryExecution,
+  logTransactionStart,
+  logTransactionCommit,
+  logTransactionRollback,
+} from '../utils/sqlLogger.js';
 
 /**
  * 4 mức cô lập giao dịch chuẩn của SQL / MySQL InnoDB
@@ -54,6 +62,45 @@ export const pool: Pool = mysql.createPool({
   timezone: '+00:00', // Đảm bảo đồng bộ múi giờ UTC
 });
 
+// ============================================================================
+// Wrapper ghi log SQL trực quan cho môn học CSDL (Proposal 3)
+// ============================================================================
+const rawPoolExecute = pool.execute.bind(pool);
+const rawPoolQuery = pool.query.bind(pool);
+
+pool.execute = (async (sql: any, values?: any) => {
+  const start = performance.now();
+  const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
+  try {
+    const res = await rawPoolExecute(sql, values);
+    const duration = performance.now() - start;
+    logQueryExecution(sqlStr, values, duration, res[0]);
+    return res;
+  } catch (err) {
+    const duration = performance.now() - start;
+    logQueryExecution(sqlStr, values, duration, null);
+    throw err;
+  }
+}) as any;
+
+pool.query = (async (sql: any, values?: any) => {
+  const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
+  if (sqlStr.includes('/* ping */') || sqlStr.startsWith('SET TRANSACTION')) {
+    return rawPoolQuery(sql, values);
+  }
+  const start = performance.now();
+  try {
+    const res = await rawPoolQuery(sql, values);
+    const duration = performance.now() - start;
+    logQueryExecution(sqlStr, values, duration, res[0]);
+    return res;
+  } catch (err) {
+    const duration = performance.now() - start;
+    logQueryExecution(sqlStr, values, duration, null);
+    throw err;
+  }
+}) as any;
+
 /**
  * Thực thi một tập hợp các truy vấn trong một Transaction có quản lý vòng đời.
  *
@@ -61,10 +108,11 @@ export const pool: Pool = mysql.createPool({
  * 1. Lấy connection từ pool
  * 2. Thiết lập TRANSACTION ISOLATION LEVEL
  * 3. Bắt đầu transaction (START TRANSACTION / BEGIN)
- * 4. Gọi hàm nghiệp vụ callback `fn(conn)`
- * 5. COMMIT nếu thành công
- * 6. Tự động ROLLBACK nếu phát sinh lỗi
- * 7. Luôn giải phóng (release) connection về pool trong khối `finally`
+ * 4. Ghi đè execute/query trên connection để log theo cấu trúc cây (TX step)
+ * 5. Gọi hàm nghiệp vụ callback `fn(conn)`
+ * 6. COMMIT nếu thành công
+ * 7. Tự động ROLLBACK nếu phát sinh lỗi
+ * 8. Khôi phục nguyên trạng connection và trả về pool trong khối `finally`
  *
  * @param fn Callback chứa các thao tác DB nhận connection của transaction
  * @param isolation Mức cô lập giao dịch (mặc định 'REPEATABLE READ')
@@ -78,26 +126,77 @@ export async function withTransaction<T>(
     throw new Error(`Invalid transaction isolation level: "${isolation}"`);
   }
   const conn: PoolConnection = await pool.getConnection();
+  const txStart = performance.now();
+  const txId = logTransactionStart(isolation);
+  let txStep = 0;
+
+  // Ghi đè execute và query trên kết nối này để theo dõi từng bước trong Transaction
+  const rawConnExecute = conn.execute.bind(conn);
+  const rawConnQuery = conn.query.bind(conn);
+
+  conn.execute = (async (sql: any, values?: any) => {
+    txStep++;
+    const step = txStep;
+    const start = performance.now();
+    const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
+    try {
+      const res = await rawConnExecute(sql, values);
+      const duration = performance.now() - start;
+      logQueryExecution(sqlStr, values, duration, res[0], { txId, txStep: step });
+      return res;
+    } catch (err) {
+      const duration = performance.now() - start;
+      logQueryExecution(sqlStr, values, duration, null, { txId, txStep: step });
+      throw err;
+    }
+  }) as any;
+
+  conn.query = (async (sql: any, values?: any) => {
+    const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
+    if (sqlStr.startsWith('SET TRANSACTION') || sqlStr.includes('/* ping */')) {
+      return rawConnQuery(sql, values);
+    }
+    txStep++;
+    const step = txStep;
+    const start = performance.now();
+    try {
+      const res = await rawConnQuery(sql, values);
+      const duration = performance.now() - start;
+      logQueryExecution(sqlStr, values, duration, res[0], { txId, txStep: step });
+      return res;
+    } catch (err) {
+      const duration = performance.now() - start;
+      logQueryExecution(sqlStr, values, duration, null, { txId, txStep: step });
+      throw err;
+    }
+  }) as any;
+
   try {
-    // Lưu ý: Trong MySQL, câu lệnh này thiết lập mức cô lập cho transaction kế tiếp trên session này
-    await conn.query(`SET TRANSACTION ISOLATION LEVEL ${isolation}`);
+    // Thiết lập mức cô lập cho transaction kế tiếp trên session này
+    await rawConnQuery(`SET TRANSACTION ISOLATION LEVEL ${isolation}`);
     await conn.beginTransaction();
     const result = await fn(conn);
     await conn.commit();
+    const totalMs = performance.now() - txStart;
+    logTransactionCommit(txId, totalMs);
     return result;
-  } catch (error) {
-    // Tự động Rollback nếu có lỗi nghiệp vụ hoặc lỗi SQL
+  } catch (error: any) {
+    const totalMs = performance.now() - txStart;
     try {
       await conn.rollback();
-    } catch (err) {
-      throw err;
+    } catch (rollbackErr) {
+      // Bỏ qua lỗi phụ nếu rollback thất bại
     }
+    logTransactionRollback(txId, totalMs, error?.message || String(error));
     throw error;
   } finally {
-    // Luôn trả kết nối lại cho pool dù thành công hay lỗi
+    // Khôi phục phương thức gốc của connection trước khi trả về pool
+    conn.execute = rawConnExecute;
+    conn.query = rawConnQuery;
     conn.release();
   }
 }
+
 /**
  * Kiểm tra kết nối tới Database (dùng khi khởi động ứng dụng trong server.ts)
  */
@@ -112,6 +211,7 @@ export async function testDbConnection(): Promise<void> {
     conn.release();
   }
 }
+
 /**
  * Đóng connection pool một cách an toàn (Graceful Shutdown)
  */
