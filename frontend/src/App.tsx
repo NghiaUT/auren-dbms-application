@@ -22,6 +22,12 @@ import { C02_CheckoutPage } from './pages/customer/C02_CheckoutPage';
 import { C05_ConfirmationPage } from './pages/customer/C05_ConfirmationPage';
 import { C04_MyOrdersPage } from './pages/customer/C04_MyOrdersPage';
 import { S01_SalesDashboardPage } from './pages/sales/S01_SalesDashboardPage';
+import { S02_OrderQueuePage } from './pages/sales/S02_OrderQueuePage';
+import { S03_OrderProcessPage } from './pages/sales/S03_OrderProcessPage';
+import { S04_OrderPaymentSchedulePage } from './pages/sales/S04_OrderPaymentSchedulePage';
+import { S05_InventoryPage } from './pages/sales/S05_InventoryPage';
+import { S06_LowStockRestockPage } from './pages/sales/S06_LowStockRestockPage';
+import { S07_ReceivablesPage } from './pages/sales/S07_ReceivablesPage';
 import { A01_AdminDashboardPage } from './pages/admin/A01_AdminDashboardPage';
 
 const App: React.FC = () => {
@@ -85,12 +91,60 @@ const App: React.FC = () => {
           }
         />
 
-        {/* Màn hình Sales được bảo vệ */}
+        {/* Màn hình Sales được bảo vệ (S01 - S07) */}
         <Route
           path="/sales"
           element={
             <ProtectedRoute allowedRoles={['sales']}>
               <S01_SalesDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sales/orders"
+          element={
+            <ProtectedRoute allowedRoles={['sales']}>
+              <S02_OrderQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sales/orders/:id"
+          element={
+            <ProtectedRoute allowedRoles={['sales']}>
+              <S03_OrderProcessPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sales/orders/:id/payments"
+          element={
+            <ProtectedRoute allowedRoles={['sales']}>
+              <S04_OrderPaymentSchedulePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sales/inventory"
+          element={
+            <ProtectedRoute allowedRoles={['sales', 'admin']}>
+              <S05_InventoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sales/inventory/low-stock"
+          element={
+            <ProtectedRoute allowedRoles={['sales', 'admin']}>
+              <S06_LowStockRestockPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sales/receivables"
+          element={
+            <ProtectedRoute allowedRoles={['sales', 'admin']}>
+              <S07_ReceivablesPage />
             </ProtectedRoute>
           }
         />

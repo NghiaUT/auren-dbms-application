@@ -292,3 +292,59 @@ export interface PlaceOrderPayload {
   deliveryDate?: string | null;
   items: PlaceOrderItemPayload[];
 }
+
+export interface SalesDashboardSummary {
+  pendingUnassignedCount: number;
+  myProcessingOrdersCount: number;
+  lowStockVariantsCount: number;
+  myOverdueReceivablesAmount: number;
+}
+
+export interface SalesOrderQueueItem {
+  id: number;
+  orderDate: string;
+  status: OrderStatus;
+  total: number;
+  itemCount: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  salesUserId: number | null;
+}
+
+export interface InventoryItem {
+  variantId: number;
+  sku: string;
+  productName: string;
+  locationId: number;
+  locationName: string;
+  qtyOnHand: number;
+  qtyReserved: number;
+  available: number;
+  version: number;
+  totalAvailable: number;
+}
+
+export interface ReceivableItem {
+  id: number;
+  orderId: number;
+  type: PaymentType;
+  amount: number;
+  dueDate: string | null;
+  paidAt: string | null;
+  method: string | null;
+  status: PaymentStatus;
+  orderStatus: OrderStatus;
+  customer: {
+    id: number;
+    fullName: string;
+    phone: string | null;
+  };
+  daysOverdue: number;
+}
+
+export interface CreatePaymentScheduleItem {
+  type: PaymentType;
+  amount: number;
+  dueDate: string;
+}

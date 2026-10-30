@@ -130,7 +130,7 @@ export const C04_MyOrdersPage: React.FC = () => {
   return (
     <div className="w-full pt-28 pb-20">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
-        
+
         {/* Header Breadcrumb */}
         <div className="flex items-center gap-2 text-xs font-sans text-[#7B6E64] mb-6">
           <Link to="/" className="hover:text-[#0D0703]">Trang chủ</Link>
@@ -204,11 +204,10 @@ export const C04_MyOrdersPage: React.FC = () => {
                 setSelectedStatus(tab.value);
                 setCurrentPage(1);
               }}
-              className={`px-3.5 py-1.5 font-sans text-xs uppercase tracking-wider rounded-[2px] transition-colors ${
-                selectedStatus === tab.value
-                  ? 'bg-[#271E18] text-[#FAF8F3] font-semibold'
-                  : 'bg-[#FAF8F3] text-[#7B6E64] hover:text-[#0D0703] border border-[#D2C8BA]'
-              }`}
+              className={`px-3.5 py-1.5 font-sans text-xs uppercase tracking-wider rounded-[2px] transition-colors ${selectedStatus === tab.value
+                ? 'bg-[#271E18] text-[#FAF8F3] font-semibold'
+                : 'bg-[#FAF8F3] text-[#7B6E64] hover:text-[#0D0703] border border-[#D2C8BA]'
+                }`}
             >
               {tab.label}
             </button>
@@ -269,25 +268,23 @@ export const C04_MyOrdersPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleViewDetail(ord.id)}
+                      className="px-4 py-2 bg-[#271E18] text-[#FAF8F3] font-sans text-xs uppercase tracking-widest hover:bg-[#0D0703] transition-colors rounded-[2px]"
+                    >
+                      Xem chi tiết &amp; Thanh toán →
+                    </button>
+
+                    {ord.status === 'pending' && (
                       <button
                         type="button"
-                        onClick={() => handleViewDetail(ord.id)}
-                        className="px-4 py-2 bg-[#271E18] text-[#FAF8F3] font-sans text-xs uppercase tracking-widest hover:bg-[#0D0703] transition-colors rounded-[2px]"
+                        onClick={() => handleCancelOrder(ord.id)}
+                        className="px-3 py-2 border border-[#BA1A1A] text-[#BA1A1A] font-sans text-xs uppercase tracking-wider hover:bg-red-50 transition-colors rounded-[2px]"
                       >
-                        Xem chi tiết &amp; Thanh toán →
+                        Hủy đơn
                       </button>
-
-                      {ord.status === 'pending' && (
-                        <button
-                          type="button"
-                          onClick={() => handleCancelOrder(ord.id)}
-                          className="px-3 py-2 border border-[#BA1A1A] text-[#BA1A1A] font-sans text-xs uppercase tracking-wider hover:bg-red-50 transition-colors rounded-[2px]"
-                        >
-                          Hủy đơn
-                        </button>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
               );
@@ -344,7 +341,7 @@ export const C04_MyOrdersPage: React.FC = () => {
       {activeOrderDetail && (
         <div className="fixed inset-0 z-50 bg-[#0D0703]/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-[#FCF9F3] border border-[#D2C8BA] max-w-3xl w-full p-8 md:p-10 rounded-[2px] shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto space-y-6">
-            
+
             <button
               type="button"
               onClick={() => setActiveOrderDetail(null)}
@@ -367,9 +364,8 @@ export const C04_MyOrdersPage: React.FC = () => {
                   Hồ Sơ Đơn Hàng AUR-2026-{String(activeOrderDetail.id).padStart(4, '0')}
                 </h3>
                 <span
-                  className={`font-sans text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-[1px] border ${
-                    STATUS_MAP[activeOrderDetail.status]?.class
-                  }`}
+                  className={`font-sans text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-[1px] border ${STATUS_MAP[activeOrderDetail.status]?.class
+                    }`}
                 >
                   {STATUS_MAP[activeOrderDetail.status]?.label}
                 </span>
@@ -432,9 +428,8 @@ export const C04_MyOrdersPage: React.FC = () => {
                             {p.type === 'deposit' ? 'Đợt 1: Đặt cọc giữ xưởng' : 'Đợt 2: Quyết toán White-Glove'}
                           </strong>
                           <span
-                            className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded-[1px] ${
-                              isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                            }`}
+                            className={`text-[9px] uppercase font-bold px-2 py-0.5 rounded-[1px] ${isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                              }`}
                           >
                             {isPaid ? 'Đã thanh toán' : 'Chờ thu'}
                           </span>
