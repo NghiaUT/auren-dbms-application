@@ -171,13 +171,22 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ bagCount }) => {
                     </Link>
 
                     {user.role === 'customer' && (
-                      <Link
-                        to="/account/orders"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="block px-4 py-2 font-sans text-[11px] uppercase tracking-[0.14em] text-[#372A22] hover:bg-[#F0EEE8] transition-colors"
-                      >
-                        Đơn hàng của tôi
-                      </Link>
+                      <>
+                        <Link
+                          to="/account/profile"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="block px-4 py-2 font-sans text-[11px] uppercase tracking-[0.14em] text-[#372A22] hover:bg-[#F0EEE8] transition-colors"
+                        >
+                          Hồ sơ Patron & Hạng thẻ
+                        </Link>
+                        <Link
+                          to="/account/orders"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="block px-4 py-2 font-sans text-[11px] uppercase tracking-[0.14em] text-[#372A22] hover:bg-[#F0EEE8] transition-colors"
+                        >
+                          Đơn hàng của tôi
+                        </Link>
+                      </>
                     )}
 
                     <button
@@ -263,6 +272,15 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ bagCount }) => {
                   >
                     Truy cập bảng điều khiển
                   </Link>
+                  {user.role === 'customer' && (
+                    <Link
+                      to="/account/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="border border-white/20 text-center py-2 text-xs uppercase tracking-wider text-white hover:bg-white/10 rounded-[2px]"
+                    >
+                      Hồ sơ Patron & Hạng thẻ
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={handleLogout}

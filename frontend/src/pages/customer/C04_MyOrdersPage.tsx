@@ -404,9 +404,19 @@ export const C04_MyOrdersPage: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <span className="font-semibold tabular-nums text-[#0D0703]">
-                      {formatVND(item.unitPrice * item.quantity)}
-                    </span>
+                    <div className="text-right flex flex-col items-end">
+                      <span className="font-semibold tabular-nums text-[#0D0703]">
+                        {formatVND(item.unitPrice * item.quantity)}
+                      </span>
+                      {activeOrderDetail.status === 'delivered' && (
+                        <Link
+                          to={`/account/orders/${activeOrderDetail.id}/items/${item.id}/review`}
+                          className="inline-flex items-center gap-1 mt-2 text-[10px] font-sans font-semibold text-[#A58548] hover:text-[#271E18] underline uppercase tracking-wider bg-[#FAF8F3] px-2 py-1 border border-[#A58548]/30 rounded-[1px]"
+                        >
+                          <span>★ Viết cảm nhận</span>
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

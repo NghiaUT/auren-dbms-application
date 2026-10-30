@@ -39,6 +39,21 @@ export async function getMeApi(): Promise<AuthUser> {
   return response.data.data;
 }
 
+export interface UpdateProfilePayload {
+  fullName?: string;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+}
+
+/**
+ * [C08] Cập nhật thông tin hồ sơ cá nhân (PATCH /api/auth/me)
+ */
+export async function updateProfileApi(payload: UpdateProfilePayload): Promise<AuthUser> {
+  const response = await axiosClient.patch<ApiResponse<AuthUser>>('/auth/me', payload);
+  return response.data.data;
+}
+
 /**
  * Đăng xuất khỏi hệ thống (POST /api/auth/logout)
  */

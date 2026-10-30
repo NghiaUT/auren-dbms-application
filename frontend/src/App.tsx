@@ -19,8 +19,11 @@ import { NotFound404Page } from './pages/public/NotFound404Page';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { C01_CartPage } from './pages/customer/C01_CartPage';
 import { C02_CheckoutPage } from './pages/customer/C02_CheckoutPage';
+import { C03_LimitedEditionOrderPage } from './pages/customer/C03_LimitedEditionOrderPage';
 import { C05_ConfirmationPage } from './pages/customer/C05_ConfirmationPage';
 import { C04_MyOrdersPage } from './pages/customer/C04_MyOrdersPage';
+import { C07_WriteReviewPage } from './pages/customer/C07_WriteReviewPage';
+import { C08_ProfilePage } from './pages/customer/C08_ProfilePage';
 import { S01_SalesDashboardPage } from './pages/sales/S01_SalesDashboardPage';
 import { S02_OrderQueuePage } from './pages/sales/S02_OrderQueuePage';
 import { S03_OrderProcessPage } from './pages/sales/S03_OrderProcessPage';
@@ -60,6 +63,9 @@ const App: React.FC = () => {
         {/* C01: Túi hàng (Shopping Bag) */}
         <Route path="/cart" element={<C01_CartPage />} />
 
+        {/* C03: Mua bản Limited Edition */}
+        <Route path="/limited/:variantId" element={<C03_LimitedEditionOrderPage />} />
+
         {/* C02: Thanh toán & Giao nhận White-Glove (Protected) */}
         <Route
           path="/checkout"
@@ -94,6 +100,34 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute allowedRoles={['customer']}>
               <C04_MyOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* C07: Viết đánh giá sản phẩm */}
+        <Route
+          path="/account/orders/:id/items/:itemId/review"
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <C07_WriteReviewPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* C08: Hồ sơ cá nhân & Hạng thành viên */}
+        <Route
+          path="/account/profile"
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <C08_ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <C08_ProfilePage />
             </ProtectedRoute>
           }
         />
