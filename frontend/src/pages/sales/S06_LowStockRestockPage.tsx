@@ -63,7 +63,9 @@ export const S06_LowStockRestockPage: React.FC = () => {
         sku: prefillSku || `Variant #${prefillVariantId}`,
         productName: 'Tác phẩm được chọn',
         locationName: `Showroom #${prefillLocationId}`,
-        version: Number(prefillVersion) || 1,
+        version: prefillVersion !== null && !isNaN(Number(prefillVersion))
+          ? Number(prefillVersion)
+          : 0,
       });
       setShowRestockModal(true);
     }
@@ -172,11 +174,10 @@ export const S06_LowStockRestockPage: React.FC = () => {
         {/* Thông báo thao tác */}
         {feedback && (
           <div
-            className={`p-4 mb-6 text-xs uppercase tracking-wider font-semibold rounded-[2px] flex items-center justify-between border ${
-              feedback.type === 'success'
+            className={`p-4 mb-6 text-xs uppercase tracking-wider font-semibold rounded-[2px] flex items-center justify-between border ${feedback.type === 'success'
                 ? 'bg-[#EBF3ED] text-[#246A38] border-[#246A38]/30'
                 : 'bg-[#FDF2F2] text-[#BA1A1A] border-[#BA1A1A]/30'
-            }`}
+              }`}
           >
             <span>{feedback.text}</span>
             <button onClick={() => setFeedback(null)} className="text-xs font-bold hover:opacity-75">

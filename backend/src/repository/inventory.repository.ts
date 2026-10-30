@@ -207,24 +207,7 @@ export async function restockWithOptimisticLock(
   version: number,
   conn: DbConnection = pool,
 ): Promise<number> {
-  // Nếu version = 0, thử tạo mới nếu chưa có dòng tồn kho
-  if (version === 0) {
-    try {
-      const [result] = await conn.execute<ResultSetHeader>(
-        `INSERT INTO inventory (variant_id, location_id, qty_on_hand, qty_reserved, version)
-         VALUES (?, ?, ?, 0, 1)`,
-        [variantId, locationId, quantity],
-      );
-      return result.affectedRows;
-    } catch (err: any) {
-      if (err.code === 'ER_DUP_ENTRY') {
-        return 0; // Đã tồn tại, version không thể là 0
-      }
-      throw err;
-    }
-  }
-
-  const [result] = await conn.execute<ResultSetHeader>(
+  const [updateResult] = await conn.execute<ResultSetHeader>(
     `UPDATE inventory
      SET qty_on_hand = qty_on_hand + ?,
          version = version + 1
@@ -233,8 +216,26 @@ export async function restockWithOptimisticLock(
        AND version = ?`,
     [quantity, variantId, locationId, version],
   );
-
-  return result.affectedRows;
+  // Nếu cập nhật thành công (khớp version = 0 hoặc version > 0) -> Trả về 1
+  if (updateResult.affectedRows > 0) {
+    return updateResult.affectedRows;
+  }
+  if (version === 0) {
+    try {
+      const [insertResult] = await conn.execute<ResultSetHeader>(
+        `INSERT INTO inventory (variant_id, location_id, qty_on_hand, qty_reserved, version)
+         VALUES (?, ?, ?, 0, 1)`,
+        [variantId, locationId, quantity],
+      );
+      return insertResult.affectedRows;
+    } catch (err: any) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return 0;
+      }
+      throw err;
+    }
+  }
+  return 0;
 }
 
 /**
