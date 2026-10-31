@@ -23,6 +23,22 @@ export interface CartItem {
 }
 
 const STORAGE_KEY = 'auren_cart';
+const USER_STORAGE_KEY = 'auren_user';
+
+/**
+ * Kiểm tra xem người dùng hiện tại có phải là nhân sự nội bộ (sales / admin) không.
+ * Nhân sự nội bộ không được phép sử dụng giỏ hàng hay mua sắm cá nhân.
+ */
+export function isShoppingBlockedForCurrentUser(): boolean {
+  try {
+    const rawUser = localStorage.getItem(USER_STORAGE_KEY);
+    if (!rawUser) return false;
+    const parsed = JSON.parse(rawUser);
+    return parsed?.role === 'sales' || parsed?.role === 'admin';
+  } catch {
+    return false;
+  }
+}
 
 function saveItems(items: CartItem[]) {
   try {
@@ -34,6 +50,9 @@ function saveItems(items: CartItem[]) {
 }
 
 export function getCartItems(): CartItem[] {
+  if (isShoppingBlockedForCurrentUser()) {
+    return [];
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -44,11 +63,17 @@ export function getCartItems(): CartItem[] {
 }
 
 export function getCartCount(): number {
+  if (isShoppingBlockedForCurrentUser()) {
+    return 0;
+  }
   const items = getCartItems();
   return items.reduce((sum, item) => sum + item.quantity, 0);
 }
 
 export function addToCart(item: Omit<CartItem, 'quantity'>, quantity = 1): CartItem[] {
+  if (isShoppingBlockedForCurrentUser()) {
+    return [];
+  }
   const items = getCartItems();
   const existingIdx = items.findIndex((i) => i.variantId === item.variantId);
 

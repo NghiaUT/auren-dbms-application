@@ -60,11 +60,25 @@ const App: React.FC = () => {
         {/* P05: Đăng ký thành viên */}
         <Route path="/register" element={<P05_RegisterPage />} />
 
-        {/* C01: Túi hàng (Shopping Bag) */}
-        <Route path="/cart" element={<C01_CartPage />} />
+        {/* C01: Túi hàng (Shopping Bag) — Chặn Sales & Admin */}
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute allowedRoles={['customer']} allowGuest>
+              <C01_CartPage />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* C03: Mua bản Limited Edition */}
-        <Route path="/limited/:variantId" element={<C03_LimitedEditionOrderPage />} />
+        {/* C03: Mua bản Limited Edition — Chặn Sales & Admin */}
+        <Route
+          path="/limited/:variantId"
+          element={
+            <ProtectedRoute allowedRoles={['customer']} allowGuest>
+              <C03_LimitedEditionOrderPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* C02: Thanh toán & Giao nhận White-Glove (Protected) */}
         <Route

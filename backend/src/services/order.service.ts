@@ -39,6 +39,10 @@ export interface PlaceOrderPayload {
  * [FR5, FR6] Đặt hàng (Thường và Limited Edition) thực thi trong một Transaction ACID
  */
 export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
+  if (user.role !== 'customer') {
+    throw new ForbiddenError('Chức năng mua sắm và đặt hàng chỉ dành cho Khách hàng.');
+  }
+
   if (!payload.items || payload.items.length === 0) {
     throw new BadRequestError('Đơn hàng phải có ít nhất một tác phẩm.');
   }
@@ -234,6 +238,10 @@ export async function getMyOrders(
   user: AuthUser,
   query: { status?: string; page?: number; limit?: number },
 ) {
+  if (user.role !== 'customer') {
+    throw new ForbiddenError('Chức năng xem lịch sử mua sắm cá nhân chỉ dành cho Khách hàng.');
+  }
+
   const customerProfile = await customerRepo.findWithTierByUserId(user.id);
   if (!customerProfile) {
     throw new ForbiddenError('Tài khoản chưa có hồ sơ khách hàng.');
@@ -337,12 +345,14 @@ export async function cancelOrder(orderId: number, user: AuthUser) {
     throw new NotFoundError('Đơn hàng không tồn tại trong lưu trữ.');
   }
 
-  // Kiểm tra quyền sở hữu
+  // Kiểm tra quyền sở hữu và vai trò hợp lệ (chỉ customer sở hữu đơn hoặc sales vận hành)
   if (user.role === 'customer') {
     const customerProfile = await customerRepo.findWithTierByUserId(user.id);
     if (!customerProfile || customerProfile.id !== header.customerId) {
       throw new NotFoundError('Đơn hàng không tồn tại trong lưu trữ.');
     }
+  } else if (user.role !== 'sales') {
+    throw new ForbiddenError('Tài khoản của bạn không có quyền huỷ đơn hàng.');
   }
 
   if (header.status !== 'pending') {

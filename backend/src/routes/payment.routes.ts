@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import { authenticate } from '../middlewares/authenticate.js';
+import { authorize } from '../middlewares/authorize.js';
 import { validate } from '../middlewares/validate.js';
 import * as paymentController from '../controllers/payment.controller.js';
 
@@ -18,9 +19,11 @@ paymentRouter.use(authenticate);
 /**
  * [11] POST /api/payments/:id/pay
  * Thanh toán khoản phải trả (deposit, final, installment)
+ * Phân quyền: customer
  */
 paymentRouter.post(
   '/:id/pay',
+  authorize('customer'),
   validate(paymentController.paySchema),
   paymentController.payInstallment,
 );

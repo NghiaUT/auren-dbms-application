@@ -13,9 +13,14 @@ import type { UserRole } from '../types';
 interface ProtectedRouteProps {
   children: React.ReactElement;
   allowedRoles?: UserRole[];
+  allowGuest?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  allowedRoles,
+  allowGuest = false,
+}) => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
@@ -33,6 +38,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
   }
 
   if (!isAuthenticated || !user) {
+    if (allowGuest) {
+      return children;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -10,7 +10,7 @@
 import * as paymentRepo from '../repository/payment.repository.js';
 import * as orderRepo from '../repository/order.repository.js';
 import * as customerRepo from '../repository/customer.repository.js';
-import { ConflictError, NotFoundError } from '../utils/AppError.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../utils/AppError.js';
 import type { AuthUser } from '../types/index.js';
 
 /**
@@ -21,6 +21,10 @@ export async function processPayment(
   user: AuthUser,
   method: string,
 ) {
+  if (user.role !== 'customer') {
+    throw new ForbiddenError('Chỉ Khách hàng mới được phép thanh toán khoản phải trả của mình.');
+  }
+
   // 1. Kiểm tra sự tồn tại của khoản thanh toán
   const payment = await paymentRepo.findPaymentById(paymentId);
   if (!payment) {

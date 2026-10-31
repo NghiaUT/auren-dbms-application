@@ -9,6 +9,7 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import type { AuthUser, LoginRequest, RegisterRequest } from '../types';
 import { getMeApi, loginApi, logoutApi, registerApi } from '../api/auth.api';
+import { clearCart } from '../utils/cartStorage';
 
 export interface AuthContextType {
   user: AuthUser | null;
@@ -43,6 +44,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const saveSession = (newToken: string, newUser: AuthUser) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    if (newUser.role === 'sales' || newUser.role === 'admin') {
+      clearCart();
+    }
     setToken(newToken);
     setUser(newUser);
   };

@@ -35,20 +35,23 @@ orderRouter.post(
 /**
  * [7] GET /api/orders
  * Lấy danh sách đơn hàng của tôi
+ * Phân quyền: customer
  */
-orderRouter.get('/', orderController.getMyOrders);
+orderRouter.get('/', authorize('customer'), orderController.getMyOrders);
 
 /**
  * [8] GET /api/orders/:id
  * Chi tiết đơn hàng kèm dòng hàng và lịch thanh toán
+ * Phân quyền: customer
  */
-orderRouter.get('/:id', orderController.getOrderDetail);
+orderRouter.get('/:id', authorize('customer'), orderController.getOrderDetail);
 
 /**
  * [9] POST /api/orders/:id/cancel
  * Hủy đơn hàng và giải phóng tồn kho
+ * Phân quyền: customer
  */
-orderRouter.post('/:id/cancel', orderController.cancelOrder);
+orderRouter.post('/:id/cancel', authorize('customer'), orderController.cancelOrder);
 
 /**
  * [10] POST /api/orders/:id/payments

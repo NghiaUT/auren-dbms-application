@@ -8,7 +8,7 @@
 // ============================================================================
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../auth/useAuth';
 import { getLimitedVariantUnitsApi, type VariantEditionData } from '../../api/limited.api';
 import { createOrderApi } from '../../api/order.api';
@@ -33,6 +33,7 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
   // Load variant & edition units data
   const fetchData = async () => {
     if (!variantId) return;
+    if (user && (user.role === 'sales' || user.role === 'admin')) return;
     try {
       setLoading(true);
       setError(null);
@@ -71,6 +72,10 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
     e.preventDefault();
     if (!user) {
       navigate('/login', { state: { from: `/limited/${variantId}` } });
+      return;
+    }
+    if (user.role !== 'customer') {
+      navigate('/403', { replace: true });
       return;
     }
 
@@ -121,6 +126,10 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+  if (user && (user.role === 'sales' || user.role === 'admin')) {
+    return <Navigate to="/403" replace />;
+  }
 
   if (loading) {
     return (

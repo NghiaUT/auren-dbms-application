@@ -7,7 +7,7 @@
 // ============================================================================
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
   getCartItems,
   updateQuantity,
@@ -49,6 +49,11 @@ export const C01_CartPage: React.FC = () => {
   const discountAmount = Math.round(subtotal * (discountPct / 100));
   const estimatedTotal = Math.max(0, subtotal - discountAmount);
   const totalItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Bảo vệ cấp trang: Nhân sự nội bộ (sales / admin) không được truy cập giỏ hàng
+  if (user && (user.role === 'sales' || user.role === 'admin')) {
+    return <Navigate to="/403" replace />;
+  }
 
   // Điều hướng sang bước thanh toán
   const handleProceedToCheckout = () => {

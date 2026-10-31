@@ -100,9 +100,10 @@ export const P03_ProductDetailPage: React.FC = () => {
     };
   }, [product]);
 
-  // Thêm vào giỏ hàng (Shopping Bag)
+  // Thêm vào giỏ hàng (Shopping Bag) — Chặn tuyệt đối với Sales và Admin
   const handleAddToBag = () => {
     if (!product || !selectedVariant) return;
+    if (user && (user.role === 'sales' || user.role === 'admin')) return;
 
     addToCart(
       {
@@ -212,6 +213,7 @@ export const P03_ProductDetailPage: React.FC = () => {
               <ProductActions
                 product={product}
                 selectedVariant={selectedVariant}
+                userRole={user?.role}
                 onAddToBag={handleAddToBag}
                 onOpenViewingModal={() => setViewingModalOpen(true)}
               />
