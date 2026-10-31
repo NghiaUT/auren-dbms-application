@@ -1,7 +1,126 @@
 # ============================================================================
 # File: docker-compose.yml
-# Vai trò: Cấu hình Docker Compose để triển khai và khởi chạy 3 dịch vụ:
-#   - mysql: Cơ sở dữ liệu MySQL 8 (InnoDB), tự động nạp schema.sql và seed.sql
-#   - api:   Backend REST API (Node.js + Express 4) kết nối tới dịch vụ mysql
-#   - web:   Frontend SPA (React 18 + Vite) giao tiếp với dịch vụ api
+# Vai trò: Cấu hình Docker Compose để triển khai và khởi chạy tức thì:
+#   - mysql:   MySQL 8.0 (InnoDB), tự động nạp schema.sql khi khởi tạo lần đầu
+#   - seeder:  Chạy script seed.ts (hoặc seed-large.ts) ngay khi MySQL sẵn sàng
+#   - api:     Backend REST API (Node.js 20 + Express 4 + tsx) tại cổng 4000
+#   - web:     Frontend SPA (React 18 + Vite) tại cổng 5173
 # ============================================================================
+
+services:
+  # 1. Dịch vụ Cơ sở dữ liệu MySQL 8.0
+  mysql:
+    image: mysql:8.0
+    container_name: auren_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-luxury_furniture}
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - '${DB_PORT:-3306}:3306'
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Tự động tạo bảng từ schema.sql trong lần khởi tạo volume đầu tiên
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test:
+        ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p${DB_PASS:-rootpassword}']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+    networks:
+      - auren_net
+
+  # 2. Dịch vụ Seeder (Tự động chạy seed.ts ngay khi MySQL healthy)
+  seeder:
+    image: node:20-alpine
+    container_name: auren_seeder
+    working_dir: /app/backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: ${DB_PASS:-rootpassword}
+      DB_NAME: ${DB_NAME:-luxury_furniture}
+      JWT_SECRET: ${JWT_SECRET:-auren_super_secret_jwt_key_2026}
+    volumes:
+      - ./backend:/app/backend
+      - ./database:/app/database
+      - backend_node_modules:/app/backend/node_modules
+    # Cho phép tùy chỉnh lệnh seed qua biến SEED_CMD (mặc định: npm run seed)
+    command: >
+      sh -c "npm install --no-audit --no-fund && ${SEED_CMD:-npm run seed}"
+    networks:
+      - auren_net
+
+  # 3. Dịch vụ Backend REST API (Express + TypeScript)
+  api:
+    image: node:20-alpine
+    container_name: auren_api
+    restart: unless-stopped
+    working_dir: /app/backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      seeder:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: ${DB_PASS:-rootpassword}
+      DB_NAME: ${DB_NAME:-luxury_furniture}
+      JWT_SECRET: ${JWT_SECRET:-auren_super_secret_jwt_key_2026}
+      JWT_EXPIRES_IN: 8h
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./backend:/app/backend
+      - ./database:/app/database
+      - backend_node_modules:/app/backend/node_modules
+    command: >
+      sh -c "npm install --no-audit --no-fund && npm run dev"
+    networks:
+      - auren_net
+
+  # 4. Dịch vụ Frontend SPA (React 18 + Vite)
+  web:
+    image: node:20-alpine
+    container_name: auren_web
+    restart: unless-stopped
+    working_dir: /app/frontend
+    depends_on:
+      - api
+    environment:
+      VITE_API_TARGET: http://api:4000
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+    command: >
+      sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    networks:
+      - auren_net
+
+volumes:
+  mysql_data:
+  backend_node_modules:
+  frontend_node_modules:
+
+networks:
+  auren_net:
+    driver: bridge
