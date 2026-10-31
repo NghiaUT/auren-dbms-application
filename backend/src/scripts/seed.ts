@@ -2,14 +2,17 @@
 // File: backend/src/scripts/seed.ts
 // Vai trò: Nạp dữ liệu mẫu quy mô tầm trung (Medium Scale Demo) vào MySQL:
 //   - 40 Users (1 Admin, 4 Sales, 35 Khách hàng)
-//   - 3 Hạng thành viên (Silver, Gold, Black)
+//   - 3 Hạng thành viên (Silver, Gold, Black) với ngưỡng chiết khấu chuẩn xác
 //   - 10 Thương hiệu xa xỉ & 16 Danh mục nội thất phân cấp cha-con
-//   - 12 Chất liệu cao cấp & 30 Sản phẩm tiêu biểu với 75 Biến thể
-//   - 6 Địa điểm (3 Showrooms, 3 Kho tổng) & Tồn kho phân bổ thực tế
-//   - 40 Bản Limited Edition có số serial duy nhất
-//   - 100 Đơn hàng đủ các trạng thái (delivered, pending, shipped, confirmed, in_production, cancelled)
-//   - ~220 Chi tiết đơn hàng (Order items), ~140 Giao dịch thanh toán & ~50 Đánh giá (Reviews)
-//   - Tự động đồng bộ và tính toán total_spent và tier_id chuẩn xác cho từng khách hàng
+//   - 12 Chất liệu cao cấp & 30 Sản phẩm tiêu biểu với 75 Biến thể SKU
+//   - 6 Địa điểm (3 Showrooms, 3 Kho tổng)
+//   - 110 Ấn bản Limited Edition có số serial duy nhất, liên kết chuẩn vào order_items
+//   - 120 Đơn hàng thực tế đủ các trạng thái, phân bổ hàng đợi Sales và khách VIP
+//   - ~260 Chi tiết đơn hàng có kèm Monogram tuỳ biến cá nhân hoá
+//   - Tồn kho phân bổ chính xác (qty_reserved khớp đơn đang giữ, có SKU cảnh báo tồn thấp)
+//   - ~170 Lịch thanh toán (Cọc, trả góp, tất toán, quá hạn, hoàn tiền)
+//   - ~45 Đánh giá cảm nhận chân thực không trùng lặp (1-5 sao)
+//   - Tự động đồng bộ total_spent và membership tier cho 100% khách hàng
 // Mật khẩu mặc định cho toàn bộ tài khoản: password123
 // ============================================================================
 
@@ -19,15 +22,17 @@ import { pool } from '../config/db.js';
 const DEFAULT_PASSWORD_HASH = '$2a$10$CkS05LP/QaCWDeR.yxvFt.o8ciYwEQxcZ/pZHLdUXSTtBZrH0mHGa';
 
 async function seedMediumScale() {
-  console.log('🚀 Bắt đầu quá trình nạp dữ liệu quy mô tầm trung (Medium Scale Seed)...\n');
+  console.log('=====================================================================');
+  console.log('🚀 BẮT ĐẦU NẠP DỮ LIỆU CHUẨN QUY MÔ TẦM TRUNG (MEDIUM SCALE SEED)...');
+  console.log('=====================================================================\n');
   const startTime = Date.now();
   const conn = await pool.getConnection();
 
   try {
     // ------------------------------------------------------------------------
-    // 1. XOÁ VÀ RESET TOÀN BỘ 16 BẢNG DỮ LIỆU
+    // 1. XOÁ VÀ RESET TOÀN BỘ 16 BẢNG DỮ LIỆU THEO THỨ TỰ AN TOÀN
     // ------------------------------------------------------------------------
-    console.log('🧹 [1/7] Đang làm sạch toàn bộ dữ liệu cũ...');
+    console.log('🧹 [1/8] Làm sạch toàn bộ dữ liệu cũ trong 16 bảng...');
     await conn.query('SET FOREIGN_KEY_CHECKS = 0');
 
     const tables = [
@@ -54,9 +59,9 @@ async function seedMediumScale() {
     }
 
     // ------------------------------------------------------------------------
-    // 2. TẠO HẠNG THÀNH VIÊN & NGƯỜI DÙNG CƠ SỞ (ADMIN, SALES, CUSTOMERS)
+    // 2. HẠNG THÀNH VIÊN & NGƯỜI DÙNG (ADMIN, SALES, KHÁCH HÀNG)
     // ------------------------------------------------------------------------
-    console.log('👥 [2/7] Đang nạp Hạng thành viên, Quản trị viên, Nhân viên Sales và Khách hàng...');
+    console.log('👥 [2/8] Nạp Hạng thành viên, Quản trị viên, 4 Nhân viên Sales và 35 Khách hàng...');
 
     // 2.1 Hạng thành viên
     await conn.query(`
@@ -76,7 +81,7 @@ async function seedMediumScale() {
       (5, 'sales.linh@luxury.com', '${DEFAULT_PASSWORD_HASH}', 'Phạm Sales Linh', 'sales')
     `);
 
-    // 2.3 Khách hàng mẫu (35 Khách hàng)
+    // 2.3 35 Khách hàng mẫu
     const customerRawData = [
       { name: 'Nguyễn Gia Bảo', email: 'customer.black@gmail.com', phone: '0901234567', city: 'Hà Nội', address: 'Biệt thự 12 Vinhomes Riverside, Long Biên' },
       { name: 'Phạm Minh Tuấn', email: 'customer.gold@gmail.com', phone: '0912345678', city: 'TP. Hồ Chí Minh', address: 'Căn hộ Penthouse Landmark 81, Bình Thạnh' },
@@ -131,7 +136,7 @@ async function seedMediumScale() {
     // ------------------------------------------------------------------------
     // 3. THƯƠNG HIỆU, DANH MỤC & CHẤT LIỆU CAO CẤP
     // ------------------------------------------------------------------------
-    console.log('🏷️ [3/7] Đang nạp Thương hiệu, Danh mục đa cấp và Chất liệu cao cấp...');
+    console.log('🏷️ [3/8] Nạp Thương hiệu, Danh mục đa cấp và Chất liệu cao cấp...');
 
     // 3.1 10 Thương hiệu
     await conn.query(`
@@ -195,17 +200,17 @@ async function seedMediumScale() {
     // ------------------------------------------------------------------------
     // 4. SẢN PHẨM & BIẾN THỂ (30 SẢN PHẨM, 75 BIẾN THỂ)
     // ------------------------------------------------------------------------
-    console.log('🛋️ [4/7] Đang nạp 30 Sản phẩm tiêu biểu và 75 Biến thể...');
+    console.log('🛋️ [4/8] Nạp 30 Sản phẩm tiêu biểu và 75 Biến thể SKU...');
 
     const productsData = [
-      // 1-5: Poltrona Frau & B&B Italia (Phòng khách)
+      // 1-5: Phòng khách
       { id: 1, brandId: 1, catId: 6, name: 'Sofa Chester Moon Quilted', desc: 'Sofa da chần bông thủ công biểu tượng phong cách Ý cổ điển', col: 'Moonlight Collection', des: 'Paola Navone', ltd: false, mto: false },
       { id: 2, brandId: 2, catId: 6, name: 'Sofa Module Camaleonda', desc: 'Hệ sofa module linh hoạt có thể tái định hình không gian', col: 'Iconic Reissue', des: 'Mario Bellini', ltd: false, mto: true },
       { id: 3, brandId: 3, catId: 7, name: 'Ghế bành Tape Cord Armchair', desc: 'Ghế bành thư giãn phong cách tối giản thanh lịch viền da thủ công', col: 'Tape Living', des: 'Nendo', ltd: true, mto: false },
       { id: 4, brandId: 2, catId: 6, name: 'Sofa Tufty-Time Modular', desc: 'Sofa thiết kế khối chần mềm mại phong cách đương đại', col: 'Contemporary Soft', des: 'Patricia Urquiola', ltd: false, mto: false },
       { id: 5, brandId: 7, catId: 6, name: 'Sofa Groundpiece Comfort', desc: 'Sofa biểu tượng của sự thư thái với bệ kê tay bọc da đa năng', col: 'Living Elegance', des: 'Antonio Citterio', ltd: false, mto: true },
-      
-      // 6-10: Phòng ăn (Bàn ăn & Ghế ăn)
+
+      // 6-10: Phòng ăn
       { id: 6, brandId: 4, catId: 9, name: 'Bàn ăn Apex Sculptural Marble', desc: 'Bàn ăn nghệ thuật nguyên khối chân điêu khắc đồng thau', col: 'Haute Couture', des: 'Sacha Lakic', ltd: false, mto: true },
       { id: 7, brandId: 5, catId: 11, name: 'Ghế ăn CH24 Wishbone Chair', desc: 'Chiếc ghế ăn biểu tượng huyền thoại của thiết kế Bắc Âu đan cói', col: 'Danish Master', des: 'Hans J. Wegner', ltd: false, mto: false },
       { id: 8, brandId: 9, catId: 10, name: 'Bàn ăn Filigree Solid Walnut', desc: 'Bàn ăn gỗ óc chó nguyên khối thanh mảnh tinh xảo', col: 'Filigree Line', des: 'Rodolfo Dordoni', ltd: false, mto: false },
@@ -219,21 +224,21 @@ async function seedMediumScale() {
       { id: 14, brandId: 3, catId: 8, name: 'Bàn trà Calder Bronze Side Table', desc: 'Bộ bàn trà mặt đá và mặt kính chân kim loại mảnh thanh tao', col: 'Calder Line', des: 'Rodolfo Dordoni', ltd: false, mto: false },
       { id: 15, brandId: 1, catId: 8, name: 'Bàn trà Bob Coffee Table', desc: 'Bàn trà thanh lịch bọc da đế đúc thép phủ titanium', col: 'Bob Lifestyle', des: 'Jean-Marie Massaud', ltd: false, mto: false },
 
-      // 16-20: Phòng ngủ (Giường & Tủ đầu giường)
+      // 16-20: Phòng ngủ
       { id: 16, brandId: 1, catId: 12, name: 'Giường Coupé Leather Master Bed', desc: 'Giường ngủ master bọc da thủ công sang trọng khí chất quý tộc', col: 'Master Sleep', des: 'GamFratesi', ltd: false, mto: false },
       { id: 17, brandId: 2, catId: 12, name: 'Giường Alys Leather Low Bed', desc: 'Giường đầu giường vát cong bọc da tự nhiên như dải lụa', col: 'Minimal Sleep', des: 'Gabriele & Oscar', ltd: false, mto: true },
       { id: 18, brandId: 9, catId: 12, name: 'Giường Ribbon Contemporary Bed', desc: 'Giường bọc vải dệt ribbon mềm mại điểm xuyết viền da', col: 'Ribbon Living', des: 'Vincent Van Duysen', ltd: false, mto: false },
       { id: 19, brandId: 1, catId: 13, name: 'Tủ đầu giường Fidelio Night Table', desc: 'Tủ đầu giường gỗ óc chó kết hợp da Pelle Frau tinh tế', col: 'Fidelio Collection', des: 'Roberto Lazzeroni', ltd: false, mto: false },
       { id: 20, brandId: 3, catId: 13, name: 'Ghế Bench Aston Ottoman Bed-end', desc: 'Ghế đôn cuối giường chân kim loại thanh thoát đệm lông vũ', col: 'Aston Night', des: 'Rodolfo Dordoni', ltd: false, mto: false },
 
-      // 21-25: Phòng làm việc (Bàn giám đốc & Ghế Executive)
+      // 21-25: Phòng làm việc
       { id: 21, brandId: 1, catId: 14, name: 'Bàn Giám Đốc CEO President Desk', desc: 'Bàn làm việc nguyên khối bọc da cao cấp tích hợp cổng sạc ẩn', col: 'Executive Suite', des: 'Lella & Massimo Vignelli', ltd: false, mto: true },
       { id: 22, brandId: 6, catId: 15, name: 'Ghế Executive LC7 Swivel Chair', desc: 'Ghế xoay văn phòng biểu tượng bọc da tròn khung chrome bóng', col: 'I Maestri Office', des: 'Charlotte Perriand', ltd: false, mto: false },
       { id: 23, brandId: 1, catId: 15, name: 'Ghế Tổng Thống Archibald Executive', desc: 'Ghế văn phòng lưng cao bọc da chần xếp nếp độc quyền', col: 'Archibald Family', des: 'Jean-Marie Massaud', ltd: true, mto: false },
       { id: 24, brandId: 9, catId: 14, name: 'Bàn làm việc Scriba Leather Desk', desc: 'Bàn làm việc gỗ sồi tích hợp ngăn kéo bọc da khâu tay', col: 'Scriba Studio', des: 'Patricia Urquiola', ltd: false, mto: false },
       { id: 25, brandId: 5, catId: 15, name: 'Ghế làm việc CH20 Elbow Chair', desc: 'Ghế làm việc tựa lưng uốn cong tự nhiên tối ưu tư thế ngồi', col: 'Nordic Office', des: 'Hans J. Wegner', ltd: false, mto: false },
 
-      // 26-30: Đèn chùm pha lê & Tác phẩm trang trí Limited
+      // 26-30: Đèn chùm pha lê & Tác phẩm Limited
       { id: 26, brandId: 4, catId: 16, name: 'Đèn chùm Pha Lê Constellation', desc: 'Đèn chùm pha lê điêu khắc tạo hình dải ngân hà lộng lẫy', col: 'Illumination Haute', des: 'Vanessa Mitrani', ltd: true, mto: true },
       { id: 27, brandId: 10, catId: 16, name: 'Đèn thả Nghệ Thuật Flos Skygarden', desc: 'Đèn vòm đúc thạch cao hoa văn Phục Hưng bên trong lồng kim loại', col: 'Sky Living', des: 'Marcel Wanders', ltd: false, mto: false },
       { id: 28, brandId: 8, catId: 7, name: 'Ghế bành Nepal Mongolian Fur', desc: 'Ghế bành bọc lông cừu Mông Cổ siêu êm chân kim loại tối giản', col: 'Artisan Objects', des: 'Paola Navone', ltd: true, mto: false },
@@ -249,7 +254,7 @@ async function seedMediumScale() {
       );
     }
 
-    // 4.2 Sinh 75 Biến thể thực tế cho 30 sản phẩm
+    // 4.2 Sinh 75 Biến thể
     const variantsData = [
       // Product 1: Sofa Chester Moon
       { id: 1, pId: 1, sku: 'SOF-CHEST-240-COGNAC', size: '240x105x75 cm', finish: 'Cognac Tan Leather', price: 185000000, lead: 0, status: 'active' },
@@ -344,7 +349,7 @@ async function seedMediumScale() {
       );
     }
 
-    // 4.3 Ánh xạ chất liệu cho các biến thể tiêu biểu (variant_materials)
+    // 4.3 Ánh xạ chất liệu (variant_materials)
     await conn.query(`
       INSERT INTO variant_materials (variant_id, material_id, portion, finish_note) VALUES
       (1, 1, 80.00, 'Bọc da bò nguyên tấm xử lý thủ công'),
@@ -360,6 +365,8 @@ async function seedMediumScale() {
       (14, 6, 75.00, 'Mặt đá cẩm thạch đen Nero Marquina'),
       (15, 3, 65.00, 'Gỗ óc chó Canaletto dầu tự nhiên'),
       (15, 10, 35.00, 'Dây đan cói giấy Đan Mạch gia công thủ công'),
+      (20, 3, 70.00, 'Khung gỗ tếch tự nhiên nguyên khối'),
+      (20, 10, 30.00, 'Mây đan mắt cáo tự nhiên vùng Đông Dương'),
       (22, 5, 60.00, 'Mặt đá Calacatta cẩm thạch bóng'),
       (22, 7, 40.00, 'Chân trụ nhôm đúc phủ sơn tĩnh điện'),
       (24, 1, 70.00, 'Da Volo cao cấp khâu chần múi'),
@@ -369,15 +376,13 @@ async function seedMediumScale() {
       (38, 1, 55.00, 'Mặt bàn và hộc bọc da Pelle Frau SC'),
       (38, 3, 45.00, 'Cánh và ngăn kéo gỗ óc chó tự nhiên'),
       (45, 12, 70.00, 'Pha lê Bohemia thổi thủ công từng quả cầu'),
-      (45, 8, 30.00, 'Thanh đỡ đồng thau nguyên khối'),
-      (52, 9, 65.00, 'Vải dệt boucle cao cấp của Ý'),
-      (52, 1, 35.00, 'Tấm kệ bệ đỡ bọc da bò yên ngựa')
+      (45, 8, 30.00, 'Thanh đỡ đồng thau nguyên khối')
     `);
 
     // ------------------------------------------------------------------------
-    // 5. ĐỊA ĐIỂM (SHOWROOMS, KHO TỔNG) & TỒN KHO & LIMITED EDITIONS
+    // 5. ĐỊA ĐIỂM (SHOWROOMS, KHO TỔNG) & KHỞI TẠO BẢN LIMITED EDITION
     // ------------------------------------------------------------------------
-    console.log('📍 [5/7] Đang nạp Địa điểm, Tồn kho đa chi nhánh và Bản Limited Edition...');
+    console.log('📍 [5/8] Nạp 6 Địa điểm và 110 Ấn bản đánh số Limited Edition...');
 
     // 5.1 6 Địa điểm
     await conn.query(`
@@ -390,205 +395,450 @@ async function seedMediumScale() {
       (6, 'Kho Cảng Hải Phòng', 'warehouse', 'Hải Phòng')
     `);
 
-    // 5.2 Tồn kho phong phú cho toàn bộ các biến thể tại các kho/showroom
-    for (const v of variantsData) {
-      // Showroom Hà Nội (ID 1)
-      await conn.query(
-        `INSERT INTO inventory (variant_id, location_id, qty_on_hand, qty_reserved, version) VALUES (?, 1, ?, 0, 0)`,
-        [v.id, v.id % 2 === 0 ? 1 : 2],
-      );
-      // Showroom TP.HCM (ID 2)
-      await conn.query(
-        `INSERT INTO inventory (variant_id, location_id, qty_on_hand, qty_reserved, version) VALUES (?, 2, ?, 0, 0)`,
-        [v.id, v.id % 3 === 0 ? 1 : 2],
-      );
-      // Kho Tổng Bắc Ninh (ID 4)
-      await conn.query(
-        `INSERT INTO inventory (variant_id, location_id, qty_on_hand, qty_reserved, version) VALUES (?, 4, ?, ?, 0)`,
-        [v.id, 8 + (v.id % 5), v.id % 3 === 0 ? 1 : 0],
-      );
-      // Kho Tổng Bình Dương (ID 5)
-      await conn.query(
-        `INSERT INTO inventory (variant_id, location_id, qty_on_hand, qty_reserved, version) VALUES (?, 5, ?, ?, 0)`,
-        [v.id, 10 + (v.id % 6), v.id % 4 === 0 ? 1 : 0],
-      );
-    }
+    // 5.2 Khởi tạo 110 Ấn bản đánh số cho toàn bộ các biến thể Limited Edition
+    // Các biến thể thuộc sản phẩm is_limited = true:
+    // P3: v7, v8 | P9: v20, v21 | P23: v41, v42 | P26: v45, v46 | P28: v49, v50 | P29: v51
+    const limitedVariantConfigs = [
+      { variantId: 7, prefix: 'TAPE-BRONZE', total: 10 },
+      { variantId: 8, prefix: 'TAPE-TITAN', total: 10 },
+      { variantId: 20, prefix: 'CAPITOL-TEAK', total: 10 },
+      { variantId: 21, prefix: 'CAPITOL-LEATH', total: 10 },
+      { variantId: 41, prefix: 'ARCH-NOIR', total: 10 },
+      { variantId: 42, prefix: 'ARCH-CAMEL', total: 10 },
+      { variantId: 45, prefix: 'CONSTEL-CRYSTAL', total: 10 },
+      { variantId: 46, prefix: 'CONSTEL-TITAN', total: 10 },
+      { variantId: 49, prefix: 'NEPAL-WHITE', total: 10 },
+      { variantId: 50, prefix: 'NEPAL-BLUE', total: 10 },
+      { variantId: 51, prefix: 'MAHJONG-KENZO', total: 10 },
+    ];
 
-    // 5.3 40 Bản Limited Edition với Serial Number rõ ràng
-    // Variant 7: Ghế bành Tape Cord (10 bản)
-    for (let i = 1; i <= 10; i++) {
-      const serial = `TAPE-LTD-${String(i).padStart(2, '0')}/10`;
-      const status = i <= 2 ? 'sold' : i === 3 ? 'reserved' : 'available';
-      await conn.query(
-        `INSERT INTO edition_units (variant_id, serial_no, status) VALUES (7, ?, ?)`,
-        [serial, status],
-      );
-    }
+    let editionUnitIdCounter = 1;
+    // Map lưu danh sách các bản limited khả dụng của từng biến thể để gắn vào order_items sau này
+    const availableEditionUnitsMap = new Map<number, Array<{ id: number; serialNo: string }>>();
 
-    // Variant 20: Ghế ăn Capitol Complex (10 bản)
-    for (let i = 1; i <= 10; i++) {
-      const serial = `CAPITOL-${String(i).padStart(2, '0')}/10`;
-      const status = i <= 3 ? 'sold' : i === 4 ? 'reserved' : 'available';
-      await conn.query(
-        `INSERT INTO edition_units (variant_id, serial_no, status) VALUES (20, ?, ?)`,
-        [serial, status],
-      );
-    }
-
-    // Variant 41: Ghế Tổng Thống Archibald (10 bản)
-    for (let i = 1; i <= 10; i++) {
-      const serial = `ARCH-EXEC-${String(i).padStart(2, '0')}/10`;
-      const status = i <= 2 ? 'sold' : 'available';
-      await conn.query(
-        `INSERT INTO edition_units (variant_id, serial_no, status) VALUES (41, ?, ?)`,
-        [serial, status],
-      );
-    }
-
-    // Variant 45: Đèn chùm Constellation (10 bản)
-    for (let i = 1; i <= 10; i++) {
-      const serial = `CONSTEL-${String(i).padStart(2, '0')}/10`;
-      const status = i === 1 ? 'sold' : 'available';
-      await conn.query(
-        `INSERT INTO edition_units (variant_id, serial_no, status) VALUES (45, ?, ?)`,
-        [serial, status],
-      );
+    for (const cfg of limitedVariantConfigs) {
+      const unitsList: Array<{ id: number; serialNo: string }> = [];
+      for (let i = 1; i <= cfg.total; i++) {
+        const serial = `${cfg.prefix}-${String(i).padStart(2, '0')}/${cfg.total}`;
+        const uId = editionUnitIdCounter++;
+        await conn.query(
+          `INSERT INTO edition_units (id, variant_id, order_item_id, serial_no, status) VALUES (?, ?, NULL, ?, 'available')`,
+          [uId, cfg.variantId, serial],
+        );
+        unitsList.push({ id: uId, serialNo: serial });
+      }
+      availableEditionUnitsMap.set(cfg.variantId, unitsList);
     }
 
     // ------------------------------------------------------------------------
-    // 6. ĐƠN HÀNG, CHI TIẾT ĐƠN, THANH TOÁN & ĐÁNH GIÁ (100 ĐƠN HÀNG)
+    // 6. ĐƠN HÀNG (ORDERS), CHI TIẾT (ORDER_ITEMS) & LIÊN KẾT SERIAL LIMITED
     // ------------------------------------------------------------------------
-    console.log('📦 [6/7] Đang sinh 100 Đơn hàng, Chi tiết đơn hàng, Thanh toán và Đánh giá...');
+    console.log('📦 [6/8] Sinh 120 Đơn hàng, Chi tiết đơn kèm Monogram và gắn kết Serial Edition...');
 
-    const statuses = ['delivered', 'delivered', 'delivered', 'shipped', 'in_production', 'confirmed', 'pending', 'cancelled'];
-    const salesIds = [2, 3, 4, 5, null]; // Một số đơn pending chưa có sales claim
+    // Trạng thái theo phân bổ chuẩn thực tế
+    const statusPool = [
+      'delivered', 'delivered', 'delivered', 'delivered', 'delivered', // 5/12 delivered (~42%)
+      'in_production', 'in_production',                                 // 2/12 in_production (~17%)
+      'confirmed', 'confirmed',                                         // 2/12 confirmed (~17%)
+      'pending', 'pending',                                             // 2/12 pending (~17%)
+      'shipped',                                                        // 1/12 shipped (~8%)
+    ];
+
+    const salesIds = [2, 3, 4, 5]; // 4 Sales reps
     let orderItemIdCounter = 1;
 
-    // Map lưu tổng chi tiêu thực tế của các đơn delivered cho từng khách hàng
-    const customerSpentMap: { [customerId: number]: number } = {};
+    // Cấu trúc theo dõi để nạp bảng inventory và payments
+    // Map: `${variantId}_${locationId}` -> { reserved: number }
+    const inventoryReservationMap = new Map<string, number>();
+    const customerDeliveredTotalMap = new Map<number, number>();
     for (let i = 1; i <= customerRawData.length; i++) {
-      customerSpentMap[i] = 0;
+      customerDeliveredTotalMap.set(i, 0);
     }
 
-    for (let oId = 1; oId <= 100; oId++) {
-      const customerId = ((oId - 1) % customerRawData.length) + 1;
-      const status = statuses[oId % statuses.length];
-      const salesId = status === 'pending' && oId % 3 === 0 ? null : salesIds[oId % (salesIds.length - 1)];
+    // Mảng lưu các bản ghi thanh toán và review sẽ nạp
+    const paymentsToInsert: any[] = [];
+    const reviewsToInsert: any[] = [];
 
-      // Ngày đặt trải từ tháng 01/2026 đến tháng 10/2026
-      const month = String(1 + (oId % 10)).padStart(2, '0');
+    // Danh sách 120 đơn hàng
+    for (let oId = 1; oId <= 120; oId++) {
+      // 1. Phân bổ khách hàng:
+      // - Customer 1 (user 6, customer.black@gmail.com): nhận nhiều đơn lớn để đạt Black Tier (>= 500M)
+      // - Customer 2 (user 7, customer.gold@gmail.com): nhận đơn để đạt Gold Tier (150M - 500M), bắt buộc có Variant 1 delivered
+      // - Customer 3 (user 8, customer.silver@gmail.com): nhận 1 đơn nhỏ (< 150M)
+      // - Customer 4 (user 9, customer.newbie@gmail.com): 0 đơn (tài khoản mới hoàn toàn)
+      // - Customer 5 (user 10, customer.loyal@gmail.com): nhận đơn Gold Tier
+      // - Các customer còn lại phân bổ vòng tròn
+      let customerId: number;
+      if (oId <= 6) {
+        customerId = 1; // 6 đơn lớn cho Black
+      } else if (oId <= 10) {
+        customerId = 2; // 4 đơn cho Gold
+      } else if (oId === 11) {
+        customerId = 3; // 1 đơn cho Silver
+      } else if (oId <= 14) {
+        customerId = 5; // 3 đơn cho Loyal
+      } else {
+        // Tránh Customer 4 để làm newbie
+        const cIdx = 4 + ((oId - 15) % (customerRawData.length - 4));
+        customerId = cIdx + 1;
+      }
+
+      // 2. Trạng thái đơn hàng:
+      let status: string;
+      if (oId === 120 || oId === 119 || oId === 118 || oId === 60 || oId === 90) {
+        status = 'cancelled';
+      } else if (oId <= 6 || (oId >= 7 && oId <= 9)) {
+        status = 'delivered'; // Các đơn nền tảng cho VIP là delivered
+      } else {
+        status = statusPool[oId % statusPool.length];
+      }
+
+      // 3. Nhân viên phụ trách (Sales):
+      // Một số đơn pending để null để tạo hàng đợi tiếp nhận (Unassigned Queue cho S02)
+      let salesUserId: number | null = null;
+      if (status === 'pending' && (oId % 2 === 0 || oId > 100)) {
+        salesUserId = null; // Unassigned queue!
+      } else {
+        salesUserId = salesIds[oId % salesIds.length];
+      }
+
+      // 4. Ngày đặt hàng (từ tháng 05/2026 đến cuối tháng 10/2026):
+      const monthOffset = (oId % 6); // 0 -> 5 (Tháng 5 đến tháng 10/2026)
+      const month = String(5 + monthOffset).padStart(2, '0');
       const day = String(1 + (oId % 28)).padStart(2, '0');
-      const hour = String(8 + (oId % 11)).padStart(2, '0');
-      const orderDate = `2026-${month}-${day} ${hour}:30:00`;
-      const deliveryDate = status === 'delivered' ? `2026-${month}-${String(Math.min(28, Number(day) + 5)).padStart(2, '0')}` : null;
+      const hour = String(8 + (oId % 12)).padStart(2, '0');
+      const minute = String(10 + (oId % 45)).padStart(2, '0');
+      const orderDate = `2026-${month}-${day} ${hour}:${minute}:00`;
 
-      // Chọn 1-3 mặt hàng cho mỗi đơn
-      const numItems = (oId % 3) + 1;
+      // Ngày giao hàng:
+      let deliveryDate: string | null = null;
+      if (status === 'delivered') {
+        const deliveryDay = Math.min(28, Number(day) + 5 + (oId % 5));
+        deliveryDate = `2026-${month}-${String(deliveryDay).padStart(2, '0')}`;
+      } else if (status === 'shipped') {
+        deliveryDate = '2026-11-05';
+      } else if (status === 'in_production') {
+        deliveryDate = '2026-11-28';
+      }
+
+      // 5. Chọn các mặt hàng cho đơn:
+      const numItems = (oId % 3) + 1; // 1 đến 3 món
       let subtotal = 0;
-      const itemsToInsert: any[] = [];
+      const orderItemsData: any[] = [];
 
       for (let itemIdx = 0; itemIdx < numItems; itemIdx++) {
-        const variant = variantsData[(oId * 3 + itemIdx) % variantsData.length];
+        const itemId = orderItemIdCounter++;
+        // Đảm bảo đơn của customer 2 (đơn 7) có chứa variant 1 (Sofa Chester Moon 240) để phục vụ test-admin và test-customer-extended
+        let variant: any;
+        if (oId === 7 && itemIdx === 0) {
+          variant = variantsData[0]; // Variant 1
+        } else {
+          const varIndex = (oId * 3 + itemIdx * 5) % variantsData.length;
+          variant = variantsData[varIndex];
+        }
+
         const qty = itemIdx === 0 && variant.price < 50000000 ? 2 : 1;
         const unitPrice = variant.price;
         subtotal += unitPrice * qty;
 
-        itemsToInsert.push({
-          id: orderItemIdCounter++,
+        // Vị trí kho xuất hàng: Showroom 1, 2, 3 hoặc Kho tổng 4, 5, 6
+        const locationId = ((oId + itemIdx) % 6) + 1;
+
+        // Cập nhật số lượng giữ chỗ cho inventory nếu đơn đang trong quá trình thực hiện
+        if (status === 'pending' || status === 'confirmed' || status === 'in_production' || status === 'shipped') {
+          const key = `${variant.id}_${locationId}`;
+          const currentReserved = inventoryReservationMap.get(key) || 0;
+          inventoryReservationMap.set(key, currentReserved + qty);
+        }
+
+        // Tùy biến Monogram nếu có thời gian sản xuất hoặc sản phẩm cao cấp
+        let customization: string | null = null;
+        if (variant.lead > 0 || oId % 3 === 0) {
+          const customer = customerRawData[customerId - 1];
+          customization = JSON.stringify({
+            monogram: `Gia đình ${customer.name} - 2026`,
+            note: 'Chế tác thủ công theo yêu cầu riêng, phủ nano chống trầy',
+            finish_preference: variant.finish,
+          });
+        }
+
+        orderItemsData.push({
+          id: itemId,
           variantId: variant.id,
-          locationId: 1 + (oId % 5),
+          locationId,
           qty,
           unitPrice,
-          customization: variant.lead > 0 ? JSON.stringify({ note: 'Gia công theo kích thước riêng, đính mác đồng khách hàng' }) : null,
+          customization,
           productId: variant.pId,
         });
       }
 
-      // Giảm giá giả định theo quy chuẩn (5-10% nếu đơn lớn)
-      const discountPct = oId % 5 === 0 ? 10 : oId % 2 === 0 ? 5 : 0;
+      // 6. Tính chiết khấu theo Hạng thành viên (Silver: 0%, Gold: 5%, Black: 10%):
+      let discountPct = 0;
+      if (customerId === 1) {
+        discountPct = 10; // Black
+      } else if (customerId === 2 || customerId === 5 || oId % 6 === 0) {
+        discountPct = 5;  // Gold
+      }
       const discount = Math.round((subtotal * discountPct) / 100);
       const total = subtotal - discount;
 
       const customer = customerRawData[customerId - 1];
+      const shippingAddress = `${customer.address}, ${customer.city}`;
+
+      // Insert Order
       await conn.query(
         `INSERT INTO orders (id, customer_id, sales_user_id, order_date, status, subtotal, discount, total, shipping_address, delivery_date)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [oId, customerId, salesId, orderDate, status, subtotal, discount, total, `${customer.address}, ${customer.city}`, deliveryDate],
+        [oId, customerId, salesUserId, orderDate, status, subtotal, discount, total, shippingAddress, deliveryDate],
       );
 
-      // Thêm chi tiết đơn hàng
-      for (let idx = 0; idx < itemsToInsert.length; idx++) {
-        const item = itemsToInsert[idx];
+      // Insert Order Items & Gắn Serial Limited Edition nếu có
+      for (const item of orderItemsData) {
         await conn.query(
           `INSERT INTO order_items (id, order_id, variant_id, location_id, quantity, unit_price, customization)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [item.id, oId, item.variantId, item.locationId, item.qty, item.unitPrice, item.customization],
         );
 
-        // Nếu đơn đã delivered, tạo review cho item đầu tiên (đạt ~40 reviews)
-        if (status === 'delivered' && idx === 0 && oId % 2 === 0) {
-          const rating = 4 + (oId % 2); // 4 hoặc 5 sao
-          const comments = [
-            'Sản phẩm vượt ngoài mong đợi, chất da mềm mại và đường chỉ may cực kỳ tỉ mỉ.',
-            'Đẳng cấp xứng tầm kiệt tác nghệ thuật, showroom giao hàng đúng hẹn và lắp đặt rất chu đáo.',
-            'Rất ưng ý với bàn đá Calacatta, màu vân tự nhiên rất sang trọng trong phòng ăn biệt thự.',
-            'Chất lượng gỗ óc chó ấm áp, hoàn thiện sắc sảo đến từng chi tiết nhỏ nhất.',
-            'Món đồ nội thất ưng ý nhất từ trước đến nay, cả gia đình đều rất hài lòng.',
-          ];
-          const comment = comments[oId % comments.length];
+        // NẾU LÀ BIẾN THỂ LIMITED EDITION: GẮN SERIAL BẢN KHẮC
+        const availableUnits = availableEditionUnitsMap.get(item.variantId);
+        if (availableUnits && availableUnits.length > 0 && status !== 'cancelled') {
+          // Lấy 1 bản serial khả dụng đầu tiên
+          const assignedUnit = availableUnits.shift()!;
+          const unitStatus = status === 'delivered' ? 'sold' : 'reserved';
           await conn.query(
-            `INSERT INTO reviews (customer_id, product_id, order_item_id, rating, comment, created_at)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [customerId, item.productId, item.id, rating, comment, `${orderDate.split(' ')[0]} 19:00:00`],
+            `UPDATE edition_units SET order_item_id = ?, status = ? WHERE id = ?`,
+            [item.id, unitStatus, assignedUnit.id],
           );
+        }
+
+        // TẠO ĐÁNH GIÁ (REVIEWS) NẾU ĐƠN DELIVERED
+        if (status === 'delivered' && (oId % 2 === 0 || oId === 7) && reviewsToInsert.length < 45) {
+          const ratings = [5, 5, 5, 4, 4, 3];
+          const rating = ratings[(oId + item.id) % ratings.length];
+          const reviewComments = [
+            'Sản phẩm vượt ngoài mong đợi, chất da mềm mại và đường chỉ may thủ công cực kỳ tinh xảo.',
+            'Đẳng cấp xứng tầm kiệt tác nghệ thuật, showroom giao hàng đúng hẹn và lắp đặt rất chu đáo.',
+            'Rất ưng ý với bàn đá Calacatta, màu vân tự nhiên rất sang trọng trong không gian phòng ăn biệt thự.',
+            'Chất lượng gỗ óc chó ấm áp, hoàn thiện sắc sảo đến từng chi tiết nhỏ nhất. Đáng tiền!',
+            'Món đồ nội thất ưng ý nhất từ trước đến nay, cả gia đình tôi đều rất hài lòng.',
+            'Thiết kế ấn tượng, công năng sử dụng rất thoải mái. Dịch vụ chăm sóc khách hàng của Sales rất chuyên nghiệp.',
+            'Giao hàng nhanh hơn dự kiến, đóng gói thùng gỗ cẩn thận, biển đồng khắc tên rất trang trọng.',
+          ];
+          const comment = reviewComments[(oId + item.id) % reviewComments.length];
+          reviewsToInsert.push({
+            customerId,
+            productId: item.productId,
+            orderItemId: item.id,
+            rating,
+            comment,
+            createdAt: `${orderDate.split(' ')[0]} 20:00:00`,
+          });
         }
       }
 
-      // Thanh toán (Payments)
+      // 7. LẬP LỊCH THANH TOÁN (PAYMENTS) TOÀN DIỆN CHO TỪNG TRẠNG THÁI:
       if (status === 'delivered') {
-        customerSpentMap[customerId] += total;
-        // Đơn đã giao: 100% đã trả đủ
-        await conn.query(
-          `INSERT INTO payments (order_id, type, amount, due_date, paid_at, method, status)
-           VALUES (?, 'final', ?, ?, ?, 'Chuyển khoản Ngân hàng', 'paid')`,
-          [oId, total, orderDate.split(' ')[0], orderDate],
-        );
-      } else if (status === 'in_production' || status === 'confirmed') {
-        // Đã cọc 50%, còn 50% chờ đến hạn
-        const half = Math.round(total / 2);
-        await conn.query(
-          `INSERT INTO payments (order_id, type, amount, due_date, paid_at, method, status)
-           VALUES (?, 'deposit', ?, ?, ?, 'Thẻ Tín Dụng Visa Signature', 'paid')`,
-          [oId, half, orderDate.split(' ')[0], orderDate],
-        );
-        await conn.query(
-          `INSERT INTO payments (order_id, type, amount, due_date, paid_at, method, status)
-           VALUES (?, 'final', ?, '2026-11-30', NULL, 'Chuyển khoản', 'pending')`,
-          [oId, total - half],
-        );
+        // Đơn hoàn thành: 100% đã thanh toán tất toán
+        customerDeliveredTotalMap.set(customerId, (customerDeliveredTotalMap.get(customerId) || 0) + total);
+        paymentsToInsert.push({
+          orderId: oId,
+          type: 'final',
+          amount: total,
+          dueDate: orderDate.split(' ')[0],
+          paidAt: orderDate,
+          method: oId % 2 === 0 ? 'Chuyển khoản Ngân hàng' : 'Thẻ Tín Dụng Visa Signature',
+          status: 'paid',
+        });
+      } else if (status === 'shipped') {
+        // Đơn đang giao: Đã cọc 50%, còn 50% thanh toán khi nhận hàng (pending)
+        const depositAmount = Math.round(total * 0.5);
+        paymentsToInsert.push({
+          orderId: oId,
+          type: 'deposit',
+          amount: depositAmount,
+          dueDate: orderDate.split(' ')[0],
+          paidAt: orderDate,
+          method: 'Thẻ Visa Signature',
+          status: 'paid',
+        });
+        paymentsToInsert.push({
+          orderId: oId,
+          type: 'final',
+          amount: total - depositAmount,
+          dueDate: '2026-11-05',
+          paidAt: null,
+          method: 'Chuyển khoản',
+          status: 'pending',
+        });
+      } else if (status === 'in_production') {
+        // Đơn sản xuất: Cọc 50% đã thanh toán, đợt cuối pending vào cuối tháng 11
+        if (oId % 3 === 0) {
+          // Chia làm 3 đợt: cọc 30%, đợt 2: 40%, đợt 3: 30% (Test lịch thanh toán trả góp)
+          const p1 = Math.round(total * 0.3);
+          const p2 = Math.round(total * 0.4);
+          const p3 = total - p1 - p2;
+          paymentsToInsert.push({
+            orderId: oId,
+            type: 'deposit',
+            amount: p1,
+            dueDate: orderDate.split(' ')[0],
+            paidAt: orderDate,
+            method: 'Chuyển khoản TCB',
+            status: 'paid',
+          });
+          paymentsToInsert.push({
+            orderId: oId,
+            type: 'installment',
+            amount: p2,
+            dueDate: '2026-11-15',
+            paidAt: null,
+            method: 'Chuyển khoản',
+            status: 'pending',
+          });
+          paymentsToInsert.push({
+            orderId: oId,
+            type: 'final',
+            amount: p3,
+            dueDate: '2026-11-30',
+            paidAt: null,
+            method: 'Chuyển khoản',
+            status: 'pending',
+          });
+        } else {
+          const depositAmount = Math.round(total * 0.5);
+          paymentsToInsert.push({
+            orderId: oId,
+            type: 'deposit',
+            amount: depositAmount,
+            dueDate: orderDate.split(' ')[0],
+            paidAt: orderDate,
+            method: 'Chuyển khoản VCB',
+            status: 'paid',
+          });
+          paymentsToInsert.push({
+            orderId: oId,
+            type: 'final',
+            amount: total - depositAmount,
+            dueDate: '2026-11-28',
+            paidAt: null,
+            method: 'Chuyển khoản',
+            status: 'pending',
+          });
+        }
+      } else if (status === 'confirmed') {
+        // Đơn xác nhận: Đã đặt cọc 30-50%
+        const depositAmount = Math.round(total * 0.4);
+        paymentsToInsert.push({
+          orderId: oId,
+          type: 'deposit',
+          amount: depositAmount,
+          dueDate: orderDate.split(' ')[0],
+          paidAt: orderDate,
+          method: 'Thẻ MasterCard',
+          status: 'paid',
+        });
+        paymentsToInsert.push({
+          orderId: oId,
+          type: 'final',
+          amount: total - depositAmount,
+          dueDate: '2026-12-10',
+          paidAt: null,
+          method: 'Chuyển khoản',
+          status: 'pending',
+        });
       } else if (status === 'pending') {
-        // Đơn pending: khoản cọc đang chờ hoặc quá hạn
-        const payStatus = oId % 4 === 0 ? 'overdue' : 'pending';
+        // Đơn chờ duyệt: Cọc đang chờ thanh toán
+        // Phân loại: Một số đơn tạo trước 2026-10-25 bị quá hạn (overdue) để test màn hình Công nợ S07
+        const isOverdue = oId % 3 === 0;
+        paymentsToInsert.push({
+          orderId: oId,
+          type: 'deposit',
+          amount: Math.round(total * 0.3),
+          dueDate: isOverdue ? '2026-10-20' : '2026-11-10',
+          paidAt: null,
+          method: 'Chuyển khoản',
+          status: isOverdue ? 'overdue' : 'pending',
+        });
+      } else if (status === 'cancelled') {
+        // Đơn huỷ: Tiền cọc đã hoàn trả
+        paymentsToInsert.push({
+          orderId: oId,
+          type: 'deposit',
+          amount: Math.round(total * 0.3),
+          dueDate: orderDate.split(' ')[0],
+          paidAt: orderDate,
+          method: 'Chuyển khoản hoàn tiền',
+          status: 'refunded',
+        });
+      }
+    }
+
+    // Nạp toàn bộ Payments vào DB
+    for (const p of paymentsToInsert) {
+      await conn.query(
+        `INSERT INTO payments (order_id, type, amount, due_date, paid_at, method, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [p.orderId, p.type, p.amount, p.dueDate, p.paidAt, p.method, p.status],
+      );
+    }
+
+    // Nạp toàn bộ Reviews vào DB
+    for (const r of reviewsToInsert) {
+      await conn.query(
+        `INSERT INTO reviews (customer_id, product_id, order_item_id, rating, comment, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [r.customerId, r.productId, r.orderItemId, r.rating, r.comment, r.createdAt],
+      );
+    }
+
+    // ------------------------------------------------------------------------
+    // 7. ĐỒNG BỘ TỒN KHO THỰC TẾ TRÊN 6 ĐỊA ĐIỂM (SHOWROOMS & KHO TỔNG)
+    // ------------------------------------------------------------------------
+    console.log('📊 [7/8] Đồng bộ Tồn kho chính xác (qty_reserved & qty_on_hand) tại 6 kho/showroom...');
+
+    for (const v of variantsData) {
+      for (let locId = 1; locId <= 6; locId++) {
+        const key = `${v.id}_${locId}`;
+        const reserved = inventoryReservationMap.get(key) || 0;
+
+        // Xác định lượng tồn khả dụng (available buffer)
+        // Showrooms (1, 2, 3) có tồn trưng bày nhỏ (1-4 món)
+        // Kho tổng (4, 5, 6) có tồn lưu kho lớn (8-25 món)
+        let buffer = 0;
+        if (locId <= 3) {
+          // Showrooms: tạo một số biến thể có mức tồn thấp (1 hoặc 0 khả dụng) để demo S06 Low Stock Restock
+          if ((v.id === 1 && locId === 1) || (v.id === 7 && locId === 2) || (v.id === 15 && locId === 3) || (v.id === 24 && locId === 1)) {
+            buffer = 1; // Sắp hết hàng! (total_available <= 2)
+          } else {
+            buffer = 2 + (v.id % 3);
+          }
+        } else {
+          // Warehouses: tồn dồi dào
+          buffer = 8 + (v.id % 7) * 2;
+        }
+
+        const onHand = reserved + buffer;
         await conn.query(
-          `INSERT INTO payments (order_id, type, amount, due_date, paid_at, method, status)
-           VALUES (?, 'deposit', ?, '2026-10-25', NULL, 'Chuyển khoản', ?)`,
-          [oId, Math.round(total * 0.3), payStatus],
+          `INSERT INTO inventory (variant_id, location_id, qty_on_hand, qty_reserved, version) VALUES (?, ?, ?, ?, 0)`,
+          [v.id, locId, onHand, reserved],
         );
       }
     }
 
     // ------------------------------------------------------------------------
-    // 7. CẬP NHẬT TỔNG CHI TIÊU & TÍNH TOÁN LẠI HẠNG THÀNH VIÊN CHO CUSTOMERS
+    // 8. TÍNH TOÁN LẠI TOTAL_SPENT & TỰ ĐỘNG NÂNG HẠNG THÀNH VIÊN
     // ------------------------------------------------------------------------
-    console.log('💎 [7/7] Đang đồng bộ total_spent và tự động nâng hạng thành viên (Silver/Gold/Black)...');
+    console.log('💎 [8/8] Cập nhật tổng chi tiêu và tự động nâng hạng thành viên (Silver/Gold/Black)...');
 
     for (let cId = 1; cId <= customerRawData.length; cId++) {
-      const spent = customerSpentMap[cId] || 0;
-      let tierId = 1; // Silver: < 150tr
+      const spent = customerDeliveredTotalMap.get(cId) || 0;
+      let tierId = 1; // Silver
       if (spent >= 500000000) {
-        tierId = 3; // Black: >= 500tr
+        tierId = 3;   // Black (>= 500tr)
       } else if (spent >= 150000000) {
-        tierId = 2; // Gold: >= 150tr
+        tierId = 2;   // Gold (>= 150tr)
       }
 
       await conn.query(
@@ -601,23 +851,23 @@ async function seedMediumScale() {
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log('\n=====================================================================');
-    console.log(`🎉 NẠP DỮ LIỆU TẦM TRUNG THÀNH CÔNG TRONG ${duration} GIÂY!`);
+    console.log(`🎉 NẠP DỮ LIỆU TẦM TRUNG THÀNH CÔNG XUẤT SẮC TRONG ${duration} GIÂY!`);
     console.log('=====================================================================');
-    console.log('📊 Thống kê dữ liệu đã sinh:');
+    console.log('📊 Thống kê chi tiết dữ liệu đã khởi tạo:');
     console.log('  - Users             : 40 (1 Admin, 4 Sales, 35 Customers)');
-    console.log('  - Membership Tiers  : 3 (Silver, Gold, Black)');
-    console.log('  - Brands & Cats     : 10 Thương hiệu xa xỉ, 16 Danh mục đa cấp');
-    console.log('  - Materials         : 12 Chất liệu cao cấp');
-    console.log('  - Products & Var    : 30 Sản phẩm tiêu biểu, 75 Biến thể');
-    console.log('  - Locations & Inv   : 6 Địa điểm (3 Showrooms, 3 Kho), ~300 Bản ghi tồn kho');
-    console.log('  - Limited Editions  : 40 Chiếc Limited Edition có số serial');
-    console.log('  - Orders & Items    : 100 Đơn hàng, ~220 Chi tiết đơn hàng');
-    console.log('  - Payments & Reviews: ~140 Đợt thanh toán, ~40 Đánh giá khách hàng');
-    console.log('  - Mật khẩu mặc định : "password123" cho tất cả các tài khoản');
+    console.log('  - Membership Tiers  : 3 Hạng (Silver, Gold, Black)');
+    console.log('  - Brands & Cats     : 10 Thương hiệu xa xỉ, 16 Danh mục đa tầng');
+    console.log('  - Materials & Prod  : 12 Chất liệu cao cấp, 30 Sản phẩm tiêu biểu, 75 Biến thể');
+    console.log('  - Locations & Inv   : 6 Địa điểm (3 Showrooms, 3 Kho), 450 Bản ghi tồn kho chuẩn xác');
+    console.log(`  - Limited Editions  : 110 Bản đánh số (${limitedVariantConfigs.length} SKUs), gắn chuẩn Order Items`);
+    console.log(`  - Orders & Items    : 120 Đơn hàng, ${orderItemIdCounter - 1} Dòng đơn hàng kèm Monogram`);
+    console.log(`  - Payments & Reviews: ${paymentsToInsert.length} Lịch thanh toán (đủ trạng thái), ${reviewsToInsert.length} Đánh giá`);
+    console.log('  - Tài khoản Demo    : admin@luxury.com / sales.nam@luxury.com / customer.black@gmail.com');
+    console.log('  - Mật khẩu mặc định : "password123" cho tất cả người dùng');
     console.log('=====================================================================\n');
   } catch (err: any) {
     await conn.query('SET FOREIGN_KEY_CHECKS = 1');
-    console.error('❌ Lỗi trong quá trình nạp dữ liệu:', err);
+    console.error('❌ Lỗi trong quá trình nạp dữ liệu seed:', err);
     process.exit(1);
   } finally {
     conn.release();
