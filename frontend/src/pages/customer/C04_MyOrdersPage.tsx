@@ -10,6 +10,7 @@
 // ============================================================================
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/useAuth';
 import {
   getMyOrdersApi,
@@ -30,6 +31,12 @@ import { useToast } from '../../context/ToastContext';
 export const C04_MyOrdersPage: React.FC = () => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true, state: {} });
+  };
 
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -135,7 +142,7 @@ export const C04_MyOrdersPage: React.FC = () => {
     <div className="w-full pt-28 pb-20">
       <div className="max-w-[1400px] mx-auto px-6 md:px-12">
         {/* Customer Profile Banner */}
-        <CustomerProfileHeader user={user} onLogout={logout} />
+        <CustomerProfileHeader user={user} onLogout={handleLogout} />
 
         {/* Status Filter Tabs */}
         <OrderStatusFilter

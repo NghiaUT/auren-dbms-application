@@ -6,13 +6,19 @@
 // ============================================================================
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Inbox, Boxes, AlertTriangle, CreditCard, LogOut, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../../auth/useAuth';
 
 export const SalesHeaderNav: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true, state: {} });
+  };
 
   const navItems = [
     { label: 'Tổng quan', path: '/sales', icon: LayoutDashboard },
@@ -61,7 +67,7 @@ export const SalesHeaderNav: React.FC = () => {
             </Link>
 
             <button
-              onClick={() => logout()}
+              onClick={handleLogout}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-[#D2C8BA] rounded-[2px] text-xs font-semibold text-[#A93226] hover:bg-[#FFEBEE] transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />

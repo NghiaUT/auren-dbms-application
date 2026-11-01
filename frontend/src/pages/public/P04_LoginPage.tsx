@@ -16,6 +16,11 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../auth/useAuth';
+import {
+  extractRedirectTarget,
+  getDefaultRouteForRole,
+  isRouteAllowedForRole,
+} from '../../auth/authUtils';
 import type { LoginRequest, UserRole } from '../../types';
 
 export interface P04_LoginPageProps {
@@ -35,22 +40,18 @@ export const P04_LoginPage: React.FC<P04_LoginPageProps> = ({ defaultEmail = '' 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Đường dẫn quay lại nếu bị chặn bởi ProtectedRoute
-  const fromLocation = (location.state as { from?: { pathname: string } })?.from?.pathname;
-
-  // Điều hướng người dùng theo role
+  // Điều hướng người dùng theo role & kiểm tra quyền hạn của trang trước đó
   const redirectAfterLogin = (role: UserRole) => {
-    if (fromLocation && fromLocation !== '/login' && fromLocation !== '/register') {
-      navigate(fromLocation, { replace: true });
+    const targetPath = extractRedirectTarget(location.state, location.search);
+
+    if (targetPath && isRouteAllowedForRole(targetPath, role)) {
+      navigate(targetPath, { replace: true });
       return;
     }
-    if (role === 'admin') {
-      navigate('/admin', { replace: true });
-    } else if (role === 'sales') {
-      navigate('/sales', { replace: true });
-    } else {
-      navigate('/account/orders', { replace: true });
-    }
+
+    // Nếu không có URL hợp lệ hoặc role không được phép truy cập targetPath,
+    // điều hướng về bảng điều khiển mặc định theo vai trò (ngăn chặn tuyệt đối 403)
+    navigate(getDefaultRouteForRole(role), { replace: true });
   };
 
   // Nếu đã đăng nhập sẵn thì chuyển trang ngay

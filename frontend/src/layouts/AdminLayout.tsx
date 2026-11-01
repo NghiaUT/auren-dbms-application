@@ -7,7 +7,7 @@
 // ============================================================================
 
 import React from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -29,6 +29,12 @@ interface AdminLayoutProps {
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true, state: {} });
+  };
 
   const navSections = [
     {
@@ -109,7 +115,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </Link> */}
 
                 <button
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-semibold text-[#BA1A1A] hover:bg-red-50 border border-transparent hover:border-red-200 rounded-[2px] transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />

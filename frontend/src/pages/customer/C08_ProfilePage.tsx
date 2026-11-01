@@ -93,7 +93,7 @@ export const C08_ProfilePage: React.FC = () => {
   const handleLogout = async () => {
     if (window.confirm('Quý khách có chắc chắn muốn đăng xuất khỏi phiên hiện tại?')) {
       await logout();
-      navigate('/login');
+      navigate('/login', { replace: true, state: {} });
     }
   };
 
