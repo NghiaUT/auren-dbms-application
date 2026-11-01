@@ -53,10 +53,7 @@ const DEFAULT_ARCHITECTURAL_IMAGE =
 /**
  * [FR2, FR3] Tìm kiếm, lọc và phân trang danh sách sản phẩm
  */
-export async function getProducts(
-  params: catalogRepo.ProductFilterParams,
-  user?: AuthUser,
-) {
+export async function getProducts(params: catalogRepo.ProductFilterParams, user?: AuthUser) {
   // Chỉ tài khoản có vai trò 'admin' mới được phép bật includeInactive
   const includeInactive = user?.role === 'admin' ? !!params.includeInactive : false;
 
@@ -107,11 +104,7 @@ export async function getProducts(
 /**
  * [FR4] Lấy thông tin chi tiết đầy đủ của sản phẩm, biến thể, chất liệu và tồn kho
  */
-export async function getProductDetail(
-  id: number,
-  user?: AuthUser,
-  reviewLimit = 10,
-) {
+export async function getProductDetail(id: number, user?: AuthUser, reviewLimit = 10) {
   const includeInactive = user?.role === 'admin';
   const isGuest = !user; // ROLE_MATRIX: Guest chỉ thấy cờ inStock, không thấy số lượng chi tiết
 
@@ -198,7 +191,7 @@ export async function getProductDetail(
   });
 
   // Ghép nối đánh giá
-  const reviews = reviewRows.map((r) => ({
+  const reviewItems = reviewRows.map((r) => ({
     id: r.id,
     rating: Number(r.rating),
     comment: r.comment,
@@ -225,11 +218,13 @@ export async function getProductDetail(
       name: product.categoryName,
       slug: product.categorySlug,
     },
-    avgRating: product.avgRating !== null ? Number(product.avgRating) : null,
-    reviewCount: Number(product.reviewCount) || 0,
     imageUrl: ARCHITECTURAL_IMAGE_MAP[product.id] || DEFAULT_ARCHITECTURAL_IMAGE,
     variants,
-    reviews,
+    reviews: {
+      avgRating: product.avgRating !== null ? Number(product.avgRating) : null,
+      totalCount: Number(product.reviewCount) || 0,
+      items: reviewItems,
+    },
   };
 }
 
