@@ -74,8 +74,8 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ bagCount }) => {
     <>
       <header
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
-            ? 'bg-[#FCF9F3]/95 backdrop-blur-md border-b border-[#D2C8BA]/50 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.03)]'
-            : 'bg-[#FCF9F3]/80 backdrop-blur-sm border-b border-[#D2C8BA]/25 py-5'
+          ? 'bg-[#FCF9F3]/95 backdrop-blur-md border-b border-[#D2C8BA]/50 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.03)]'
+          : 'bg-[#FCF9F3]/80 backdrop-blur-sm border-b border-[#D2C8BA]/25 py-5'
           }`}
       >
         <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 flex items-center justify-between">
@@ -115,7 +115,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ bagCount }) => {
           {/* Actions & Auth */}
           <div className="flex items-center gap-4 sm:gap-6">
             {/* Bag Icon */}
-            {user && user.role === "customer" && (<Link
+            {(!user || !['admin', 'sales'].includes(user.role)) && (<Link
               to="/cart"
               className="relative text-[#372A22] hover:text-[#0D0703] transition-colors p-1"
               aria-label="Giỏ hàng"
