@@ -28,12 +28,24 @@ export const C08_ProfilePage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      setFullName(user.fullName || '');
-      setPhone(user.customer?.phone || '');
-      setAddress(user.customer?.address || '');
-      setCity(user.customer?.city || '');
-    }
+    const loadUser = async () => {
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setFullName(user.fullName || '');
+    setPhone(user.customer?.phone || '');
+    setAddress(user.customer?.address || '');
+    setCity(user.customer?.city || '');
   }, [user]);
 
   const currentSpent = user?.customer?.totalSpent || 0;
