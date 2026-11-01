@@ -29,10 +29,12 @@ import {
 } from '../../api/admin.api';
 import type { AdminVariant, CatalogMeta, CreateVariantInput } from '../../types';
 import { formatVND } from '../../utils/formatVND';
+import { useToast } from '../../context/ToastContext';
 
 export const A06_VariantManagementPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const productId = Number(id);
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [variants, setVariants] = useState<AdminVariant[]>([]);
@@ -173,17 +175,23 @@ export const A06_VariantManagementPage: React.FC = () => {
 
       if (editingVariant) {
         await updateVariantApi(editingVariant.id, formData);
-        setSuccessMsg(`Cập nhật biến thể "${editingVariant.sku}" thành công!`);
+        const msg = `Cập nhật biến thể "${editingVariant.sku}" thành công!`;
+        setSuccessMsg(msg);
+        toast.success(msg);
       } else {
         await createVariantApi(productId, formData);
-        setSuccessMsg(`Đã tạo biến thể mới cho sản phẩm #${productId}!`);
+        const msg = `Đã tạo biến thể mới cho sản phẩm #${productId}!`;
+        setSuccessMsg(msg);
+        toast.success(msg);
       }
 
       setModalOpen(false);
       fetchVariants();
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Có lỗi khi lưu thông tin biến thể');
+      const msg = err?.response?.data?.message || 'Có lỗi khi lưu thông tin biến thể';
+      setError(msg);
+      toast.error(err, msg);
     } finally {
       setSubmitting(false);
     }
@@ -198,12 +206,15 @@ export const A06_VariantManagementPage: React.FC = () => {
     try {
       setError(null);
       await deleteVariantApi(vId);
-      setSuccessMsg(`Đã xoá thành công biến thể "${sku}"!`);
+      const msg = `Đã xoá thành công biến thể "${sku}"!`;
+      setSuccessMsg(msg);
+      toast.success(msg);
       fetchVariants();
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Không thể xoá biến thể này';
       setError(`[Xung đột dữ liệu 409] ${msg}`);
+      toast.error(err, `[Xung đột dữ liệu 409] ${msg}`);
     }
   };
 

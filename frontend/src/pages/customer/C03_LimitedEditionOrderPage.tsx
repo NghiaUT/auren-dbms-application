@@ -13,11 +13,13 @@ import { useAuth } from '../../auth/useAuth';
 import { getLimitedVariantUnitsApi, type VariantEditionData } from '../../api/limited.api';
 import { createOrderApi } from '../../api/order.api';
 import { formatVND } from '../../utils/formatVND';
+import { useToast } from '../../context/ToastContext';
 
 export const C03_LimitedEditionOrderPage: React.FC = () => {
   const { variantId } = useParams<{ variantId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -80,12 +82,12 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
     }
 
     if (!shippingAddress.trim() || shippingAddress.trim().length < 5) {
-      alert('Vui lòng cung cấp địa chỉ dinh thự nhận bàn giao tác phẩm (tối thiểu 5 ký tự).');
+      toast.warning('Vui lòng cung cấp địa chỉ dinh thự nhận bàn giao tác phẩm (tối thiểu 5 ký tự).');
       return;
     }
 
     if (!data?.edition.nextAvailableSerial) {
-      alert('Tác phẩm hiện đã hết ấn bản khả dụng.');
+      toast.error('Tác phẩm hiện đã hết ấn bản khả dụng.');
       return;
     }
 
@@ -119,8 +121,9 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
         // Bắt lỗi xung đột đồng thời khi có người mua trước
         setSoldOutConflictModal(true);
         fetchData(); // Làm mới lại danh sách serial
+        toast.error(err, 'Ấn bản vừa có sự thay đổi do Patron khác đã hoàn tất giao dịch trước.');
       } else {
-        alert(err.response?.data?.error?.message || 'Có lỗi xảy ra trong quá trình niêm phong tác phẩm.');
+        toast.error(err, 'Có lỗi xảy ra trong quá trình niêm phong tác phẩm.');
       }
     } finally {
       setSubmitting(false);

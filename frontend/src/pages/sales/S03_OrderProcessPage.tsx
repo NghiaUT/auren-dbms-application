@@ -22,10 +22,12 @@ import {
   OrderItemsTable,
   OrderCustomerSpatialCard,
 } from '../../components/sales/order-process';
+import { useToast } from '../../context/ToastContext';
 
 export const S03_OrderProcessPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const orderId = Number(id);
+  const { toast } = useToast();
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,15 +62,18 @@ export const S03_OrderProcessPage: React.FC = () => {
         status: targetStatus,
         deliveryDate,
       });
+      const successText = `Đã cập nhật trạng thái đơn sang "${targetStatus}" thành công!`;
       setFeedback({
-        text: `Đã cập nhật trạng thái đơn sang "${targetStatus}" thành công!`,
+        text: successText,
         type: 'success',
       });
+      toast.success(successText);
       await fetchOrderDetail();
     } catch (err: any) {
       const msg =
         err.response?.data?.error?.message || 'Không thể chuyển đổi trạng thái đơn hàng này.';
       setFeedback({ text: msg, type: 'error' });
+      toast.error(err, 'Không thể chuyển đổi trạng thái đơn hàng này.');
     } finally {
       setActionLoading(false);
     }
@@ -79,15 +84,18 @@ export const S03_OrderProcessPage: React.FC = () => {
       setActionLoading(true);
       setFeedback(null);
       await cancelOrderBySalesApi(orderId, cancelReason);
+      const successText = 'Đơn hàng đã được huỷ bỏ và hoàn trả tồn kho thành công.';
       setFeedback({
-        text: 'Đơn hàng đã được huỷ bỏ và hoàn trả tồn kho thành công.',
+        text: successText,
         type: 'success',
       });
+      toast.success(successText);
       setShowCancelModal(false);
       await fetchOrderDetail();
     } catch (err: any) {
       const msg = err.response?.data?.error?.message || 'Không thể huỷ đơn hàng này.';
       setFeedback({ text: msg, type: 'error' });
+      toast.error(err, 'Không thể huỷ đơn hàng này.');
     } finally {
       setActionLoading(false);
     }

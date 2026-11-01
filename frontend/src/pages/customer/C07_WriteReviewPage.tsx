@@ -18,6 +18,7 @@ import {
 import type { OrderDetail, OrderItemDetail } from '../../types';
 import { formatVND } from '../../utils/formatVND';
 import { formatDate } from '../../utils/formatDate';
+import { useToast } from '../../context/ToastContext';
 
 const RATING_LABELS: Record<number, string> = {
   1: '1 sao: Chưa đáp ứng kỳ vọng thẩm mỹ',
@@ -30,6 +31,7 @@ const RATING_LABELS: Record<number, string> = {
 export const C07_WriteReviewPage: React.FC = () => {
   const { id: orderIdStr, itemId: itemIdStr } = useParams<{ id: string; itemId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const orderId = parseInt(orderIdStr || '0', 10);
   const itemId = parseInt(itemIdStr || '0', 10);
@@ -100,10 +102,14 @@ export const C07_WriteReviewPage: React.FC = () => {
       });
 
       setExistingReview(created);
-      setSuccessMessage('Cảm nhận nghệ thuật của quý khách đã được ghi nhận và hiển thị công khai.');
+      const msg = 'Cảm nhận nghệ thuật của quý khách đã được ghi nhận và hiển thị công khai.';
+      setSuccessMessage(msg);
+      toast.success(msg);
     } catch (err: any) {
       console.error('Lỗi khi gửi đánh giá:', err);
-      setErrorMessage(err.response?.data?.error?.message || 'Không thể gửi bài đánh giá lúc này.');
+      const errMsg = err.response?.data?.error?.message || 'Không thể gửi bài đánh giá lúc này.';
+      setErrorMessage(errMsg);
+      toast.error(err, errMsg);
     } finally {
       setSubmitting(false);
     }
@@ -123,10 +129,14 @@ export const C07_WriteReviewPage: React.FC = () => {
       setExistingReview(null);
       setComment('');
       setRating(5);
-      setSuccessMessage('Đã gỡ bỏ bài đánh giá thành công.');
+      const msg = 'Đã gỡ bỏ bài đánh giá thành công.';
+      setSuccessMessage(msg);
+      toast.success(msg);
     } catch (err: any) {
       console.error('Lỗi khi xoá bài đánh giá:', err);
-      setErrorMessage(err.response?.data?.error?.message || 'Không thể gỡ bỏ bài đánh giá.');
+      const errMsg = err.response?.data?.error?.message || 'Không thể gỡ bỏ bài đánh giá.';
+      setErrorMessage(errMsg);
+      toast.error(err, errMsg);
     } finally {
       setSubmitting(false);
     }

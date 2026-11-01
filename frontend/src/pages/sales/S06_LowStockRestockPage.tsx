@@ -11,9 +11,11 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { AlertTriangle, Plus, RefreshCw, CheckCircle2, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { SalesHeaderNav } from '../../components/layout';
 import { getSalesLowStockApi, restockInventoryApi } from '../../api/sales.api';
+import { useToast } from '../../context/ToastContext';
 import type { InventoryItem } from '../../types';
 
 export const S06_LowStockRestockPage: React.FC = () => {
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const prefillVariantId = searchParams.get('variantId');
   const prefillLocationId = searchParams.get('locationId');
@@ -104,22 +106,27 @@ export const S06_LowStockRestockPage: React.FC = () => {
         version: selectedItem.version,
       });
 
+      const successMsg = `Đã nhập thêm +${restockQty} chiếc cho SKU ${selectedItem.sku} thành công! Phiên bản đã được cập nhật.`;
       setFeedback({
-        text: `Đã nhập thêm +${restockQty} chiếc cho SKU ${selectedItem.sku} thành công! Phiên bản đã được cập nhật.`,
+        text: successMsg,
         type: 'success',
       });
+      toast.success(successMsg);
       setShowRestockModal(false);
       await fetchLowStock();
     } catch (err: any) {
       if (err.response?.data?.error?.code === 'VERSION_CONFLICT') {
+        const conflictMsg = 'Xung đột phiên bản (VERSION_CONFLICT): Tồn kho của tác phẩm này vừa được cập nhật bởi một phiên làm việc khác. Dữ liệu đã được làm mới, vui lòng nhập lại!';
         setFeedback({
-          text: 'Xung đột phiên bản (VERSION_CONFLICT): Tồn kho của tác phẩm này vừa được cập nhật bởi một phiên làm việc khác. Dữ liệu đã được làm mới, vui lòng nhập lại!',
+          text: conflictMsg,
           type: 'error',
         });
+        toast.error(err, conflictMsg);
         await fetchLowStock();
       } else {
         const msg = err.response?.data?.error?.message || 'Không thể nhập hàng.';
         setFeedback({ text: msg, type: 'error' });
+        toast.error(err, msg);
       }
     } finally {
       setRestockLoading(false);

@@ -28,8 +28,10 @@ import {
   deleteReferenceResourceApi,
 } from '../../api/admin.api';
 import type { CatalogMeta, Category, Brand, Material } from '../../types';
+import { useToast } from '../../context/ToastContext';
 
 export const A07_CatalogReferencePage: React.FC = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'categories' | 'brands' | 'materials'>('categories');
   const [loading, setLoading] = useState<boolean>(true);
   const [meta, setMeta] = useState<CatalogMeta | null>(null);
@@ -130,17 +132,23 @@ export const A07_CatalogReferencePage: React.FC = () => {
 
       if (editingItem) {
         await updateReferenceResourceApi(activeTab, editingItem.id, payload);
-        setSuccessMsg(`Cập nhật ${activeTab} #${editingItem.id} thành công!`);
+        const msg = `Cập nhật ${activeTab} #${editingItem.id} thành công!`;
+        setSuccessMsg(msg);
+        toast.success(msg);
       } else {
         await createReferenceResourceApi(activeTab, payload);
-        setSuccessMsg(`Thêm mới vào ${activeTab} thành công!`);
+        const msg = `Thêm mới vào ${activeTab} thành công!`;
+        setSuccessMsg(msg);
+        toast.success(msg);
       }
 
       setModalOpen(false);
       fetchCatalogData();
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Có lỗi khi lưu thông tin');
+      const msg = err?.response?.data?.message || 'Có lỗi khi lưu thông tin';
+      setError(msg);
+      toast.error(err, msg);
     } finally {
       setSubmitting(false);
     }
@@ -154,11 +162,15 @@ export const A07_CatalogReferencePage: React.FC = () => {
     try {
       setError(null);
       await deleteReferenceResourceApi(activeTab, id);
-      setSuccessMsg(`Đã xoá "${name}" thành công!`);
+      const msg = `Đã xoá "${name}" thành công!`;
+      setSuccessMsg(msg);
+      toast.success(msg);
       fetchCatalogData();
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Không thể xoá vì dữ liệu đang được sử dụng');
+      const msg = err?.response?.data?.message || 'Không thể xoá vì dữ liệu đang được sử dụng';
+      setError(msg);
+      toast.error(err, msg);
     }
   };
 

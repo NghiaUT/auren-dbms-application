@@ -22,8 +22,10 @@ import { AdminLayout } from '../../layouts/AdminLayout';
 import { getTiersApi, updateTierApi, recalculateTiersApi } from '../../api/admin.api';
 import type { AdminTier, RecalculateTiersResult } from '../../types';
 import { formatVND } from '../../utils/formatVND';
+import { useToast } from '../../context/ToastContext';
 
 export const A08_MembershipTiersPage: React.FC = () => {
+  const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(true);
   const [tiers, setTiers] = useState<AdminTier[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -79,12 +81,16 @@ export const A08_MembershipTiersPage: React.FC = () => {
       setSubmitting(true);
       setError(null);
       await updateTierApi(selectedTier.id, tierForm);
-      setSuccessMsg(`Cập nhật cấu hình hạng "${tierForm.name}" thành công!`);
+      const msg = `Cập nhật cấu hình hạng "${tierForm.name}" thành công!`;
+      setSuccessMsg(msg);
+      toast.success(msg);
       setEditModalOpen(false);
       fetchTiers();
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Lỗi khi cập nhật hạng thành viên');
+      const msg = err?.response?.data?.message || 'Lỗi khi cập nhật hạng thành viên';
+      setError(msg);
+      toast.error(err, msg);
     } finally {
       setSubmitting(false);
     }
@@ -99,7 +105,9 @@ export const A08_MembershipTiersPage: React.FC = () => {
       setRecalcResult(res);
       setRecalcModalOpen(true);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Không thể chạy tính toán nâng hạng');
+      const msg = err?.response?.data?.message || 'Không thể chạy tính toán nâng hạng';
+      setError(msg);
+      toast.error(err, msg);
     } finally {
       setRecalcLoading(false);
     }
@@ -112,11 +120,15 @@ export const A08_MembershipTiersPage: React.FC = () => {
       setError(null);
       const res = await recalculateTiersApi(false);
       setRecalcResult(res);
-      setSuccessMsg(`Đã cập nhật nâng hạng thành công cho ${res.affected} khách hàng!`);
+      const msg = `Đã cập nhật nâng hạng thành công cho ${res.affected} khách hàng!`;
+      setSuccessMsg(msg);
+      toast.success(msg);
       fetchTiers();
       setTimeout(() => setSuccessMsg(null), 5000);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Lỗi khi thực thi nâng hạng');
+      const msg = err?.response?.data?.message || 'Lỗi khi thực thi nâng hạng';
+      setError(msg);
+      toast.error(err, msg);
     } finally {
       setRecalcLoading(false);
     }

@@ -13,10 +13,12 @@ import { getSalesOrderDetailApi, createPaymentScheduleApi } from '../../api/sale
 import type { OrderDetail, PaymentDetail, PaymentType } from '../../types';
 import { formatVND } from '../../utils/formatVND';
 import { formatDate, formatDateTime, getTodayDateString } from '../../utils/formatDate';
+import { useToast } from '../../context/ToastContext';
 
 export const S04_OrderPaymentSchedulePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const orderId = Number(id);
+  const { toast } = useToast();
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [payments, setPayments] = useState<PaymentDetail[]>([]);
@@ -92,11 +94,14 @@ export const S04_OrderPaymentSchedulePage: React.FC = () => {
       setPayments(updatedPayments);
       setNewAmount('');
       setNewDueDate('');
-      setFeedback({ text: 'Đã lập lịch thanh toán thành công!', type: 'success' });
+      const successMsg = 'Đã lập lịch thanh toán thành công!';
+      setFeedback({ text: successMsg, type: 'success' });
+      toast.success(successMsg);
       await fetchOrder();
     } catch (err: any) {
       const msg = err.response?.data?.error?.message || 'Không thể lập lịch thanh toán.';
       setFeedback({ text: msg, type: 'error' });
+      toast.error(err, msg);
     } finally {
       setActionLoading(false);
     }

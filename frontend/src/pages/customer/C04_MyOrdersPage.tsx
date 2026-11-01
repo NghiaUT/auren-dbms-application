@@ -25,9 +25,11 @@ import {
   OrderDetailModal,
   OrdersPagination,
 } from '../../components/customer/orders';
+import { useToast } from '../../context/ToastContext';
 
 export const C04_MyOrdersPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { toast } = useToast();
 
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -73,7 +75,7 @@ export const C04_MyOrdersPage: React.FC = () => {
       setActiveOrderDetail(detail);
     } catch (err) {
       console.error('Lỗi khi tải chi tiết đơn hàng:', err);
-      alert('Không thể tải chi tiết đơn hàng.');
+      toast.error(err, 'Không thể tải chi tiết đơn hàng.');
     } finally {
       setDetailLoading(false);
     }
@@ -86,6 +88,7 @@ export const C04_MyOrdersPage: React.FC = () => {
     try {
       await payPaymentApi(paymentId, 'bank_transfer');
       setActionMessage('Ghi nhận thanh toán thành công!');
+      toast.success('Ghi nhận thanh toán thành công!');
       // Cập nhật lại chi tiết đơn và danh sách
       if (activeOrderDetail) {
         const refreshed = await getOrderDetailApi(activeOrderDetail.id);
@@ -94,7 +97,7 @@ export const C04_MyOrdersPage: React.FC = () => {
       fetchOrders();
     } catch (err: any) {
       console.error('Lỗi thanh toán:', err);
-      alert(err.response?.data?.error?.message || 'Không thể thanh toán khoản này.');
+      toast.error(err, 'Không thể thanh toán khoản này.');
     } finally {
       setActionLoading(false);
     }
@@ -115,13 +118,14 @@ export const C04_MyOrdersPage: React.FC = () => {
     try {
       await cancelOrderApi(orderId);
       setActionMessage('Đã hủy đơn hàng thành công.');
+      toast.success('Đã hủy đơn hàng thành công.');
       if (activeOrderDetail && activeOrderDetail.id === orderId) {
         setActiveOrderDetail(null);
       }
       fetchOrders();
     } catch (err: any) {
       console.error('Lỗi hủy đơn:', err);
-      alert(err.response?.data?.error?.message || 'Không thể hủy đơn hàng này.');
+      toast.error(err, 'Không thể hủy đơn hàng này.');
     } finally {
       setActionLoading(false);
     }

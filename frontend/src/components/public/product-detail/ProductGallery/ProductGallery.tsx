@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ProductDetail } from '../../../../types';
+import { useToast } from '../../../../context/ToastContext';
 
 export interface ProductGalleryProps {
   product: ProductDetail;
@@ -17,6 +18,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
   galleryImages,
   onZoom,
 }) => {
+  const { toast } = useToast();
   return (
     <div className="lg:col-span-7 flex flex-col gap-6">
       {/* 1. Primary Hero Photo (4:5) */}
@@ -100,7 +102,12 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={() => alert('Tệp 3D CAD Pack (STEP/OBJ) đã được đóng gói và sẵn sàng gửi qua email concierge của quý khách.')}
+            onClick={() =>
+              toast.info(
+                'Tệp 3D CAD Pack (STEP/OBJ) đã được đóng gói và gửi qua email concierge của quý khách.',
+                { title: 'Tải tệp 3D CAD Pack' }
+              )
+            }
             className="bg-[#FCF9F3] border border-[#D2C8BA] px-4 py-2.5 text-[#0D0703] hover:bg-[#EAE4D9] transition-colors font-sans text-xs uppercase tracking-widest flex items-center gap-2 rounded-[2px]"
           >
             <svg className="w-3.5 h-3.5 text-[#A7824B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +117,11 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => alert('Hồ sơ kỹ thuật Tear Sheet PDF đã tải thành công.')}
+            onClick={() =>
+              toast.success('Hồ sơ kỹ thuật Tear Sheet PDF đã tải thành công.', {
+                title: 'Tải Tear Sheet'
+              })
+            }
             className="bg-[#FCF9F3] border border-[#D2C8BA] px-4 py-2.5 text-[#0D0703] hover:bg-[#EAE4D9] transition-colors font-sans text-xs uppercase tracking-widest flex items-center gap-2 rounded-[2px]"
           >
             <svg className="w-3.5 h-3.5 text-[#A7824B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

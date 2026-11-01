@@ -16,16 +16,24 @@ import {
   deleteProductApi,
   getCatalogMetaApi,
 } from '../../api/admin.api';
-import type { CatalogMeta, ProductSummary, CreateProductInput } from '../../types';
+import type { CatalogMeta, ProductSummary, CreateProductInput, PageMeta } from '../../types';
 import {
   ProductManagementFilter,
   ProductManagementTable,
   ProductEditModal,
 } from '../../components/admin/product-management';
+import { useToast } from '../../context/ToastContext';
 
 export const A05_ProductManagementPage: React.FC = () => {
+  const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(true);
   const [products, setProducts] = useState<ProductSummary[]>([]);
+  const [pageMeta, setPageMeta] = useState<PageMeta>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+  });
   const [meta, setMeta] = useState<CatalogMeta | null>(null);
   const [search, setSearch] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
@@ -47,16 +55,20 @@ export const A05_ProductManagementPage: React.FC = () => {
   });
   const [submitting, setSubmitting] = useState<boolean>(false);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (targetPage = pageMeta.page) => {
     try {
       setLoading(true);
       setError(null);
       const res = await getAdminProductsApi({
         q: search || undefined,
         categoryId: selectedCategory,
-        limit: 50,
+        page: targetPage,
+        limit: 20,
       });
       setProducts(res.data);
+      if (res.meta) {
+        setPageMeta(res.meta);
+      }
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Không thể tải danh sách sản phẩm');
     } finally {
@@ -82,12 +94,21 @@ export const A05_ProductManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchMeta();
-    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    fetchProducts(1);
   }, [selectedCategory]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchProducts();
+    fetchProducts(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pageMeta.totalPages && newPage !== pageMeta.page) {
+      fetchProducts(newPage);
+    }
   };
 
   const openCreateModal = () => {
@@ -127,15 +148,21 @@ export const A05_ProductManagementPage: React.FC = () => {
       setError(null);
       if (editingProduct) {
         await updateProductApi(editingProduct.id, formData);
-        setSuccessMsg(`Cập nhật tác phẩm #${editingProduct.id} thành công.`);
+        const msg = `Cập nhật tác phẩm #${editingProduct.id} thành công.`;
+        setSuccessMsg(msg);
+        toast.success(msg);
       } else {
         const created = await createProductApi(formData);
-        setSuccessMsg(`Đã tạo tác phẩm mới #${created.id} thành công.`);
+        const msg = `Đã tạo tác phẩm mới #${created.id} thành công.`;
+        setSuccessMsg(msg);
+        toast.success(msg);
       }
       setModalOpen(false);
-      await fetchProducts();
+      await fetchProducts(editingProduct ? pageMeta.page : 1);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Có lỗi xảy ra khi lưu sản phẩm.');
+      const msg = err?.response?.data?.message || 'Có lỗi xảy ra khi lưu sản phẩm.';
+      setError(msg);
+      toast.error(err, msg);
     } finally {
       setSubmitting(false);
     }
@@ -154,13 +181,17 @@ export const A05_ProductManagementPage: React.FC = () => {
       setLoading(true);
       setError(null);
       await deleteProductApi(productId);
-      setSuccessMsg(`Xóa sản phẩm "${productName}" (ID #${productId}) thành công.`);
-      await fetchProducts();
+      const msg = `Xóa sản phẩm "${productName}" (ID #${productId}) thành công.`;
+      setSuccessMsg(msg);
+      toast.success(msg);
+      const nextPage = products.length === 1 && pageMeta.page > 1 ? pageMeta.page - 1 : pageMeta.page;
+      await fetchProducts(nextPage);
     } catch (err: any) {
-      setError(
+      const msg =
         err?.response?.data?.message ||
-          'Không thể xóa sản phẩm. Sản phẩm này có thể đã có đơn hàng tham chiếu trong hệ thống.'
-      );
+        'Không thể xóa sản phẩm. Sản phẩm này có thể đã có đơn hàng tham chiếu trong hệ thống.';
+      setError(msg);
+      toast.error(err, msg);
     } finally {
       setLoading(false);
     }
@@ -177,7 +208,7 @@ export const A05_ProductManagementPage: React.FC = () => {
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
           meta={meta}
-          onRefresh={fetchProducts}
+          onRefresh={() => fetchProducts(pageMeta.page)}
           onOpenCreateModal={openCreateModal}
           loading={loading}
         />
@@ -211,6 +242,8 @@ export const A05_ProductManagementPage: React.FC = () => {
         <ProductManagementTable
           products={products}
           loading={loading}
+          pageMeta={pageMeta}
+          onPageChange={handlePageChange}
           onEdit={openEditModal}
           onDelete={handleDelete}
         />

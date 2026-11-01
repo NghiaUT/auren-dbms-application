@@ -11,6 +11,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth/useAuth';
 import { getCartItems, clearCart, type CartItem } from '../../utils/cartStorage';
 import { createOrderApi } from '../../api/order.api';
+import { useToast } from '../../context/ToastContext';
 import {
   CheckoutStepper,
   CorrespondenceSection,
@@ -22,6 +23,7 @@ import {
 export const C02_CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const cartItems: CartItem[] = getCartItems();
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -107,6 +109,7 @@ export const C02_CheckoutPage: React.FC = () => {
         err.response?.data?.error?.message ||
         'Không thể hoàn tất đặt hàng. Vui lòng kiểm tra lại tồn kho hoặc thử lại.';
       setErrorMsg(message);
+      toast.error(err, message);
     } finally {
       setLoading(false);
     }

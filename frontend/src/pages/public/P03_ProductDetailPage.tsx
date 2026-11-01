@@ -11,6 +11,7 @@ import { getProductDetailApi } from '../../api/catalog.api';
 import { useAuth } from '../../auth/useAuth';
 import type { ProductDetail, Variant } from '../../types';
 import { addToCart } from '../../utils/cartStorage';
+import { useToast } from '../../context/ToastContext';
 
 import {
   ProductBreadcrumb,
@@ -32,6 +33,7 @@ export const P03_ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const productId = Number(id);
   const { isAuthenticated, user } = useAuth();
+  const { toast } = useToast();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
@@ -121,17 +123,22 @@ export const P03_ProductDetailPage: React.FC = () => {
       1,
     );
 
-    setToastMessage(`${product.name} (${selectedVariant.finish}) đã được thêm vào bộ sưu tập.`);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
+    // const cartMsg = `${product.name} (${selectedVariant.finish}) đã được thêm vào bộ sưu tập.`;
+    // setToastMessage(cartMsg);
+    // toast.success(cartMsg, { title: 'Đã thêm vào bộ sưu tập' });
+    // setTimeout(() => {
+    //   setToastMessage(null);
+    // }, 4500);
   };
 
   // Xử lý gửi biểu mẫu hẹn lịch trải nghiệm riêng
   const handleViewingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setViewingModalOpen(false);
-    alert(`Cảm ơn Quý khách ${viewingForm.fullName}. Bộ phận Giám tuyển AUREN sẽ liên hệ qua email ${viewingForm.email} trong vòng 24 giờ để xác nhận buổi tiếp đón riêng tại ${viewingForm.gallery}.`);
+    toast.success(
+      `Cảm ơn Quý khách ${viewingForm.fullName}. Bộ phận Giám tuyển AUREN sẽ liên hệ qua email ${viewingForm.email} trong vòng 24 giờ để xác nhận buổi tiếp đón riêng tại ${viewingForm.gallery}.`,
+      { title: 'Tiếp nhận lịch hẹn trải nghiệm', duration: 6000 },
+    );
   };
 
   // Toggle Accordion

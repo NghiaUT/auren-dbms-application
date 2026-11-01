@@ -11,10 +11,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/useAuth';
 import { updateProfileApi } from '../../api/auth.api';
 import { formatVND } from '../../utils/formatVND';
+import { useToast } from '../../context/ToastContext';
 
 export const C08_ProfilePage: React.FC = () => {
   const { user, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.customer?.phone || '');
@@ -63,10 +65,14 @@ export const C08_ProfilePage: React.FC = () => {
       });
 
       await refreshUser();
-      setSuccessMessage('Hồ sơ Patron và địa chỉ bàn giao White-Glove đã được cập nhật thành công.');
+      const msg = 'Hồ sơ Patron và địa chỉ bàn giao White-Glove đã được cập nhật thành công.';
+      setSuccessMessage(msg);
+      toast.success(msg);
     } catch (err: any) {
       console.error('Lỗi khi cập nhật hồ sơ:', err);
-      setErrorMessage(err.response?.data?.error?.message || 'Không thể lưu thay đổi hồ sơ.');
+      const errMsg = err.response?.data?.error?.message || 'Không thể lưu thay đổi hồ sơ.';
+      setErrorMessage(errMsg);
+      toast.error(err, errMsg);
     } finally {
       setSaving(false);
     }
