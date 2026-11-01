@@ -93,7 +93,10 @@ export const P03_ProductDetailPage: React.FC = () => {
 
   // Bộ ảnh chất lượng cao gán cho tác phẩm
   const galleryImages = useMemo(() => {
-    const mainImg = product?.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1400&q=85&auto=format&fit=crop';
+    const mainImg =
+      product?.imageUrl ||
+      product?.images?.[0] ||
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1400&q=85&auto=format&fit=crop';
     return {
       hero: mainImg,
       macro1: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80&auto=format&fit=crop',

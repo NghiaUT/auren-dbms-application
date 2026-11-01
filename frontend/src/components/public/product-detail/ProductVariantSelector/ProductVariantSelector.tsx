@@ -28,16 +28,21 @@ export const ProductVariantSelector: React.FC<ProductVariantSelectorProps> = ({
             Phân bổ tỉ lệ chất liệu tự nhiên:
           </span>
           <div className="flex flex-wrap gap-2">
-            {selectedVariant.materials.map((m) => (
-              <span
-                key={m.materialId}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FCF9F3] border border-[#D2C8BA] font-sans text-[11px] text-[#372A22] rounded-[1px]"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#A58548]" />
-                <strong>{m.name}</strong>
-                {m.pct && <span className="text-[#7B6E64]">({m.pct}%)</span>}
-              </span>
-            ))}
+            {selectedVariant.materials.map((m) => {
+              const portionVal = m.portion ?? m.pct;
+              return (
+                <span
+                  key={m.materialId}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FCF9F3] border border-[#D2C8BA] font-sans text-[11px] text-[#372A22] rounded-[1px]"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#A58548]" />
+                  <strong>{m.name}</strong>
+                  {portionVal !== null && portionVal !== undefined && (
+                    <span className="text-[#7B6E64]">({portionVal}%)</span>
+                  )}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}

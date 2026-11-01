@@ -70,8 +70,8 @@ export async function getOrderDetailApi(id: number): Promise<OrderDetail> {
  * [FR9] Huỷ đơn hàng
  * Endpoint: POST /api/orders/:id/cancel
  */
-export async function cancelOrderApi(id: number): Promise<{ id: number; status: string; message: string }> {
-  const response = await axiosClient.post<ApiResponse<{ id: number; status: string; message: string }>>(
+export async function cancelOrderApi(id: number): Promise<{ id: number; status: string; message?: string }> {
+  const response = await axiosClient.post<ApiResponse<{ id: number; status: string; message?: string }>>(
     `/orders/${id}/cancel`,
   );
   return response.data.data;

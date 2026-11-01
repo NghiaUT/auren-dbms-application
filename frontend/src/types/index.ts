@@ -110,8 +110,10 @@ export interface VariantMaterial {
   materialId: number;
   name: string;
   type: string;
-  origin: string | null;
-  pct: number | null;
+  origin?: string | null;
+  portion?: number | null;
+  finishNote?: string | null;
+  pct?: number | null; // Bí danh tương thích ngược cho portion
 }
 
 export interface StockByLocation {
@@ -130,19 +132,27 @@ export interface Variant {
   size: string;
   price: number;
   leadTimeDays: number;
-  editionLimit: number | null;
-  editionRemaining: number | null;
+  editionLimit?: number | null;
+  editionRemaining?: number | null;
+  edition?: {
+    total: number;
+    available: number;
+  } | null;
   materials: VariantMaterial[];
   stock: StockByLocation[];
+  status?: 'active' | 'discontinued';
 }
 
 export interface Review {
   id: number;
   rating: number;
-  title: string | null;
-  body: string | null;
+  comment?: string | null;
+  customerName?: string;
   createdAt: string;
-  authorName: string;
+  // Bí danh tương thích ngược
+  body?: string | null;
+  authorName?: string;
+  title?: string | null;
 }
 
 export interface ProductDetail {
@@ -151,15 +161,18 @@ export interface ProductDetail {
   collectionName: string | null;
   designerName: string | null;
   description: string;
-  dimensions: string | null;
+  dimensions?: string | null;
   isLimited: boolean;
   isMadeToOrder: boolean;
-  minPrice: number;
+  minPrice?: number;
+  createdAt?: string;
+  imageUrl?: string;
+  images?: string[];
   brand: {
     id: number;
     name: string;
-    country: string | null;
-    foundedYear: number | null;
+    country?: string | null;
+    foundedYear?: number | null;
   };
   category: {
     id: number;
@@ -172,7 +185,6 @@ export interface ProductDetail {
     avgRating: number | null;
     totalCount: number;
   };
-  images: string[];
 }
 
 export interface CatalogMeta {
@@ -224,9 +236,19 @@ export type OrderStatus =
 export type PaymentType = 'deposit' | 'installment' | 'final';
 export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'refunded';
 
+export interface OrderItemCustomization {
+  plaqueText?: string;
+  plaque?: string;
+  monogram?: string;
+  limitedRequest?: boolean;
+  paymentOption?: 'deposit' | 'full';
+  [key: string]: any;
+}
+
 export interface OrderItemDetail {
   id: number;
   variantId: number;
+  productId?: number;
   productName: string;
   sku: string;
   finish: string;
@@ -235,7 +257,7 @@ export interface OrderItemDetail {
   locationName?: string;
   quantity: number;
   unitPrice: number;
-  customization?: Record<string, any> | null;
+  customization?: OrderItemCustomization | Record<string, any> | null;
   serialNo?: string | null;
 }
 

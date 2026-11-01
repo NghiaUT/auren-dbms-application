@@ -36,7 +36,9 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({
 
       <div className="flex items-baseline gap-4 pt-2">
         <span className="font-serif text-3xl sm:text-4xl text-[#0D0703] font-normal tabular-nums">
-          {selectedVariant ? formatVND(selectedVariant.price) : formatVND(product.minPrice)}
+          {selectedVariant
+            ? formatVND(selectedVariant.price)
+            : formatVND(product.variants?.[0]?.price ?? product.minPrice ?? 0)}
         </span>
         <span className="font-sans text-[10px] text-[#7B6E64] uppercase tracking-wider">
           Đã bao gồm thuế • Lắp đặt White-Glove

@@ -54,13 +54,13 @@ export const ProductReviewsSection: React.FC<ProductReviewsSectionProps> = ({ re
                     </span>
                   </div>
                   <p className="font-sans text-xs text-[#372A22] leading-relaxed italic">
-                    "{rev.body || (rev as any).comment || 'Tác phẩm đạt chuẩn mực cao về tỉ lệ và chất lượng hoàn thiện.'}"
+                    "{rev.comment || rev.body || 'Tác phẩm đạt chuẩn mực cao về tỉ lệ và chất lượng hoàn thiện.'}"
                   </p>
                 </div>
 
                 <div className="pt-3 border-t border-[#D2C8BA]/40">
                   <span className="font-sans text-xs font-semibold text-[#0D0703]">
-                    {rev.authorName || (rev as any).customerName || 'Khách hàng AUREN'}
+                    {rev.customerName || rev.authorName || 'Khách hàng AUREN'}
                   </span>
                   <span className="text-[10px] text-[#7B6E64] block">Chủ sở hữu đã xác minh</span>
                 </div>
