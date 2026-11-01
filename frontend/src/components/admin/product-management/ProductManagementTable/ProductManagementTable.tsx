@@ -1,12 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Edit2, Trash2 } from 'lucide-react';
-import type { ProductSummary } from '../../../../types';
+import { Layers, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { PageMeta, ProductSummary } from '../../../../types';
 import { formatVND } from '../../../../utils/formatVND';
 
 export interface ProductManagementTableProps {
   products: ProductSummary[];
   loading: boolean;
+  pageMeta?: PageMeta;
+  onPageChange?: (newPage: number) => void;
   onEdit: (product: ProductSummary) => void;
   onDelete: (productId: number, productName: string) => void;
 }
@@ -14,6 +16,8 @@ export interface ProductManagementTableProps {
 export const ProductManagementTable: React.FC<ProductManagementTableProps> = ({
   products,
   loading,
+  pageMeta,
+  onPageChange,
   onEdit,
   onDelete,
 }) => {
@@ -109,6 +113,73 @@ export const ProductManagementTable: React.FC<ProductManagementTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Thanh Phân trang Quản trị (Admin Pagination Footer) */}
+      {pageMeta && pageMeta.total > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-[#D2C8BA]/60 bg-[#F4EFE6]/30 text-xs">
+          <span className="font-sans text-[#7B6E64]">
+            Hiển thị trang <strong className="text-[#0D0703]">{pageMeta.page}</strong> / <strong className="text-[#0D0703]">{pageMeta.totalPages}</strong> (Tổng số <strong className="text-[#0D0703]">{pageMeta.total}</strong> tác phẩm)
+          </span>
+
+          {pageMeta.totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={pageMeta.page <= 1 || loading}
+                onClick={() => onPageChange?.(pageMeta.page - 1)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-[#D2C8BA] rounded-[2px] font-sans text-xs text-[#0D0703] hover:bg-[#FAF8F3] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Trang trước"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Trước</span>
+              </button>
+
+              {/* Dãy số trang trực tiếp */}
+              <div className="hidden sm:flex items-center gap-1">
+                {Array.from({ length: pageMeta.totalPages }, (_, i) => i + 1)
+                  .filter((p) => {
+                    if (p === 1 || p === pageMeta.totalPages) return true;
+                    return Math.abs(p - pageMeta.page) <= 1;
+                  })
+                  .map((p, idx, arr) => {
+                    const prev = arr[idx - 1];
+                    const isGap = prev && p - prev > 1;
+                    const isActive = p === pageMeta.page;
+
+                    return (
+                      <React.Fragment key={p}>
+                        {isGap && <span className="px-1 text-[#7B6E64]">...</span>}
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => onPageChange?.(p)}
+                          className={`min-w-[28px] h-7 px-2 font-mono text-xs rounded-[2px] transition-colors ${
+                            isActive
+                              ? 'bg-[#271E18] text-[#FAF8F3] font-bold shadow-sm'
+                              : 'bg-white border border-[#D2C8BA] text-[#0D0703] hover:bg-[#FAF8F3]'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+              </div>
+
+              <button
+                type="button"
+                disabled={pageMeta.page >= pageMeta.totalPages || loading}
+                onClick={() => onPageChange?.(pageMeta.page + 1)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-[#D2C8BA] rounded-[2px] font-sans text-xs text-[#0D0703] hover:bg-[#FAF8F3] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Trang sau"
+              >
+                <span>Sau</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
