@@ -159,13 +159,24 @@ export async function findOrdersByCustomerId(
       o.total,
       o.shipping_address AS shippingAddress,
       o.delivery_date AS deliveryDate,
-      COUNT(oi.id) AS itemCount,
-      COALESCE(SUM(CASE WHEN p.status = 'paid' THEN p.amount ELSE 0 END), 0) AS paidAmount
+      COALESCE(oi_agg.itemCount, 0) AS itemCount,
+      COALESCE(p_agg.paidAmount, 0) AS paidAmount
     FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    LEFT JOIN payments p ON o.id = p.order_id
+    LEFT JOIN (
+      SELECT 
+        order_id,
+        COUNT(id) AS itemCount
+      FROM order_items
+      GROUP BY order_id
+    ) oi_agg ON o.id = oi_agg.order_id
+    LEFT JOIN (
+      SELECT 
+        order_id,
+        SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS paidAmount
+      FROM payments
+      GROUP BY order_id
+    ) p_agg ON o.id = p_agg.order_id
     WHERE ${conditions.join(' AND ')}
-    GROUP BY o.id
     ORDER BY o.order_date DESC
     LIMIT ? OFFSET ?
   `;
