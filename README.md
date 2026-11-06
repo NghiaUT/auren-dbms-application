@@ -199,9 +199,9 @@ Toàn bộ các câu truy vấn SQL trong hệ thống được phân loại t�
 | :--- | :--- | :--- |
 | **Loại (a) — `INSERT`** | Chèn bản ghi đơn/đa bảng trong Transaction, lưu kiểu `JSON` | `order.repository.ts` (`createOrder`, `createOrderItem`) |
 | **Loại (b) — `DELETE`** | Xóa có kiểm tra ràng buộc toàn vẹn tham chiếu (`RESTRICT` / Safe Delete) | `catalog.repository.ts` (`deleteProductSafe`), `review.repository.ts` |
-| **Loại (c) — `UPDATE` & Locking** | Cập nhật trạng thái nguyên tử, Optimistic Locking (`version`) & Pessimistic Locking (`FOR UPDATE`) | `inventory.repository.ts`, `edition.repository.ts`, `payment.repository.ts` |
-| **Loại (d) — `SELECT` & Filter** | Truy vấn có điều kiện động, `LIKE`, `IN`, `BETWEEN`, Whitelist `ORDER BY`, `LIMIT/OFFSET` | `catalog.repository.ts` (`findAll`), `order.repository.ts` |
-| **Loại (e) — Date/Time Query** | Xử lý thời gian với `DATE_FORMAT`, `DATEDIFF`, `CURDATE()`, `NOW()` | `payment.repository.ts` (`findReceivables`, `markOverduePayments`) |
+| **Loại (c) — `UPDATE` (& Locking)** | Cập nhật trạng thái nguyên tử, Optimistic Locking (`version`) & Pessimistic Locking (`FOR UPDATE`) | `inventory.repository.ts`, `edition.repository.ts`, `payment.repository.ts` |
+| **Loại (d) — `SELECT` & Filter (đơn điều kiện)** | Truy vấn có điều kiện động, `LIKE`, `IN`, `BETWEEN`, Whitelist `ORDER BY`, `LIMIT/OFFSET` | `catalog.repository.ts` (`findAll`), `order.repository.ts` |
+| **Loại (e) — Date/Time Query (điều kiện ghép)** | Xử lý thời gian với `DATE_FORMAT`, `DATEDIFF`, `CURDATE()`, `NOW()` | `payment.repository.ts` (`findReceivables`, `markOverduePayments`) |
 | **Loại (f) — Multi-table `JOIN`** | Kết nối từ 3 đến 5 bảng (`INNER JOIN`, `LEFT JOIN`) | `report.repository.ts` (`getBrandSalesReport`), `order.repository.ts` |
 | **Loại (g) — `SUBQUERY`** | Truy vấn lồng trong `WHERE`, `FROM` (Derived Table) và `UPDATE ... SET` | `report.repository.ts` (`getTopCustomersReport`), `tier.repository.ts` (`recalculateTiers`) |
 | **Loại (h) — Aggregate + `GROUP BY` + `HAVING`** | Thống kê tổng hợp với `SUM`, `COUNT`, `AVG`, `MIN`, `MAX`, `COALESCE`, `CASE WHEN` | `report.repository.ts`, `catalog.repository.ts`, `inventory.repository.ts` |
