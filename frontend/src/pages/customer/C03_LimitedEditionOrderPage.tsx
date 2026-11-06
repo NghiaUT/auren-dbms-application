@@ -259,33 +259,30 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
                     return (
                       <div
                         key={unit.id}
-                        className={`p-3 rounded-[2px] text-center border transition-all duration-300 ${
-                          isNext
+                        className={`p-3 rounded-[2px] text-center border transition-all duration-300 ${isNext
                             ? 'bg-[#FAF8F3] border-[#A58548] shadow-md ring-2 ring-[#A58548]/30 scale-[1.02]'
                             : isSold
-                            ? 'bg-[#ECE8E1]/60 border-[#D2C8BA]/30 opacity-60'
-                            : isReserved
-                            ? 'bg-[#FAF8F3]/80 border-dashed border-[#A58548]/50'
-                            : 'bg-[#FAF8F3] border-[#D2C8BA]/50 hover:border-[#A58548]/60'
-                        }`}
+                              ? 'bg-[#ECE8E1]/60 border-[#D2C8BA]/30 opacity-60'
+                              : isReserved
+                                ? 'bg-[#FAF8F3]/80 border-dashed border-[#A58548]/50'
+                                : 'bg-[#FAF8F3] border-[#D2C8BA]/50 hover:border-[#A58548]/60'
+                          }`}
                       >
                         <span
-                          className={`font-mono text-xs font-bold block ${
-                            isNext ? 'text-[#0D0703] text-sm' : isSold ? 'line-through text-[#7B6E64]' : 'text-[#0D0703]'
-                          }`}
+                          className={`font-mono text-xs font-bold block ${isNext ? 'text-[#0D0703] text-sm' : isSold ? 'line-through text-[#7B6E64]' : 'text-[#0D0703]'
+                            }`}
                         >
                           {unit.serialNo}
                         </span>
                         <span
-                          className={`text-[9px] uppercase tracking-wider block mt-1 font-sans ${
-                            isNext
+                          className={`text-[9px] uppercase tracking-wider block mt-1 font-sans ${isNext
                               ? 'text-[#A58548] font-bold'
                               : isSold
-                              ? 'text-[#7B6E64]'
-                              : isReserved
-                              ? 'text-amber-700'
-                              : 'text-emerald-700 font-medium'
-                          }`}
+                                ? 'text-[#7B6E64]'
+                                : isReserved
+                                  ? 'text-amber-700'
+                                  : 'text-emerald-700 font-medium'
+                            }`}
                         >
                           {isNext ? '✦ Cấp cho bạn' : isSold ? 'Đã sở hữu' : isReserved ? 'Đang giữ' : 'Sẵn sàng'}
                         </span>
@@ -344,7 +341,7 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
               {/* Form đặt mua */}
               <form onSubmit={handleAcquire} className="space-y-5">
                 {/* Lựa chọn phương án thanh toán */}
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <label className="block text-xs font-sans uppercase tracking-wider text-[#0D0703] font-semibold">
                     Phương án thanh toán
                   </label>
@@ -385,7 +382,7 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
                       </span>
                     </button>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Địa chỉ dinh thự bàn giao */}
                 <div className="space-y-1.5">
@@ -443,22 +440,20 @@ export const C03_LimitedEditionOrderPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting || edition.available === 0}
-                  className={`w-full py-4 px-6 text-center font-sans text-xs font-bold uppercase tracking-[0.2em] rounded-[2px] transition-all duration-300 shadow-md ${
-                    edition.available === 0
+                  className={`w-full py-4 px-6 text-center font-sans text-xs font-bold uppercase tracking-[0.2em] rounded-[2px] transition-all duration-300 shadow-md ${edition.available === 0
                       ? 'bg-[#D2C8BA] text-[#7B6E64] cursor-not-allowed'
                       : submitting
-                      ? 'bg-[#503625] text-[#FAF8F3] cursor-wait'
-                      : 'bg-[#271E18] text-[#FAF8F3] hover:bg-[#0D0703] active:translate-y-0.5'
-                  }`}
+                        ? 'bg-[#503625] text-[#FAF8F3] cursor-wait'
+                        : 'bg-[#271E18] text-[#FAF8F3] hover:bg-[#0D0703] active:translate-y-0.5'
+                    }`}
                 >
                   {edition.available === 0
                     ? 'Tác phẩm đã hết ấn bản'
                     : submitting
-                    ? 'Đang kiểm tra và niêm phong độc bản...'
-                    : `Niêm phong bản số ${edition.nextAvailableSerial} • ${
-                        paymentOption === 'deposit'
-                          ? formatVND(pricing.depositAmount)
-                          : formatVND(pricing.finalPrice)
+                      ? 'Đang kiểm tra và niêm phong độc bản...'
+                      : `Niêm phong bản số ${edition.nextAvailableSerial} • ${paymentOption === 'deposit'
+                        ? formatVND(pricing.depositAmount)
+                        : formatVND(pricing.finalPrice)
                       }`}
                 </button>
               </form>

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { CatalogMeta, Category, Brand, Material } from '../../../../types';
+import { formatVND } from '../../../../utils/formatVND';
 
 export interface CatalogFilterSidebarProps {
   meta: CatalogMeta | null;
@@ -145,11 +146,10 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectCategory(undefined)}
-                  className={`w-full text-left py-1 px-2 rounded-[2px] transition-colors ${
-                    !selectedCategory
+                  className={`w-full text-left py-1 px-2 rounded-[2px] transition-colors ${!selectedCategory
                       ? 'bg-[#FAF8F3] text-[#0D0703] font-semibold border-l-2 border-[#A7824B]'
                       : 'text-[#7B6E64] hover:text-[#0D0703]'
-                  }`}
+                    }`}
                 >
                   Tất cả danh mục
                 </button>
@@ -164,11 +164,10 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
                       <button
                         type="button"
                         onClick={() => onSelectCategory(parent.id)}
-                        className={`w-full text-left py-1 px-2 rounded-[2px] transition-colors ${
-                          isParentActive
+                        className={`w-full text-left py-1 px-2 rounded-[2px] transition-colors ${isParentActive
                             ? 'bg-[#FAF8F3] text-[#0D0703] font-semibold border-l-2 border-[#A7824B]'
                             : 'text-[#372A22] hover:text-[#0D0703]'
-                        }`}
+                          }`}
                       >
                         {parent.name}
                       </button>
@@ -181,11 +180,10 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => onSelectCategory(sub.id)}
-                                  className={`w-full text-left py-0.5 px-2 text-[11px] transition-colors ${
-                                    isSubActive
+                                  className={`w-full text-left py-0.5 px-2 text-[11px] transition-colors ${isSubActive
                                       ? 'text-[#A7824B] font-semibold'
                                       : 'text-[#7B6E64] hover:text-[#0D0703]'
-                                  }`}
+                                    }`}
                                 >
                                   • {sub.name}
                                 </button>
@@ -212,7 +210,7 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
                   <input
                     type="number"
                     step={5000000}
-                    placeholder={meta?.priceRange ? String(meta.priceRange.min) : '0'}
+                    placeholder={meta?.priceRange ? formatVND(meta.priceRange.min) : formatVND(0)}
                     value={minPriceParam || ''}
                     onChange={(e) => {
                       const val = e.target.value ? Number(e.target.value) : undefined;
@@ -226,7 +224,7 @@ export const CatalogFilterSidebar: React.FC<CatalogFilterSidebarProps> = ({
                   <input
                     type="number"
                     step={5000000}
-                    placeholder={meta?.priceRange ? String(meta.priceRange.max) : '600000000'}
+                    placeholder={meta?.priceRange ? formatVND(meta.priceRange.max) : formatVND(600000000)}
                     value={maxPriceParam || ''}
                     onChange={(e) => {
                       const val = e.target.value ? Number(e.target.value) : undefined;

@@ -56,17 +56,15 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {product.isLimited && selectedVariant && (
-            <Link
-              to={`/limited/${selectedVariant.id}`}
-              className="w-full bg-[#A58548] text-[#FAF8F3] py-4 px-6 text-center font-sans text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#8F723C] transition-all duration-300 shadow-md flex items-center justify-center gap-2 rounded-[2px]"
-            >
-              <span>★ Mua bản Limited Edition (Đánh số độc bản)</span>
-            </Link>
-          )}
-
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
+            {(product.isLimited && selectedVariant) ? (
+              <Link
+                to={`/limited/${selectedVariant.id}`}
+                className="flex-1  bg-[#A58548] text-[#FAF8F3] py-4 px-6 text-center font-sans text-xs font-bold uppercase tracking-[0.18em] hover:bg-[#8F723C] transition-all duration-300 shadow-md active:translate-y-0.5 flex items-center justify-center gap-2 rounded-[2px]"
+              >
+                <span>★ Mua bản Limited Edition (Đánh số độc bản)</span>
+              </Link>
+            ) : <button
               type="button"
               onClick={onAddToBag}
               className="flex-1 bg-[#271E18] text-[#FAF8F3] py-4 px-6 text-center font-sans text-xs font-semibold uppercase tracking-[0.18em] hover:bg-[#0D0703] transition-all duration-300 shadow-md active:translate-y-0.5 flex items-center justify-center gap-2 rounded-[2px]"
@@ -77,7 +75,7 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
               <span>
                 Đưa vào bộ sưu tập • {selectedVariant ? formatVND(selectedVariant.price) : ''}
               </span>
-            </button>
+            </button>}
 
             <button
               type="button"

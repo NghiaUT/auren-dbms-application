@@ -95,6 +95,7 @@ export const C02_CheckoutPage: React.FC = () => {
       };
 
       const createdOrder = await createOrderApi(payload);
+      toast.success("Đơn hàng đã được đặt thành công");
 
       // Xóa giỏ hàng khi đặt thành công
       clearCart();

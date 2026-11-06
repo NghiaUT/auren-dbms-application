@@ -68,7 +68,7 @@ export const C01_CartPage: React.FC = () => {
   return (
     <div className="w-full pt-28 pb-24">
       {/* Contextual Notification Bar */}
-      <CartNotificationBar />
+      {/* <CartNotificationBar /> */}
 
       {/* Bag Hero / Stepper Header */}
       <CartStepper />

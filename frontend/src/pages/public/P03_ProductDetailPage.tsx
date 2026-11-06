@@ -126,12 +126,11 @@ export const P03_ProductDetailPage: React.FC = () => {
       1,
     );
 
-    // const cartMsg = `${product.name} (${selectedVariant.finish}) đã được thêm vào bộ sưu tập.`;
-    // setToastMessage(cartMsg);
-    // toast.success(cartMsg, { title: 'Đã thêm vào bộ sưu tập' });
-    // setTimeout(() => {
-    //   setToastMessage(null);
-    // }, 4500);
+    const cartMsg = `${product.name} (${selectedVariant.finish}) đã được thêm vào bộ sưu tập.`;
+    setToastMessage(cartMsg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
   };
 
   // Xử lý gửi biểu mẫu hẹn lịch trải nghiệm riêng
