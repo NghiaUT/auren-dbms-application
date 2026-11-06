@@ -11,10 +11,13 @@ import { performance } from 'node:perf_hooks';
 import { env } from './env.js';
 import {
   logQueryExecution,
+  logQueryError, // mới
   logTransactionStart,
   logTransactionCommit,
   logTransactionRollback,
+  printSqlSummary, // mới
 } from '../utils/sqlLogger.js';
+import type { QueryLogContext } from '../utils/sqlLogger.js';
 
 /**
  * 4 mức cô lập giao dịch chuẩn của SQL / MySQL InnoDB
@@ -63,44 +66,31 @@ export const pool: Pool = mysql.createPool({
   dateStrings: ['DATE'], // Các cột DATE (due_date, delivery_date) trả về string YYYY-MM-DD thuần túy, tránh lệch múi giờ
 });
 
+// Helper
+function instrument(raw: (sql: any, values?: any) => Promise<any>, ctx?: QueryLogContext) {
+  return async (sql: any, values?: any) => {
+    const sqlStr = typeof sql === 'string' ? sql : (sql?.sql ?? String(sql));
+    const params = values ?? sql?.values; // query dạng object { sql, values }
+    const start = performance.now();
+    try {
+      const res = await raw(sql, values);
+      logQueryExecution(sqlStr, params, performance.now() - start, res[0], ctx);
+      return res;
+    } catch (err) {
+      logQueryError(sqlStr, params, performance.now() - start, err, ctx);
+      throw err;
+    }
+  };
+}
+
 // ============================================================================
 // Wrapper ghi log SQL trực quan cho môn học CSDL (Proposal 3)
 // ============================================================================
 const rawPoolExecute = pool.execute.bind(pool);
 const rawPoolQuery = pool.query.bind(pool);
 
-pool.execute = (async (sql: any, values?: any) => {
-  const start = performance.now();
-  const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
-  try {
-    const res = await rawPoolExecute(sql, values);
-    const duration = performance.now() - start;
-    logQueryExecution(sqlStr, values, duration, res[0]);
-    return res;
-  } catch (err) {
-    const duration = performance.now() - start;
-    logQueryExecution(sqlStr, values, duration, null);
-    throw err;
-  }
-}) as any;
-
-pool.query = (async (sql: any, values?: any) => {
-  const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
-  if (sqlStr.includes('/* ping */') || sqlStr.startsWith('SET TRANSACTION')) {
-    return rawPoolQuery(sql, values);
-  }
-  const start = performance.now();
-  try {
-    const res = await rawPoolQuery(sql, values);
-    const duration = performance.now() - start;
-    logQueryExecution(sqlStr, values, duration, res[0]);
-    return res;
-  } catch (err) {
-    const duration = performance.now() - start;
-    logQueryExecution(sqlStr, values, duration, null);
-    throw err;
-  }
-}) as any;
+pool.execute = instrument(rawPoolExecute) as any;
+pool.query = instrument(rawPoolQuery) as any;
 
 /**
  * Thực thi một tập hợp các truy vấn trong một Transaction có quản lý vòng đời.
@@ -122,55 +112,25 @@ pool.query = (async (sql: any, values?: any) => {
 export async function withTransaction<T>(
   fn: (connection: PoolConnection) => Promise<T>,
   isolation: IsolationLevel = 'REPEATABLE READ',
+  label?: string,
 ): Promise<T> {
   if (!VALID_ISOLATION_LEVELS.has(isolation)) {
     throw new Error(`Invalid transaction isolation level: "${isolation}"`);
   }
   const conn: PoolConnection = await pool.getConnection();
-  const txStart = performance.now();
-  const txId = logTransactionStart(isolation);
-  let txStep = 0;
 
-  // Ghi đè execute và query trên kết nối này để theo dõi từng bước trong Transaction
   const rawConnExecute = conn.execute.bind(conn);
   const rawConnQuery = conn.query.bind(conn);
+  const originalExecute = conn.execute;
+  const originalQuery = conn.query;
 
-  conn.execute = (async (sql: any, values?: any) => {
-    txStep++;
-    const step = txStep;
-    const start = performance.now();
-    const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
-    try {
-      const res = await rawConnExecute(sql, values);
-      const duration = performance.now() - start;
-      logQueryExecution(sqlStr, values, duration, res[0], { txId, txStep: step });
-      return res;
-    } catch (err) {
-      const duration = performance.now() - start;
-      logQueryExecution(sqlStr, values, duration, null, { txId, txStep: step });
-      throw err;
-    }
-  }) as any;
+  const txStart = performance.now();
+  const txId = logTransactionStart(isolation, label);
+  const ctx: QueryLogContext = { txId }; // số thứ tự step do logger tự đếm
 
-  conn.query = (async (sql: any, values?: any) => {
-    const sqlStr = typeof sql === 'string' ? sql : sql?.sql || String(sql);
-    if (sqlStr.startsWith('SET TRANSACTION') || sqlStr.includes('/* ping */')) {
-      return rawConnQuery(sql, values);
-    }
-    txStep++;
-    const step = txStep;
-    const start = performance.now();
-    try {
-      const res = await rawConnQuery(sql, values);
-      const duration = performance.now() - start;
-      logQueryExecution(sqlStr, values, duration, res[0], { txId, txStep: step });
-      return res;
-    } catch (err) {
-      const duration = performance.now() - start;
-      logQueryExecution(sqlStr, values, duration, null, { txId, txStep: step });
-      throw err;
-    }
-  }) as any;
+  // Ghi đè execute và query trên kết nối này để theo dõi từng bước trong Transaction
+  conn.execute = instrument(rawConnExecute, ctx) as any;
+  conn.query = instrument(rawConnQuery, ctx) as any;
 
   try {
     // Thiết lập mức cô lập cho transaction kế tiếp trên session này
@@ -188,12 +148,12 @@ export async function withTransaction<T>(
     } catch (rollbackErr) {
       // Bỏ qua lỗi phụ nếu rollback thất bại
     }
-    logTransactionRollback(txId, totalMs, error?.message || String(error));
+    logTransactionRollback(txId, totalMs, error?.message || String(error), error);
     throw error;
   } finally {
     // Khôi phục phương thức gốc của connection trước khi trả về pool
-    conn.execute = rawConnExecute;
-    conn.query = rawConnQuery;
+    conn.execute = originalExecute;
+    conn.query = originalQuery;
     conn.release();
   }
 }
@@ -217,6 +177,7 @@ export async function testDbConnection(): Promise<void> {
  * Đóng connection pool một cách an toàn (Graceful Shutdown)
  */
 export async function closePool(): Promise<void> {
+  printSqlSummary();
   await pool.end();
   console.log('[DB] Connection pool closed.');
 }

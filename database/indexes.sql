@@ -154,3 +154,30 @@ CREATE INDEX idx_orders_sales_status     ON orders (sales_user_id, status);
 -- DROP INDEX idx_reviews_product_rating ON reviews;
 -- DROP INDEX idx_edition_variant_status ON edition_units;
 -- DROP INDEX idx_customers_city         ON customers;
+
+-- Không thể DROP INDEX, thực hiện ALTER TABLE để các index invisible với query optimizer
+ALTER TABLE orders           ALTER INDEX idx_orders_status_total     INVISIBLE;
+ALTER TABLE orders           ALTER INDEX idx_orders_date             INVISIBLE;
+ALTER TABLE orders           ALTER INDEX idx_orders_sales_status     INVISIBLE;
+ALTER TABLE orders           ALTER INDEX idx_orders_customer_date    INVISIBLE;
+ALTER TABLE product_variants ALTER INDEX idx_variants_product_price  INVISIBLE;
+ALTER TABLE payments         ALTER INDEX idx_payments_status_due     INVISIBLE;
+ALTER TABLE payments         ALTER INDEX idx_payments_order_type     INVISIBLE;
+ALTER TABLE products         ALTER INDEX idx_products_name           INVISIBLE;
+ALTER TABLE products         ALTER INDEX idx_products_category_brand INVISIBLE;
+ALTER TABLE reviews          ALTER INDEX idx_reviews_product_rating  INVISIBLE;
+ALTER TABLE edition_units    ALTER INDEX idx_edition_variant_status  INVISIBLE;
+ALTER TABLE customers        ALTER INDEX idx_customers_city          INVISIBLE;
+
+ALTER TABLE orders           ALTER INDEX idx_orders_status_total     VISIBLE;
+ALTER TABLE orders           ALTER INDEX idx_orders_date             VISIBLE;
+ALTER TABLE orders           ALTER INDEX idx_orders_sales_status     VISIBLE;
+ALTER TABLE orders           ALTER INDEX idx_orders_customer_date    VISIBLE;
+ALTER TABLE product_variants ALTER INDEX idx_variants_product_price  VISIBLE;
+ALTER TABLE payments         ALTER INDEX idx_payments_status_due     VISIBLE;
+ALTER TABLE payments         ALTER INDEX idx_payments_order_type     VISIBLE;
+ALTER TABLE products         ALTER INDEX idx_products_name           VISIBLE;
+ALTER TABLE products         ALTER INDEX idx_products_category_brand VISIBLE;
+ALTER TABLE reviews          ALTER INDEX idx_reviews_product_rating  VISIBLE;
+ALTER TABLE edition_units    ALTER INDEX idx_edition_variant_status  VISIBLE;
+ALTER TABLE customers        ALTER INDEX idx_customers_city          VISIBLE;
