@@ -14,7 +14,13 @@
     "db:setup": "npm run db:init && npm run seed -- --if-empty",
     "db:indexes:apply": "tsx src/scripts/database.ts apply",
     "db:indexes:drop": "tsx src/scripts/database.ts drop",
-    "db:indexes:status": "tsx src/scripts/database.ts status"
+    "db:indexes:status": "tsx src/scripts/database.ts status",
+    "test:core": "tsx src/scripts/test-core.ts",
+    "test:customer": "tsx src/scripts/test-customer-extended.ts",
+    "test:sales": "tsx src/scripts/test-sales.ts",
+    "test:admin": "tsx src/scripts/test-admin.ts",
+    "test:api": "tsx src/scripts/test-api.ts",
+    "test:smoke": "npm run test:core && npm run test:customer && npm run test:sales && npm run test:admin && npm run test:api"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

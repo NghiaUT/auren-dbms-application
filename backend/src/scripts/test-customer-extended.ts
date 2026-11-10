@@ -6,6 +6,8 @@
 //   3. [C08 / FR0] Xem hồ sơ Patron, thanh tiến độ hạng và cập nhật thông tin
 // ============================================================================
 
+import assert from 'node:assert/strict';
+import { requireTestDatabase } from './test-database.js';
 import { pool } from '../config/db.js';
 import * as editionRepo from '../repository/edition.repository.js';
 import * as reviewService from '../services/review.service.js';
@@ -15,6 +17,7 @@ import * as customerRepo from '../repository/customer.repository.js';
 import { ConflictError, NotFoundError } from '../utils/AppError.js';
 
 async function runCustomerExtendedTests() {
+  requireTestDatabase();
   console.log('\n================================================================');
   console.log('🏛️  BẮT ĐẦU KIỂM THỬ CỤM KHÁCH HÀNG MỞ RỘNG (C03, C07, C08)');
   console.log('================================================================\n');
@@ -34,7 +37,7 @@ async function runCustomerExtendedTests() {
     `);
 
     if (limitedVariants.length === 0) {
-      console.log('  ⚠️ Không tìm thấy biến thể Limited nào trong DB để test!');
+      throw new Error('Missing Limited Edition fixture');
     } else {
       const variantId = limitedVariants[0].variantId;
       const summary = await editionRepo.getEditionSummaryByVariantId(variantId);
@@ -44,7 +47,8 @@ async function runCustomerExtendedTests() {
       console.log(`  - Số bản đã niêm phong/sở hữu: ${(summary?.edition.sold || 0) + (summary?.edition.reserved || 0)}`);
       console.log(`  - Bản số tiếp theo sẽ cấp: ${summary?.edition.nextAvailableSerial}`);
 
-      if (summary && summary.edition.units.length > 0) {
+      assert(summary && summary.edition.units.length > 0);
+      if (summary.edition.units.length > 0) {
         console.log(`  - Mẫu 3 bản đầu tiên:`, summary.edition.units.slice(0, 3).map((u) => `${u.serialNo} (${u.status})`).join(', '));
       }
       console.log('✅ [Test 1 PASS] Truy vấn ma trận số hiệu Limited Edition hoạt động chuẩn xác!\n');
@@ -66,55 +70,16 @@ async function runCustomerExtendedTests() {
       throw new Error('Tài khoản customer@luxury.vn chưa có hồ sơ trong bảng customers');
     }
 
-    // Tìm 1 đơn hàng delivered của customer này, nếu chưa có thì tìm đơn delivered bất kỳ hoặc gán tạm để test
-    let [deliveredItems]: any = await pool.execute(`
-      SELECT oi.id AS orderItemId, oi.order_id AS orderId, pv.product_id AS productId, p.name AS productName
+    const [deliveredItems]: any = await pool.execute(`
+      SELECT oi.id AS orderItemId
       FROM order_items oi
       JOIN orders o ON oi.order_id = o.id
-      JOIN product_variants pv ON oi.variant_id = pv.id
-      JOIN products p ON pv.product_id = p.id
       WHERE o.customer_id = ? AND o.status = 'delivered'
-      LIMIT 1
+        AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.order_item_id = oi.id)
+      ORDER BY oi.id LIMIT 1
     `, [customerProfile.id]);
-
-    let testOrderItemId: number;
-    let cleanupDeliveredOrder = false;
-
-    if (deliveredItems.length === 0) {
-      console.log('  ℹ️ Chưa có đơn delivered của customer, tìm 1 đơn và chuyển sang delivered để test...');
-      const [anyOrder]: any = await pool.execute(`
-        SELECT oi.id AS orderItemId, o.id AS orderId, o.status
-        FROM order_items oi
-        JOIN orders o ON oi.order_id = o.id
-        WHERE o.customer_id = ?
-        LIMIT 1
-      `, [customerProfile.id]);
-
-      if (anyOrder.length > 0) {
-        testOrderItemId = anyOrder[0].orderItemId;
-        await pool.execute(`UPDATE orders SET status = 'delivered' WHERE id = ?`, [anyOrder[0].orderId]);
-        cleanupDeliveredOrder = true;
-      } else {
-        console.log('  ⚠️ Customer chưa có đơn hàng nào, tạo đơn giả lập để test review...');
-        const [ordRes]: any = await pool.execute(`
-          INSERT INTO orders (customer_id, shipping_address, status, total_amount)
-          VALUES (?, '123 Test Villa, District 1', 'delivered', 15000000)
-        `, [customerProfile.id]);
-        const testOrderId = ordRes.insertId;
-
-        const [anyVariant]: any = await pool.execute(`SELECT id FROM product_variants LIMIT 1`);
-        const [itemRes]: any = await pool.execute(`
-          INSERT INTO order_items (order_id, variant_id, quantity, unit_price, subtotal)
-          VALUES (?, ?, 1, 15000000, 15000000)
-        `, [testOrderId, anyVariant[0].id]);
-        testOrderItemId = itemRes.insertId;
-      }
-    } else {
-      testOrderItemId = deliveredItems[0].orderItemId;
-    }
-
-    // Xóa review cũ nếu có trên dòng hàng này để test từ đầu
-    await pool.execute(`DELETE FROM reviews WHERE order_item_id = ?`, [testOrderItemId]);
+    assert(deliveredItems.length, 'Missing delivered and unreviewed customer fixture');
+    const testOrderItemId = deliveredItems[0].orderItemId;
 
     // 2.1 Tạo đánh giá mới (Query a: Insert)
     const newReview = await reviewService.createReview(customerUser.id, {
@@ -122,6 +87,7 @@ async function runCustomerExtendedTests() {
       rating: 5,
       comment: 'Smoke test review: Tác phẩm điêu khắc gỗ tuyệt tác, vân óc chó thượng hạng.',
     });
+    assert.equal(newReview?.rating, 5);
     console.log(`  - Tạo đánh giá thành công: ID #${newReview?.id} (Rating: ${newReview?.rating} sao)`);
 
     // 2.2 Thử đánh giá trùng (phải throw DUPLICATE_REVIEW)
@@ -197,10 +163,13 @@ async function runCustomerExtendedTests() {
     console.log('================================================================\n');
   } catch (error) {
     console.error('❌ LỖI TRONG QUÁ TRÌNH TEST:', error);
-    process.exit(1);
+    process.exitCode = 1;
   } finally {
     await pool.end();
   }
 }
 
-runCustomerExtendedTests();
+runCustomerExtendedTests().catch((err) => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
