@@ -47,11 +47,11 @@ flowchart TD
 - **Cửa sổ 2 (Terminal Backend / MySQL Client)**: Mở sẵn cửa sổ chạy lệnh Node.js backend để giảng viên trực tiếp nhìn thấy các câu lệnh SQL thuần (Raw SQL) được in ra console theo thời gian thực khi thao tác trên giao diện.
 
 ### 2.2. Danh Sách Tài Khoản Demo
-Các tài khoản mẫu đã được tích hợp sẵn widget **Nhấn để điền nhanh** tại màn hình Đăng nhập (`/login`):
+Ba tài khoản sau có nút điền nhanh tại `/login`. Để đối chiếu chiết khấu, nhập thủ công `tu.le@design.vn` (Gold, 5%) và `customer.black@gmail.com` (Black, 10%), cùng mật khẩu mẫu.
 
 | Vai trò | Email đăng nhập | Mật khẩu | Đặc điểm hiển thị |
 | :--- | :--- | :---: | :--- |
-| **Khách hàng (Customer)** | `customer.silver@gmail.com` | `password123` | Hạng Bạc (Silver Patron), chiết khấu 5% |
+| **Khách hàng (Customer)** | `customer.silver@gmail.com` | `password123` | Hạng Silver, chiết khấu 0% |
 | **Nhân viên Sales** | `sales.nam@luxury.com` | `password123` | Phụ trách điều phối showroom & quản lý nợ |
 | **Quản trị viên (Admin)** | `admin@luxury.com` | `password123` | Toàn quyền khai phá dữ liệu & cấu hình hệ thống |
 
@@ -69,10 +69,10 @@ Các tài khoản mẫu đã được tích hợp sẵn widget **Nhấn để đ
      - Chọn chất liệu: **Da tự nhiên (Full-grain Leather)**.
      - Kéo khoảng giá: từ **50.000.000 ₫** đến **200.000.000 ₫**.
      - Chọn sắp xếp: **Giá tăng dần**.
-   - Bấm vào một tác phẩm bất kỳ để vào trang chi tiết `/products/1`.
+   - Bấm vào sản phẩm tìm thấy để xem chi tiết. Sofa Chester Moon Quilted có mã sản phẩm 1 trong bộ seed.
 
 2. **Truy vấn SQL thực thi dưới CSDL**:
-   - **Loại (d) — `SELECT` & Filter**: Tìm kiếm động với `LIKE`, `IN`, điều kiện khoảng giá `BETWEEN`, phân trang `LIMIT ? OFFSET ?`.
+   - **Loại (d) — `SELECT` & Filter**: Từ khóa `sofa` dùng `MATCH(name, collection_name, designer_name) AGAINST (? IN NATURAL LANGUAGE MODE)` và index `ftx_products_search`. Từ khóa chỉ có token ngắn như `so` dùng `LIKE` literal. Xem [kịch bản EXPLAIN](../README.md#8-kịch-bản-đo-kiểm-hiệu-năng-indexing-explain-analyze).
    - **Loại (f) — Multi-table `JOIN` (5 bảng)**:
      `products p` $\Join$ `brands b` $\Join$ `categories c` $\Join$ `product_variants pv` $\Join$ `reviews r`.
    - **Loại (h) — Aggregate + `GROUP BY` + `HAVING`**:
@@ -101,14 +101,14 @@ Các tài khoản mẫu đã được tích hợp sẵn widget **Nhấn để đ
 
 1. **Thao tác trên màn hình**:
    - Bấm **Đăng nhập** $\to$ Chọn thẻ điền nhanh **Khách hàng** (`customer.silver@gmail.com`).
-   - Chọn tác phẩm nội thất $\to$ Bấm **Đặt hàng White-Glove** (hoặc vào `/limited/1` đặt mua bản giới hạn).
+   - Chọn tác phẩm nội thất $\to$ Bấm **Đặt hàng White-Glove** (hoặc mở `/products/3`, chọn biến thể còn serial và bấm mua bản Limited Edition).
    - Điền địa chỉ dinh thự giao nhận $\to$ Bấm **Xác nhận đặt hàng**.
    - Chuyển sang màn hình Đơn hàng cá nhân `/account/orders` $\to$ Bấm **Thanh toán đợt cọc (Payment #1)**.
-   - Thử gửi một Đánh giá tác phẩm $\to$ Bấm nút **Xóa đánh giá** để kiểm chứng thao tác xóa an toàn.
+   - Mở một đơn đã giao và chọn dòng hàng chưa được đánh giá. Có thể dùng đơn vừa bàn giao sau giai đoạn 3. Gửi một đánh giá $\to$ Bấm nút **Xóa đánh giá** để kiểm chứng thao tác xóa an toàn.
 
 2. **Truy vấn SQL thực thi dưới CSDL**:
    - **Loại (a) — `INSERT` trong Transaction**:
-     - Chèn đồng thời vào `orders`, `order_items` (lưu thuộc tính cấu hình `specifications` dạng cột **MySQL `JSON`**), và tự động phân rã 2 đợt thanh toán vào bảng `payments` (`order.repository.ts`).
+     - Chèn đồng thời vào `orders`, `order_items` (lưu thuộc tính cấu hình `customization` dạng cột **MySQL `JSON`**), và tự động phân rã 2 đợt thanh toán vào bảng `payments` (`order.repository.ts`).
    - **Loại (c) — `UPDATE` & Locking**:
      - **Optimistic Locking (Hàng thường)**: Kiểm soát tồn kho bằng cột `version` (`inventory.repository.ts`):
        ```sql
@@ -140,7 +140,7 @@ Các tài khoản mẫu đã được tích hợp sẵn widget **Nhấn để đ
    - Vào tab **Hàng đợi đơn hàng** (`/sales/orders`) $\to$ Tìm đơn vừa đặt $\to$ Bấm **Tiếp nhận xử lý (Claim)**.
    - Vào tab **Cảnh báo & Nhập kho** (`/sales/inventory/low-stock`) $\to$ Xem danh sách biến thể có tổng tồn kho toàn hệ thống chạm ngưỡng cảnh báo.
    - Vào tab **Sổ nợ & Quá hạn** (`/sales/receivables`) $\to$ Bấm nút **Quét & Đánh dấu quá hạn**.
-   - Vào chi tiết đơn hàng $\to$ Cập nhật trạng thái sang `shipped` rồi sang `delivered` (kích hoạt cộng dồn `total_spent` cho khách hàng).
+   - Vào chi tiết đơn hàng $\to$ Chuyển sang `in_production` kèm ngày giao, tiếp theo là `shipped` và `delivered` (kích hoạt cộng dồn `total_spent` cho khách hàng).
 
 2. **Truy vấn SQL thực thi dưới CSDL**:
    - **Loại (g) — `SUBQUERY` trong mệnh đề `FROM` (Derived Table)**:
@@ -182,6 +182,8 @@ Các tài khoản mẫu đã được tích hợp sẵn widget **Nhấn để đ
 1. **Thao tác trên màn hình**:
    - Bấm **Đăng xuất** từ cổng Sales.
    - Đăng nhập thẻ **Quản trị viên** (`admin@luxury.com`) $\to$ Hệ thống chuyển thẳng vào `/admin`.
+   - Mở **Người dùng** (`/admin/users`), tạo một Sales dùng email demo mới, lọc theo Sales và tìm email vừa tạo. Khóa tài khoản, thử đăng nhập, rồi mở khóa và thử lại.
+   - Mở **Kiểm duyệt đánh giá** (`/admin/reviews`), lọc theo sao hoặc tên sản phẩm. Xóa một đánh giá mẫu trên dữ liệu demo và xác nhận danh sách cập nhật.
    - Vào menu **Báo Cáo** $\to$ **Doanh thu theo tháng** (`/admin/reports/revenue`).
    - Vào menu **Báo Cáo** $\to$ **Doanh số Thương hiệu** (`/admin/reports/brands`).
    - Vào menu **Báo Cáo** $\to$ **Đánh giá & Khách VIP** (`/admin/reports/insights`).
@@ -235,7 +237,7 @@ Bảng tổng hợp vị trí triển khai chính xác để mở mã nguồn kh
 
 | Ký hiệu | Nhóm kỹ thuật SQL | Màn hình Demo | Tập tin Repository & Hàm triển khai | Đoạn mã / Cú pháp SQL trọng tâm |
 | :---: | :--- | :---: | :--- | :--- |
-| **Loại (a)** | **`INSERT`** đa bảng trong Transaction | Đặt hàng (`/cart`, `/limited/1`) | `backend/src/repository/order.repository.ts`<br/>`createOrder`, `createOrderItem` | `INSERT INTO orders ...`, `INSERT INTO order_items ...` (lưu cột `specifications` kiểu `JSON`) |
+| **Loại (a)** | **`INSERT`** đa bảng trong Transaction | Đặt hàng (`/cart`, `/limited/:variantId`) | `backend/src/repository/order.repository.ts`<br/>`createOrder`, `createOrderItem` | `INSERT INTO orders ...`, `INSERT INTO order_items ...` (lưu cột `customization` kiểu `JSON`) |
 | **Loại (b)** | **`DELETE`** an toàn (Safe / Restrict) | Đơn hàng (`/account/orders`), Admin (`/admin/products`) | `backend/src/repository/review.repository.ts`<br/>`deleteReview`<br/>`backend/src/repository/catalog.repository.ts`<br/>`deleteProductSafe` | `DELETE FROM reviews WHERE id = ? AND customer_id = ?`<br/>`DELETE FROM products WHERE id = ? AND id NOT IN (...)` |
 | **Loại (c)** | **`UPDATE` & Locking** (Optimistic & Pessimistic) | Đặt hàng & Đổi trạng thái đơn hàng | `backend/src/repository/inventory.repository.ts`<br/>`checkAndReserveStock`<br/>`backend/src/repository/edition.repository.ts`<br/>`lockAvailableUnit` | `UPDATE inventory ... WHERE version = ? ...`<br/>`SELECT ... FROM edition_units ... FOR UPDATE` |
 | **Loại (d)** | **`SELECT` & Dynamic Filter** | Danh mục tác phẩm (`/products`) | `backend/src/repository/catalog.repository.ts`<br/>`findAll` | `SELECT ... WHERE pv.status = 'active' AND ... ORDER BY ... LIMIT ? OFFSET ?` |
@@ -251,7 +253,7 @@ Bảng tổng hợp vị trí triển khai chính xác để mở mã nguồn kh
 ### Câu hỏi 1: *"Tại sao nhóm em không dùng Prisma hay TypeORM mà lại viết Raw SQL?"*
 > **Trả lời**: *"Dạ thưa Thầy/Cô, việc sử dụng Raw SQL thuần giúp nhóm em kiểm soát chặt chẽ kế hoạch thực thi (Execution Plan) của MySQL Query Optimizer. ORM thường tự động sinh ra các câu query lồng hoặc gặp vấn đề N+1 query khi truy xuất các mối quan hệ phức tạp 5 bảng. Với Raw SQL, nhóm có thể chủ động áp dụng các kỹ thuật nâng cao như `HAVING`, Derived Table, Correlated Subquery, và các cơ chế khóa `FOR UPDATE` hoặc Optimistic Locking chính xác theo nhu cầu."*
 
-### Câu hỏi 2: *"Tại sao trường `specifications` trong bảng `order_items` lại lưu dưới dạng JSON?"*
+### Câu hỏi 2: *"Tại sao trường `customization` trong bảng `order_items` lại lưu dưới dạng JSON?"*
 > **Trả lời**: *"Dạ thưa Thầy/Cô, trong đồ án này, mỗi tác phẩm nội thất cao cấp có thể có những thông số đo đạc tùy biến độc nhất theo dinh thự của khách hàng (chiều cao tay vịn, tỷ lệ phối da, ghi chú hoàn thiện thủ công). Việc dùng cột kiểu `JSON` của MySQL cho phép lưu trữ bán cấu trúc linh hoạt mà không cần phải tạo thêm quá nhiều bảng phụ (EAV pattern) làm suy giảm hiệu năng JOIN."*
 
 ### Câu hỏi 3: *"Nhóm đã kiểm chứng hiệu năng chỉ mục (Index) như thế nào?"*

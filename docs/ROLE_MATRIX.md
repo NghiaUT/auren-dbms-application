@@ -138,11 +138,11 @@ stateDiagram-v2
 
 ## 6. Tài khoản mẫu cho demo
 
-| Email                            | Role              | Mục đích demo                                                    |
-| -------------------------------- | ----------------- | ---------------------------------------------------------------- |
-| `admin@lux.vn`                   | admin             | Báo cáo, CRUD catalog, quản lý hạng                              |
-| `sales1@lux.vn`                  | sales             | Xử lý đơn, tồn kho, công nợ                                      |
-| `sales2@lux.vn`                  | sales             | Kiểm chứng row-level: không thấy đơn của `sales1`                |
-| `silver@lux.vn`                  | customer (Silver) | Đặt hàng, thanh toán                                             |
-| `black@lux.vn`                   | customer (Black)  | Kiểm tra giảm giá theo hạng                                      |
-| `racer1@lux.vn`, `racer2@lux.vn` | customer          | Hai khách cùng mua chiếc Limited Edition cuối (demo concurrency) |
+Dùng [tài khoản và hạng đã đối chiếu với seed](../README.md#6-tài-khoản-demo-theo-phân-quyền-rbac). Đăng nhập Sales Nam và Sales Hoa ở hai phiên để kiểm tra mỗi người chỉ xem được đơn đã phân công cho mình hoặc đơn chờ nhận.
+
+## 7. Quản lý tài khoản và kiểm duyệt
+
+- Admin xem và tạo tài khoản nội bộ tại `GET/POST /api/admin/users`. Customer đăng ký qua `POST /api/auth/register`.
+- Admin khóa hoặc mở khóa Sales và Customer qua `PATCH /api/admin/users/:id/status`. API từ chối khóa tài khoản Admin.
+- Tài khoản inactive không đăng nhập được và token của tài khoản đó bị từ chối trên API bảo vệ trong thời gian bị khóa.
+- Admin xem toàn bộ đánh giá tại `GET /api/admin/reviews` và xóa qua `DELETE /api/reviews/:id`. Customer chỉ xóa đánh giá của mình và chỉ đọc đánh giá theo dòng đơn của mình.
