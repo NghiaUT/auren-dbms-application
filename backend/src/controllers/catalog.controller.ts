@@ -25,7 +25,7 @@ const commaSeparatedNumbers = z
 
 export const productFilterSchema = z
   .object({
-    q: z.string().trim().optional(),
+    q: z.string().trim().max(200).optional(),
     categoryId: z.coerce.number().int().positive().optional(),
     brandId: commaSeparatedNumbers,
     materialId: commaSeparatedNumbers,
@@ -45,7 +45,7 @@ export const productFilterSchema = z
       .transform((val) => (val === true || val === 'true' || val === '1' ? true : false)),
     sort: z.enum(['newest', 'price', 'rating', 'name']).default('newest'),
     order: z.enum(['asc', 'desc']).default('desc'),
-    page: z.coerce.number().int().min(1, 'page tối thiểu là 1').default(1),
+    page: z.coerce.number().int().min(1, 'page tối thiểu là 1').max(1_000_000).default(1),
     limit: z.coerce.number().int().min(1).max(100, 'limit tối đa là 100').default(12),
   })
   .refine(
