@@ -9,7 +9,12 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "seed": "tsx src/scripts/seed.ts",
-    "seed:large": "tsx src/scripts/seed-large.ts"
+    "seed:large": "tsx src/scripts/seed-large.ts",
+    "db:init": "tsx src/scripts/database.ts init",
+    "db:setup": "npm run db:init && npm run seed -- --if-empty",
+    "db:indexes:apply": "tsx src/scripts/database.ts apply",
+    "db:indexes:drop": "tsx src/scripts/database.ts drop",
+    "db:indexes:status": "tsx src/scripts/database.ts status"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

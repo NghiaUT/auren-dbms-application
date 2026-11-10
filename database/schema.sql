@@ -16,44 +16,23 @@ USE luxury_furniture;
 
 SET NAMES utf8mb4;
 
--- ------------------------------------------------------------
--- Xoá bảng cũ (theo thứ tự ngược phụ thuộc) để chạy lại được nhiều lần
--- ------------------------------------------------------------
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS reviews;
-DROP TABLE IF EXISTS payments;
-DROP TABLE IF EXISTS edition_units;
-DROP TABLE IF EXISTS order_items;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS inventory;
-DROP TABLE IF EXISTS locations;
-DROP TABLE IF EXISTS variant_materials;
-DROP TABLE IF EXISTS product_variants;
-DROP TABLE IF EXISTS materials;
-DROP TABLE IF EXISTS products;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS brands;
-DROP TABLE IF EXISTS customers;
-DROP TABLE IF EXISTS membership_tiers;
-DROP TABLE IF EXISTS users;
-SET FOREIGN_KEY_CHECKS = 1;
-
 -- ============================================================
 -- GROUP A - USERS
 -- ============================================================
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   email          VARCHAR(150) NOT NULL,
   password_hash  VARCHAR(255) NOT NULL,
   full_name      VARCHAR(120) NOT NULL,
   role           ENUM('admin','sales','customer') NOT NULL DEFAULT 'customer',
   created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_active      BOOLEAN NOT NULL DEFAULT TRUE,
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB COMMENT='Tài khoản đăng nhập. role = sales dùng làm nhân viên phụ trách đơn';
 
-CREATE TABLE membership_tiers (
+CREATE TABLE IF NOT EXISTS membership_tiers (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name          VARCHAR(30)  NOT NULL COMMENT 'Silver / Gold / Black',
   min_spent     DECIMAL(15,2) NOT NULL DEFAULT 0 COMMENT 'Ngưỡng chi tiêu để đạt hạng',
@@ -64,7 +43,7 @@ CREATE TABLE membership_tiers (
   CONSTRAINT chk_tiers_discount  CHECK (discount_pct BETWEEN 0 AND 100)
 ) ENGINE=InnoDB;
 
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id      INT UNSIGNED NOT NULL COMMENT '1:1 với users',
   tier_id      INT UNSIGNED NOT NULL,
@@ -86,7 +65,7 @@ CREATE TABLE customers (
 -- GROUP B - CATALOG
 -- ============================================================
 
-CREATE TABLE brands (
+CREATE TABLE IF NOT EXISTS brands (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name          VARCHAR(100) NOT NULL,
   country       VARCHAR(60),
@@ -95,7 +74,7 @@ CREATE TABLE brands (
   UNIQUE KEY uq_brands_name (name)
 ) ENGINE=InnoDB;
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
   parent_id  INT UNSIGNED NULL COMMENT 'Tự tham chiếu: Phòng khách > Sofa > Sofa góc',
   name       VARCHAR(100) NOT NULL,
@@ -106,7 +85,7 @@ CREATE TABLE categories (
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
   brand_id          INT UNSIGNED NOT NULL,
   category_id       INT UNSIGNED NOT NULL,
@@ -124,7 +103,7 @@ CREATE TABLE products (
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB COMMENT='Sản phẩm gốc. Giá và kích thước nằm ở product_variants';
 
-CREATE TABLE materials (
+CREATE TABLE IF NOT EXISTS materials (
   id      INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name    VARCHAR(100) NOT NULL,
   type    ENUM('wood','leather','stone','metal','fabric','glass') NOT NULL,
@@ -133,7 +112,7 @@ CREATE TABLE materials (
   UNIQUE KEY uq_materials_name (name)
 ) ENGINE=InnoDB;
 
-CREATE TABLE product_variants (
+CREATE TABLE IF NOT EXISTS product_variants (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   product_id     INT UNSIGNED NOT NULL,
   sku            VARCHAR(60)  NOT NULL,
@@ -150,7 +129,7 @@ CREATE TABLE product_variants (
   CONSTRAINT chk_variants_lead  CHECK (lead_time_days >= 0)
 ) ENGINE=InnoDB;
 
-CREATE TABLE variant_materials (
+CREATE TABLE IF NOT EXISTS variant_materials (
   variant_id    INT UNSIGNED NOT NULL,
   material_id   INT UNSIGNED NOT NULL,
   portion       DECIMAL(5,2) COMMENT '% chất liệu trong biến thể',
@@ -167,7 +146,7 @@ CREATE TABLE variant_materials (
 -- GROUP C - INVENTORY
 -- ============================================================
 
-CREATE TABLE locations (
+CREATE TABLE IF NOT EXISTS locations (
   id    INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name  VARCHAR(120) NOT NULL,
   type  ENUM('showroom','warehouse') NOT NULL,
@@ -175,7 +154,7 @@ CREATE TABLE locations (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE inventory (
+CREATE TABLE IF NOT EXISTS inventory (
   variant_id    INT UNSIGNED NOT NULL,
   location_id   INT UNSIGNED NOT NULL,
   qty_on_hand   INT NOT NULL DEFAULT 0,
@@ -196,7 +175,7 @@ CREATE TABLE inventory (
 -- (orders, order_items đặt trước edition_units vì edition_units tham chiếu order_items)
 -- ============================================================
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
   customer_id      INT UNSIGNED NOT NULL,
   sales_user_id    INT UNSIGNED NULL COMMENT 'Nhân viên sales phụ trách',
@@ -216,7 +195,7 @@ CREATE TABLE orders (
   CONSTRAINT chk_orders_amounts CHECK (subtotal >= 0 AND discount >= 0 AND total >= 0)
 ) ENGINE=InnoDB;
 
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   order_id      INT UNSIGNED NOT NULL,
   variant_id    INT UNSIGNED NOT NULL,
@@ -239,7 +218,7 @@ CREATE TABLE order_items (
 -- GROUP C (tiếp) - EDITION UNITS
 -- ============================================================
 
-CREATE TABLE edition_units (
+CREATE TABLE IF NOT EXISTS edition_units (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   variant_id     INT UNSIGNED NOT NULL,
   order_item_id  INT UNSIGNED NULL COMMENT 'NULL khi chưa bán',
@@ -258,7 +237,7 @@ CREATE TABLE edition_units (
 -- GROUP E - PAYMENT
 -- ============================================================
 
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id        INT UNSIGNED NOT NULL AUTO_INCREMENT,
   order_id  INT UNSIGNED NOT NULL,
   type      ENUM('deposit','installment','final') NOT NULL,
@@ -277,7 +256,7 @@ CREATE TABLE payments (
 -- GROUP F - ENGAGEMENT
 -- ============================================================
 
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   customer_id    INT UNSIGNED NOT NULL,
   product_id     INT UNSIGNED NOT NULL,
