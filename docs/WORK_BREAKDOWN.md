@@ -17,9 +17,9 @@ Bảng dưới giả định **nhóm 5 người** (n = 2×5 = 10 FR, kế hoạc
 | ------- | ---------------------------------------- | ------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------- |
 | **TV1** | Trưởng nhóm, nền tảng, Auth              | FR0, FR1, hồ sơ cá nhân, quản lý người dùng | P04, P05, C08, A09, layout dùng chung | **Data storage & management** (+ **Backup & Recovery** làm bonus) |
 | **TV2** | Catalog công khai và đánh giá            | FR2, FR3, FR4, FR10                         | P01, P02, P03, C07, A10               | **Indexing**                                                      |
-| **TV3** | Đặt hàng và thanh toán của khách         | FR5, FR7, FR8, FR9                          | C01, C02, C04, C05, C06               | **Transaction**                                                   |
+| **TV3** | Đặt hàng và thanh toán của khách         | FR5, FR7, FR8, FR9                          | C01, C02, C04 (kèm modal), C05               | **Transaction**                                                   |
 | **TV4** | Limited Edition và nghiệp vụ Sales       | FR6, FR7b, FR11, FR12, FR13                 | C03, S01-S07                          | **Concurrency control**                                           |
-| **TV5** | Admin: catalog, báo cáo, hạng thành viên | FR14, FR15a, FR15b                          | A01-A08                               | **Query processing**                                              |
+| **TV5** | Admin: catalog, báo cáo, hạng thành viên | FR14, FR15a, FR15b                          | A01-A10                               | **Query processing**                                              |
 
 Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 3. Tổng 18 đầu việc, tương ứng 15 FR + FR0 + FR7b + hồ sơ.
 
@@ -30,15 +30,15 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 | Khu vực                                                                          | Chủ                                 | Ghi chú                                                          |
 | -------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------- |
 | `database/schema.sql`, `database/indexes.sql`                                    | TV1 (schema), TV2 (indexes)         | Sửa schema phải báo cả nhóm                                      |
-| `database/seed.sql`, `seed_large.js`                                             | TV1                                 | Các thành viên gửi yêu cầu dữ liệu mẫu cho TV1                   |
-| `backend/src/app.js`, `config/*`, `middlewares/*`, `utils/*`                     | TV1                                 |                                                                  |
+| `backend/src/scripts/seed.ts`, `backend/src/scripts/seed-large.ts`                                             | TV1                                 | Các thành viên gửi yêu cầu dữ liệu mẫu cho TV1                   |
+| `backend/src/app.ts`, `config/*`, `middlewares/*`, `utils/*`                     | TV1                                 |                                                                  |
 | `frontend/src/api/client`, `auth/*`, `layouts/*`, `components/*` dùng chung      | TV1                                 | Component riêng của màn hình do chủ màn hình giữ                 |
-| `routes/controllers/services` theo `*.routes/*.service`                          | Theo cột FR ở mục 2                 | Ví dụ `order.service.js` thuộc TV3, `sales.service.js` thuộc TV4 |
-| `repository/user.repository.js`, `customer.repository.js`                        | TV1                                 |                                                                  |
-| `repository/catalog.repository.js`, `review.repository.js`                       | TV2                                 |                                                                  |
-| `repository/order.repository.js`, `payment.repository.js`                        | TV3                                 | TV4 thêm hàm (claim, lập lịch thanh toán) qua PR vào file này    |
-| `repository/inventory.repository.js`, `edition.repository.js`                    | TV4                                 | TV3 gọi `reserveStock` từ file này                               |
-| `repository/variant.repository.js`, `tier.repository.js`, `report.repository.js` | TV5                                 | TV2 và TV3 đọc `variant.repository` qua hàm đã công bố           |
+| `routes/controllers/services` theo `*.routes/*.service`                          | Theo cột FR ở mục 2                 | Ví dụ `order.service.ts` thuộc TV3, `sales.service.ts` thuộc TV4 |
+| `repository/user.repository.ts`, `customer.repository.ts`                        | TV1                                 |                                                                  |
+| `repository/catalog.repository.ts`, `review.repository.ts`                       | TV2                                 |                                                                  |
+| `repository/order.repository.ts`, `payment.repository.ts`                        | TV3                                 | TV4 thêm hàm (claim, lập lịch thanh toán) qua PR vào file này    |
+| `repository/inventory.repository.ts`, `edition.repository.ts`                    | TV4                                 | TV3 gọi `reserveStock` từ file này                               |
+| `repository/variant.repository.ts`, `tier.repository.ts`, `report.repository.ts` | TV5                                 | TV2 và TV3 đọc `variant.repository` qua hàm đã công bố           |
 | `docs/API_CONTRACT.md`                                                           | Chủ endpoint cập nhật phần của mình | Đổi cần PR `contract-change`                                     |
 
 **Điểm giao nhau cần thống nhất sớm** (làm ở Giai đoạn 0):
@@ -46,7 +46,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 | Giao điểm                          | Bên liên quan  | Thoả thuận                                                                                                                                                      |
 | ---------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `placeOrder` gọi `reserveStock`    | TV3 ↔ TV4      | Chữ ký: `reserveStock(variantId, locationId, qty, version, conn)` trả `affectedRows`. TV4 giao hàm này ở Giai đoạn 2 đầu tiên, TV3 dùng bản giả (stub) trước đó |
-| Huỷ đơn có serial Limited          | TV3 ↔ TV4      | TV4 cung cấp `releaseUnitsByOrderItems(orderItemIds, conn)` trong `edition.repository.js`                                                                       |
+| Huỷ đơn có serial Limited          | TV3 ↔ TV4      | TV4 cung cấp `releaseUnitsByOrderId(orderId, conn)` trong `edition.repository.ts`                                                                       |
 | Cộng `total_spent` khi `delivered` | TV4 ↔ TV1      | `customer.repository.addSpent(customerId, amount, conn)` do TV1 viết, TV4 gọi trong `sales.service`                                                             |
 | Đọc biến thể để tính giá           | TV3, TV4 ↔ TV5 | `variant.repository.findActiveById(id, conn)` do TV5 viết sớm                                                                                                   |
 | Giảm giá theo hạng                 | TV3 ↔ TV1      | `customer.repository.findWithTierByUserId(userId, conn)` do TV1 viết                                                                                            |
@@ -63,7 +63,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 
 - [x] Khởi tạo repo, cấu trúc thư mục, ESLint/Prettier, `.env.example`
 - [] `docker-compose.yml` (mysql, api, web), nạp `schema.sql`
-- [x] Backend: `db.js` (pool, `withTransaction`), `authenticate`, `authorize`, `validate`, `errorHandler`, `AppError`, `res.ok()` + `camelize()`
+- [x] Backend: `db.ts` (pool, `withTransaction`), `authenticate`, `authorize`, `validate`, `errorHandler`, `AppError`, `sendSuccessRes()`
 - [ ] Frontend: Vite + Router, axios client (gắn token, bắt `TOKEN_EXPIRED`), `AuthContext`, `ProtectedRoute`, 4 layout, `StatusBadge`, `DataTable`, `Toast`, `ConfirmDialog`
 - [ ] `seed.sql`: tài khoản demo (xem `ROLE_MATRIX.md` mục 6), danh mục, thương hiệu, vài sản phẩm, kho, hạng thành viên
 - [ ] Hàm dùng chung: `customer.repository` (findWithTierByUserId, addSpent)
@@ -72,7 +72,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 
 - [ ] FR0, FR1: `auth.*`, màn P04, P05
 - [ ] Hồ sơ C08, quản lý người dùng A09
-- [ ] `seed_large.js` (10k-100k đơn có phân bố thực tế)
+- [ ] `backend/src/scripts/seed-large.ts` (10k-100k đơn có phân bố thực tế)
 
 **Topic: Data storage & management**
 
@@ -103,7 +103,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 - [ ] FR8: lịch sử đơn, chi tiết đơn, lịch thanh toán
 - [ ] FR9: huỷ đơn trong transaction (trả tồn, giải phóng serial, đổi trạng thái)
 - [ ] FR7: khách trả khoản (`UPDATE ... WHERE status = 'pending'`)
-- [ ] Frontend: C01 (giỏ hàng, lưu `localStorage`), C02, C04, C05, C06
+- [ ] Frontend: C01 (giỏ hàng, lưu `localStorage`), C02, C04 (kèm modal), C05
 - [ ] Test Supertest: rollback khi một dòng hàng lỗi
 
 **Topic: Transaction**
@@ -121,7 +121,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 - [ ] FR13: công nợ quá hạn, `mark-overdue`
 - [ ] FR7b: lập lịch thanh toán, kiểm tổng bằng `total`
 - [ ] Frontend: C03, S01-S07
-- [ ] `scripts/concurrency_demo.js`: N yêu cầu song song vào chiếc cuối cùng
+- [x] `backend/src/scripts/test-sales.ts`: nhận đơn, trả tiền, hủy và bàn giao đồng thời
 
 **Topic: Concurrency control**
 
@@ -135,7 +135,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 - [ ] FR14: CRUD sản phẩm, biến thể, chất liệu, danh mục, thương hiệu, kho, serial Limited. Xoá biến thể bằng `NOT EXISTS`
 - [ ] FR15a: bốn báo cáo (doanh thu theo tháng, doanh số thương hiệu có HAVING, điểm đánh giá, khách trên trung bình)
 - [ ] FR15b: CRUD hạng, nâng hạng tự động (`UPDATE` + subquery)
-- [ ] Frontend: A01-A08 (biểu đồ Recharts)
+- [ ] Frontend: A01-A10 (biểu đồ Recharts)
 - [ ] Viết sớm `variant.repository.findActiveById` cho TV3, TV4
 
 **Topic: Query processing**
@@ -159,7 +159,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 | **4. Demo DBMS**          | ~1 tuần (chạy **song song** với 2-3) | Mỗi TV hoàn thiện demo topic trên MySQL và MongoDB, thu số liệu                                    | Mỗi TV                                                           | Mỗi topic có script chạy lại được và bảng so sánh         |
 | **5. Báo cáo, trình bày** | ~1 tuần                              | Viết báo cáo, tập thuyết trình, đóng gói zip                                                       | Cả nhóm                                                          | Zip nộp, rehearsal có bấm giờ                             |
 
-<!-- Phần demo DBMS (Giai đoạn 4) phụ thuộc dữ liệu lớn của `seed_large.js`, nên **TV1 phải xong `seed_large.js` ngay đầu Giai đoạn 2**. -->
+<!-- Phần demo DBMS (Giai đoạn 4) phụ thuộc dữ liệu lớn của `backend/src/scripts/seed-large.ts`, nên **TV1 phải xong `backend/src/scripts/seed-large.ts` ngay đầu Giai đoạn 2**. -->
 
 ---
 

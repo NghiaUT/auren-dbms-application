@@ -71,13 +71,14 @@ function instrument(raw: (sql: any, values?: any) => Promise<any>, ctx?: QueryLo
   return async (sql: any, values?: any) => {
     const sqlStr = typeof sql === 'string' ? sql : (sql?.sql ?? String(sql));
     const params = values ?? sql?.values; // query dạng object { sql, values }
+    const isCredentialQuery = /\bpassword_hash\b/i.test(sqlStr);
     const start = performance.now();
     try {
       const res = await raw(sql, values);
-      logQueryExecution(sqlStr, params, performance.now() - start, res[0], ctx);
+      if (!isCredentialQuery) logQueryExecution(sqlStr, params, performance.now() - start, res[0], ctx);
       return res;
     } catch (err) {
-      logQueryError(sqlStr, params, performance.now() - start, err, ctx);
+      if (!isCredentialQuery) logQueryError(sqlStr, params, performance.now() - start, err, ctx);
       throw err;
     }
   };

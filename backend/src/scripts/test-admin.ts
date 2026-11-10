@@ -14,11 +14,14 @@
 //   6. Kiểm tra Nâng hạng tự động (FR15b [30]-[32]) qua Transaction ACID
 // ============================================================================
 
+import assert from 'node:assert/strict';
+import { requireTestDatabase } from './test-database.js';
 import { pool } from '../config/db.js';
 import * as adminService from '../services/admin.service.js';
 import { ConflictError } from '../utils/AppError.js';
 
 async function runAdminSmokeTests() {
+  requireTestDatabase();
   console.log('\n================================================================');
   console.log('🏛️  BẮT ĐẦU KIỂM THỬ TỰ ĐỘNG PHÂN HỆ ADMIN PORTAL (A01 - A08)');
   console.log('================================================================\n');
@@ -71,6 +74,11 @@ async function runAdminSmokeTests() {
       editionSize: 5, // Sinh 5 serial: 01/5 to 05/5
     });
     console.log(`  - Tạo Biến thể thành công: ID #${newVariant.id} (SKU: ${newVariant.sku})`);
+
+    const updatedProduct = await adminService.updateProduct(newProd.id, { name: 'Smoke updated product' });
+    const updatedVariant = await adminService.updateVariant(newVariant.id, { price: 66000000 });
+    assert.equal(updatedProduct.name, 'Smoke updated product');
+    assert.equal(Number(updatedVariant.price), 66000000);
 
     // Kiểm tra các bản ghi edition_units đã sinh ra trong DB
     const [serialRows]: any = await pool.execute(
@@ -127,14 +135,17 @@ async function runAdminSmokeTests() {
     console.log(`  - 4.1: KPI Tổng quan: Doanh thu = ${summary.revenue.toLocaleString()} VND, Đơn = ${summary.orderCount}, Khách = ${summary.newCustomers}`);
 
     // 4.2: Báo cáo thương hiệu có HAVING
+    assert(summary.orderCount > 0 && summary.revenue > 0);
     const brandSales: any = await adminService.getReport('brand-sales', { min: 10000000 });
     console.log(`  - 4.2: Báo cáo Thương hiệu (HAVING >= 10M): ${brandSales.length} thương hiệu đạt ngưỡng`);
 
     // 4.3: Báo cáo điểm đánh giá có HAVING count >= 1
+    assert(brandSales.length > 0 && brandSales.every((item: any) => item.revenue >= 10000000));
     const ratings: any = await adminService.getReport('ratings', { min: 1 });
     console.log(`  - 4.3: Báo cáo Đánh giá (HAVING reviewCount >= 1): ${ratings.length} tác phẩm có đánh giá`);
 
     // 4.4: Báo cáo khách hàng VIP có SUBQUERY (> AVG)
+    assert(ratings.length > 0 && ratings.every((item: any) => item.reviewCount >= 1));
     const topCust: any = await adminService.getReport('top-customers', { limit: 5 });
     console.log(`  - 4.4: Báo cáo Khách VIP (SUBQUERY > AVG ${topCust.averageSpent.toLocaleString()} VND): ${topCust.customers.length} khách vượt mức TB`);
 
@@ -148,12 +159,17 @@ async function runAdminSmokeTests() {
     const tiers = await adminService.getTiers();
     console.log(`  - 5.1: Danh sách hạng thành viên: ${tiers.length} hạng`, tiers.map((t: any) => `${t.name} (${t.customerCount} khách)`).join(', '));
 
-    // Chạy thử nghiệm xem trước (dryRun = true)
+    assert.equal(tiers.length, 3);
+    // Seed tiers are synchronized. Introduce one stale tier to exercise a real update.
+    await pool.execute('UPDATE customers SET tier_id = ? WHERE id = ?', [tiers[0].id, 1]);
     const preview = await adminService.recalculateTiers(true);
+    assert(preview.affected >= 1);
     console.log(`  - 5.2: Xem trước nâng hạng (dryRun: true): ${preview.affected} khách hàng cần cập nhật`);
 
     // Chạy thực thi thực tế (dryRun = false)
     const realRecalc = await adminService.recalculateTiers(false);
+    assert.equal(realRecalc.affected, preview.affected);
+    assert.equal((await adminService.recalculateTiers(true)).affected, 0);
     console.log(`  - 5.3: Thực thi nâng hạng tự động (Transaction ACID): Đã cập nhật ${realRecalc.affected} khách hàng`);
 
     console.log('✅ [Test 5 PASS] Nâng hạng tự động trong Transaction ACID thành công!\n');
@@ -166,10 +182,13 @@ async function runAdminSmokeTests() {
     if (err.stack) {
       console.error(err.stack);
     }
-    process.exit(1);
+    process.exitCode = 1;
   } finally {
     await pool.end();
   }
 }
 
-runAdminSmokeTests();
+runAdminSmokeTests().catch((err) => {
+  console.error(err.message);
+  process.exitCode = 1;
+});

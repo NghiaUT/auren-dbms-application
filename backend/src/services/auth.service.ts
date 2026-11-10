@@ -128,7 +128,7 @@ export async function login(
 ): Promise<AuthResponse & { expiresIn: number }> {
   // 1. Tìm user theo email
   const user = await userRepo.findByEmail(email);
-  if (!user) {
+  if (!user?.is_active) {
     throw new InvalidCredentialsError();
   }
 

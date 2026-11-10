@@ -14,6 +14,47 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendSuccessRes } from '../utils/sendSuccessRes.js';
 import { BadRequestError } from '../utils/AppError.js';
 
+const adminPageSchema = z.object({
+  q: z.string().trim().max(200).optional(),
+  page: z.coerce.number().int().min(1).max(1_000_000).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+const userListSchema = adminPageSchema.extend({ role: z.enum(['admin', 'sales', 'customer']).optional() });
+const reviewListSchema = adminPageSchema.extend({ rating: z.coerce.number().int().min(1).max(5).optional() });
+const internalUserSchema = z.object({
+  fullName: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(150).toLowerCase(),
+  password: z.string().min(8).refine((value) => Buffer.byteLength(value, 'utf8') <= 72, 'Mật khẩu tối đa 72 byte'),
+  role: z.enum(['admin', 'sales']),
+}).strict();
+const userStatusSchema = z.object({ isActive: z.boolean() }).strict();
+const userIdSchema = z.coerce.number().int().positive().max(4_294_967_295);
+
+function sendPage<T>(res: Response, { data, total }: { data: T[]; total: number }, { page, limit }: { page: number; limit: number }) {
+  return res.json({ data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+}
+
+export const listUsers = asyncHandler(async (req, res) => {
+  const filters = userListSchema.parse(req.query);
+  return sendPage(res, await adminService.listUsers(filters), filters);
+});
+
+export const createInternalUser = asyncHandler(async (req, res) => {
+  const user = await adminService.createInternalUser(internalUserSchema.parse(req.body));
+  return sendSuccessRes(res, user, 'Tạo tài khoản thành công', 201);
+});
+
+export const setUserActive = asyncHandler(async (req, res) => {
+  const id = userIdSchema.parse(req.params.id);
+  const { isActive } = userStatusSchema.parse(req.body);
+  return sendSuccessRes(res, await adminService.setUserActive(id, isActive), 'Đã cập nhật trạng thái tài khoản');
+});
+
+export const listReviews = asyncHandler(async (req, res) => {
+  const filters = reviewListSchema.parse(req.query);
+  return sendPage(res, await adminService.listReviews(filters), filters);
+});
+
 // ============================================================================
 // SCHEMAS VALIDATION ZOD
 // ============================================================================

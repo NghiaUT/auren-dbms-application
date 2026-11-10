@@ -199,6 +199,7 @@ export async function updateOrderStatusWithDeliveryDate(
   orderId: number,
   salesUserId: number,
   status: OrderStatus,
+  expectedStatus: OrderStatus,
   deliveryDate?: string | null,
   conn: DbConnection = pool,
 ): Promise<number> {
@@ -210,16 +211,16 @@ export async function updateOrderStatusWithDeliveryDate(
       UPDATE orders 
       SET status = ?,
           delivery_date = ?
-      WHERE id = ? AND sales_user_id = ?
+      WHERE id = ? AND sales_user_id = ? AND status = ?
     `;
-    params = [status, deliveryDate, orderId, salesUserId];
+    params = [status, deliveryDate, orderId, salesUserId, expectedStatus];
   } else {
     sql = `
       UPDATE orders 
       SET status = ?
-      WHERE id = ? AND sales_user_id = ?
+      WHERE id = ? AND sales_user_id = ? AND status = ?
     `;
-    params = [status, orderId, salesUserId];
+    params = [status, orderId, salesUserId, expectedStatus];
   }
 
   const [result] = await conn.execute<ResultSetHeader>(sql, params);

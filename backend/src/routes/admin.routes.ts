@@ -22,6 +22,11 @@ const adminRouter = Router();
 adminRouter.use(authenticate);
 adminRouter.use(authorize('admin'));
 
+adminRouter.get('/users', adminController.listUsers);
+adminRouter.post('/users', adminController.createInternalUser);
+adminRouter.patch('/users/:id/status', adminController.setUserActive);
+adminRouter.get('/reviews', adminController.listReviews);
+
 // ============================================================================
 // 1. BÁO CÁO THỐNG KÊ (FR15a [29])
 // ============================================================================

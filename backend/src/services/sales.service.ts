@@ -167,7 +167,9 @@ export async function updateOrderStatus(
   if (targetStatus === 'delivered') {
     return await withTransaction(async (conn) => {
       // 1. Cập nhật trạng thái đơn
-      await salesRepo.updateOrderStatusWithDeliveryDate(orderId, user.id, 'delivered', null, conn);
+      if (!(await salesRepo.updateOrderStatusWithDeliveryDate(orderId, user.id, 'delivered', currentStatus, undefined, conn))) {
+        throw new ConflictError('Trạng thái đơn hàng đã thay đổi.', 'INVALID_STATUS_TRANSITION');
+      }
 
       // 2. Trừ tồn kho vật lý (qty_on_hand) và giải phóng số lượng giữ (qty_reserved)
       await salesRepo.deductPhysicalStockOnDelivered(orderId, conn);
@@ -188,12 +190,14 @@ export async function updateOrderStatus(
   }
 
   // Các bước chuyển thông thường (confirmed -> in_production, in_production -> shipped)
-  await salesRepo.updateOrderStatusWithDeliveryDate(
+  const updated = await salesRepo.updateOrderStatusWithDeliveryDate(
     orderId,
     user.id,
     targetStatus,
+    currentStatus,
     payload.deliveryDate,
   );
+  if (!updated) throw new ConflictError('Trạng thái đơn hàng đã thay đổi.', 'INVALID_STATUS_TRANSITION');
 
   return {
     id: orderId,
@@ -230,6 +234,9 @@ export async function cancelOrderBySales(
   }
 
   return await withTransaction(async (conn) => {
+    if (!(await orderRepo.updateOrderStatus(orderId, 'cancelled', order.status, conn))) {
+      throw new ConflictError('Trạng thái đơn hàng đã thay đổi.', 'INVALID_STATUS_TRANSITION');
+    }
     // 1. Hoàn trả tồn kho đã giữ
     const items = await orderRepo.findOrderItemsByOrderId(orderId, conn);
     for (const item of items) {
@@ -241,9 +248,6 @@ export async function cancelOrderBySales(
 
     // 3. Huỷ bỏ các khoản thanh toán chờ thu
     await paymentRepo.cancelPendingPaymentsByOrderId(orderId, conn);
-
-    // 4. Đổi trạng thái đơn sang 'cancelled'
-    await orderRepo.updateOrderStatus(orderId, 'cancelled', conn);
 
     return {
       id: orderId,
@@ -264,85 +268,87 @@ export async function createPaymentSchedule(
   user: AuthUser,
   payload: CreatePaymentSchedulePayload,
 ) {
-  const order = await orderRepo.findOrderHeaderById(orderId);
-  if (!order) {
-    throw new NotFoundError('Đơn hàng không tồn tại trong hệ thống.');
-  }
-
-  if (order.salesUserId !== user.id) {
-    throw new NotFoundError('Đơn hàng không tồn tại hoặc bạn không được phân công phụ trách đơn hàng này.');
-  }
-
-  if (order.status === 'cancelled') {
-    throw new ConflictError('Đơn hàng đã bị huỷ, không thể lập lịch thanh toán.', 'INVALID_STATUS_TRANSITION');
-  }
-
-  if (!payload.payments || payload.payments.length === 0) {
-    throw new BadRequestError('Danh sách khoản thanh toán không được rỗng.', 'VALIDATION_ERROR');
-  }
-
-  // Lấy các khoản thanh toán hiện tại của đơn
-  const existingPayments = await paymentRepo.findPaymentsByOrderId(orderId);
-  const activeExistingPayments = existingPayments.filter((p) => p.status !== 'refunded');
-
-  // Kiểm tra ngày thanh toán và tính tổng (theo ngày Việt Nam)
-  const todayStr = getVietnamDateString();
-  let newFinalCount = 0;
-  let newAmountSum = 0;
-
-  for (const p of payload.payments) {
-    if (p.amount <= 0) {
-      throw new BadRequestError('Số tiền mỗi đợt thanh toán phải lớn hơn 0.', 'VALIDATION_ERROR');
+  return withTransaction(async (conn) => {
+    const order = await orderRepo.lockOrderForPaymentSchedule(orderId, conn);
+    if (!order) {
+      throw new NotFoundError('Đơn hàng không tồn tại trong hệ thống.');
     }
-    if (p.dueDate && p.dueDate < todayStr) {
-      throw new BadRequestError(`Hạn thanh toán ${p.dueDate} không thể ở quá khứ.`, 'VALIDATION_ERROR');
+
+    if (order.salesUserId !== user.id) {
+      throw new NotFoundError('Đơn hàng không tồn tại hoặc bạn không được phân công phụ trách đơn hàng này.');
     }
-    if (p.type === 'final') {
-      newFinalCount++;
+
+    if (order.status === 'cancelled') {
+      throw new ConflictError('Đơn hàng đã bị huỷ, không thể lập lịch thanh toán.', 'INVALID_STATUS_TRANSITION');
     }
-    newAmountSum += p.amount;
-  }
 
-  // Ràng buộc: Tối đa 1 khoản final
-  const existingFinalCount = activeExistingPayments.filter((p) => p.type === 'final').length;
-  if (existingFinalCount + newFinalCount > 1) {
-    throw new BadRequestError('Đơn hàng chỉ được phép có tối đa một đợt thanh toán quyết toán (final).', 'VALIDATION_ERROR');
-  }
+    if (!payload.payments || payload.payments.length === 0) {
+      throw new BadRequestError('Danh sách khoản thanh toán không được rỗng.', 'VALIDATION_ERROR');
+    }
 
-  // Ràng buộc: Tổng các khoản thanh toán không vượt quá order.total
-  const existingAmountSum = activeExistingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const grandTotal = existingAmountSum + newAmountSum;
+    // Lấy các khoản thanh toán hiện tại của đơn
+    const existingPayments = await paymentRepo.findPaymentsByOrderId(orderId, conn);
+    const activeExistingPayments = existingPayments.filter((p) => p.status !== 'refunded');
 
-  if (grandTotal > Number(order.total)) {
-    throw new BadRequestError(
-      `Tổng các đợt thanh toán (${grandTotal.toLocaleString('vi-VN')} đ) vượt quá tổng giá trị đơn hàng (${Number(order.total).toLocaleString('vi-VN')} đ).`,
-      'VALIDATION_ERROR',
-    );
-  }
+    // Kiểm tra ngày thanh toán và tính tổng (theo ngày Việt Nam)
+    const todayStr = getVietnamDateString();
+    let newFinalCount = 0;
+    let newAmountSum = 0;
 
-  // Thêm các khoản thanh toán mới
-  for (const p of payload.payments) {
-    await paymentRepo.createPayment({
-      orderId,
+    for (const p of payload.payments) {
+      if (p.amount <= 0) {
+        throw new BadRequestError('Số tiền mỗi đợt thanh toán phải lớn hơn 0.', 'VALIDATION_ERROR');
+      }
+      if (p.dueDate && p.dueDate < todayStr) {
+        throw new BadRequestError(`Hạn thanh toán ${p.dueDate} không thể ở quá khứ.`, 'VALIDATION_ERROR');
+      }
+      if (p.type === 'final') {
+        newFinalCount++;
+      }
+      newAmountSum += p.amount;
+    }
+
+    // Ràng buộc: Tối đa 1 khoản final
+    const existingFinalCount = activeExistingPayments.filter((p) => p.type === 'final').length;
+    if (existingFinalCount + newFinalCount > 1) {
+      throw new BadRequestError('Đơn hàng chỉ được phép có tối đa một đợt thanh toán quyết toán (final).', 'VALIDATION_ERROR');
+    }
+
+    // Ràng buộc: Tổng các khoản thanh toán không vượt quá order.total
+    const existingAmountSum = activeExistingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const grandTotal = existingAmountSum + newAmountSum;
+
+    if (grandTotal > Number(order.total)) {
+      throw new BadRequestError(
+        `Tổng các đợt thanh toán (${grandTotal.toLocaleString('vi-VN')} đ) vượt quá tổng giá trị đơn hàng (${Number(order.total).toLocaleString('vi-VN')} đ).`,
+        'VALIDATION_ERROR',
+      );
+    }
+
+    // Thêm các khoản thanh toán mới
+    for (const p of payload.payments) {
+      await paymentRepo.createPayment({
+        orderId,
+        type: p.type,
+        amount: p.amount,
+        dueDate: p.dueDate,
+        status: 'pending',
+      }, conn);
+    }
+
+    // Trả về toàn bộ lịch thanh toán sau khi cập nhật
+    const allPayments = await paymentRepo.findPaymentsByOrderId(orderId, conn);
+    return allPayments.map((p) => ({
+      id: p.id,
+      orderId: p.orderId,
       type: p.type,
-      amount: p.amount,
+      amount: Number(p.amount),
       dueDate: p.dueDate,
-      status: 'pending',
-    });
-  }
-
-  // Trả về toàn bộ lịch thanh toán sau khi cập nhật
-  const allPayments = await paymentRepo.findPaymentsByOrderId(orderId);
-  return allPayments.map((p) => ({
-    id: p.id,
-    orderId: p.orderId,
-    type: p.type,
-    amount: Number(p.amount),
-    dueDate: p.dueDate,
-    paidAt: p.paidAt,
-    method: p.method,
-    status: p.status,
-  }));
+      paidAt: p.paidAt,
+      method: p.method,
+      status: p.status,
+    }));
+  });
 }
 
 /**

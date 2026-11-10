@@ -10,26 +10,26 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 
 | Mã FR | Tên chức năng | Vai trò chính | Màn hình liên quan | Endpoint API chính | Điểm nhấn kỹ thuật DBMS / Ràng buộc |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **FR0** | Đăng nhập / Đăng xuất | Tất cả vai trò | `P04`, `P05`, `C08`, Header | `POST /api/auth/login`<br>`POST /api/auth/logout`<br>`GET /api/auth/me` | JWT Token, phân quyền RBAC (Role-based Access Control), lưu vết phiên làm việc |
+| **FR0** | Đăng nhập / Đăng xuất | Tất cả vai trò | `P04`, `P05`, `C08`, Header | `POST /api/auth/login`<br>`POST /api/auth/logout`<br>`GET /api/auth/me` | JWT Token, phân quyền RBAC (Role-based Access Control), kiểm tra tài khoản còn hoạt động |
 | **FR1** | Đăng ký tài khoản khách hàng | Guest | `P05` (`/register`) | `POST /api/auth/register` | Tự động gán role `customer`, khởi tạo hạng thành viên Silver, `total_spent = 0` |
-| **FR2** | Xem danh mục sản phẩm & thương hiệu | Công khai | `P01` (`/`), `P02` (`/products`) | `GET /api/catalog/products`<br>`GET /api/catalog/categories`<br>`GET /api/catalog/brands` | Phân cấp danh mục cha - con (`parent_id`), nạp dữ liệu phân trang |
-| **FR3** | Tìm kiếm & Lọc nâng cao đa chiều | Công khai | `P02` (`/products`) | `GET /api/catalog/products` (query params) | `JOIN` 5 bảng, `IN (SELECT DISTINCT ...)`, `GROUP BY` & `HAVING MIN(pv.price) BETWEEN ? AND ?`, Composite B-Tree & Fulltext Index |
-| **FR4** | Xem chi tiết sản phẩm & biến thể | Công khai | `P03` (`/products/:id`) | `GET /api/catalog/products/:id` | Gom nhóm biến thể & chất liệu trong 1 truy vấn JOIN (tránh N+1); Guest chỉ thấy cờ Còn/Hết, User thấy số lượng tồn chi tiết |
+| **FR2** | Xem danh mục sản phẩm & thương hiệu | Công khai | `P01` (`/`), `P02` (`/products`) | `GET /api/products`<br>`GET /api/categories`<br>`GET /api/brands` | Phân cấp danh mục cha - con (`parent_id`), nạp dữ liệu phân trang |
+| **FR3** | Tìm kiếm & Lọc nâng cao đa chiều | Công khai | `P02` (`/products`) | `GET /api/products` (query params) | `JOIN` 5 bảng, `IN (SELECT DISTINCT ...)`, `GROUP BY` & `HAVING MIN(pv.price) BETWEEN ? AND ?`, Composite B-Tree & Fulltext Index |
+| **FR4** | Xem chi tiết sản phẩm & biến thể | Công khai | `P03` (`/products/:id`) | `GET /api/products/:id` | Đọc biến thể, chất liệu và tồn kho theo lô; Guest chỉ thấy cờ Còn/Hết, User thấy số lượng tồn chi tiết |
 | **FR5** | Đặt hàng tiêu chuẩn & Giữ tồn kho | Customer | `C01` (`/cart`), `C02` (`/checkout`) | `POST /api/orders` | **Optimistic Locking** qua cột `version` trên bảng `inventory` khi giữ chỗ kho; Transaction tự động tính chiết khấu theo hạng |
-| **FR6** | Mua tác phẩm Limited Edition | Customer | `C03` (`/products/:id#limited`), `C02` | `POST /api/orders` | **Pessimistic Locking** (`SELECT ... FOR UPDATE`) trên bảng `edition_units` ở mức `REPEATABLE READ`, cấp bản khắc serial duy nhất |
-| **FR7** | Khách hàng thanh toán trả khoản | Customer | `C06` (`/account/orders/:id/payments`) | `POST /api/payments/:id/pay` | **Atomic State Transition** (`UPDATE payments ... WHERE status = 'pending'`), chống double-payment, bảo mật row-level |
-| **FR7b** | Lập lịch thanh toán nhiều kỳ cho đơn hàng | Sales | `S04` (`/sales/orders/:id/schedule`) | `POST /api/orders/:id/schedule` | Chia kỳ thanh toán (đặt cọc, đợt sản xuất, quyết toán); kiểm tra tổng các đợt bằng chính xác `orders.total_amount` |
-| **FR8** | Lịch sử đơn hàng & Tiến trình thanh toán | Customer, Sales, Admin | `C04`, `C05`, `S02`, `S03` | `GET /api/orders`<br>`GET /api/orders/:id`<br>`GET /api/orders/:id/payments` | Tối ưu phân trang với index composite `idx_orders_customer_date (customer_id, order_date)`; hiển thị thuộc tính JSON `customization` |
-| **FR9** | Hủy đơn hàng & Hoàn trả tài nguyên | Customer, Sales | `C05`, `S03` | `POST /api/orders/:id/cancel` | Transaction hoàn tác toàn diện: giải phóng `qty_reserved`, trả trạng thái `edition_units` về `available`, hủy các khoản nợ pending |
-| **FR10** | Đánh giá sản phẩm đã mua | Customer, Admin | `C07` (`/account/reviews`), `P03`, `A10` | `POST /api/reviews`<br>`DELETE /api/reviews/:id`<br>`GET /api/reviews/product/:id` | Xác thực mua hàng qua `INSERT ... SELECT WHERE status = 'delivered'`; ràng buộc chống trùng `UNIQUE(customer_id, order_item_id)` |
-| **FR11** | Tiếp nhận & Xử lý đơn hàng | Sales | `S01` (`/sales`), `S02`, `S03` | `POST /api/sales/orders/:id/claim`<br>`PATCH /api/sales/orders/:id/status` | Atomic Claiming chống 2 Sales nhận cùng đơn (`WHERE sales_user_id IS NULL`); khi `delivered` tự động cộng dồn `customers.total_spent` |
-| **FR12** | Quản lý tồn kho & Cảnh báo sắp hết hàng | Sales, Admin | `S05` (`/sales/inventory`), `S06` | `GET /api/sales/inventory`<br>`GET /api/sales/inventory/low-stock`<br>`POST /api/sales/inventory/restock` | Derived Table Subquery tính tổng khả dụng `(qty_on_hand - qty_reserved)` trên toàn hệ thống; nhập kho có kiểm soát `version` |
+| **FR6** | Mua tác phẩm Limited Edition | Customer | `C03` (`/limited/:variantId`), `C02` | `POST /api/orders` | **Pessimistic Locking** (`SELECT ... FOR UPDATE`) trên bảng `edition_units` ở mức `REPEATABLE READ`, cấp bản khắc serial duy nhất |
+| **FR7** | Khách hàng thanh toán trả khoản | Customer | `OrderDetailModal` trong `C04` (`/account/orders`) | `POST /api/payments/:id/pay` | **Atomic State Transition** (`UPDATE payments ... WHERE status IN ('pending', 'overdue')`), chống double-payment, bảo mật row-level |
+| **FR7b** | Lập lịch thanh toán nhiều kỳ cho đơn hàng | Sales | `S04` (`/sales/orders/:id/payments`) | `POST /api/sales/orders/:id/payments` | Chia kỳ thanh toán (đặt cọc, đợt sản xuất, quyết toán); kiểm tra tổng các đợt không vượt `orders.total` |
+| **FR8** | Lịch sử đơn hàng & Tiến trình thanh toán | Customer, Sales, Admin | `C04`, `S02`, `S03` | `GET /api/orders`<br>`GET /api/orders/:id`<br>`GET /api/sales/orders/:id` | Tối ưu phân trang với index composite `idx_orders_customer_date (customer_id, order_date)`; hiển thị thuộc tính JSON `customization` |
+| **FR9** | Hủy đơn hàng & Hoàn trả tài nguyên | Customer, Sales | `C04`, `S03` | `POST /api/orders/:id/cancel`<br>`POST /api/sales/orders/:id/cancel` | Transaction hoàn tác toàn diện: giải phóng `qty_reserved`, trả trạng thái `edition_units` về `available`, hủy các khoản nợ pending |
+| **FR10** | Đánh giá sản phẩm đã mua | Customer, Admin | `C07` (`/account/orders/:id/items/:itemId/review`), `P03`, `A10` | `POST /api/reviews`<br>`DELETE /api/reviews/:id`<br>`GET /api/products/:id`<br>`GET /api/admin/reviews` | Xác thực chủ đơn và trạng thái `delivered` trước khi chèn; ràng buộc chống trùng `UNIQUE(customer_id, order_item_id)` |
+| **FR11** | Tiếp nhận & Xử lý đơn hàng | Sales | `S01` (`/sales`), `S02`, `S03` | `PATCH /api/sales/orders/:id/claim`<br>`PATCH /api/sales/orders/:id/status` | Atomic Claiming chống 2 Sales nhận cùng đơn (`WHERE sales_user_id IS NULL`); khi `delivered` tự động cộng dồn `customers.total_spent` |
+| **FR12** | Quản lý tồn kho & Cảnh báo sắp hết hàng | Sales, Admin | `S05` (`/sales/inventory`), `S06` | `GET /api/sales/inventory`<br>`GET /api/sales/inventory/low-stock`<br>`PATCH /api/sales/inventory/restock` | Derived Table Subquery tính tổng khả dụng `(qty_on_hand - qty_reserved)` trên toàn hệ thống; nhập kho có kiểm soát `version` |
 | **FR13** | Quản lý công nợ & Quét nợ quá hạn | Sales, Admin | `S07` (`/sales/receivables`) | `GET /api/sales/receivables`<br>`POST /api/sales/receivables/mark-overdue` | Index `idx_payments_status_due (status, due_date)`; tính ngày trễ hạn bằng hàm `DATEDIFF()`; cập nhật hàng loạt nợ quá hạn qua `UPDATE ... JOIN` |
-| **FR14** | Quản trị danh mục, sản phẩm & biến thể | Admin | `A05`, `A06`, `A07` | `POST/PUT/DELETE /api/admin/products`<br>`POST/PUT/DELETE /api/admin/variants`<br>`POST/PUT/DELETE /api/admin/categories`... | Ràng buộc khóa ngoại toàn vẹn dữ liệu (RESTRICT); xóa biến thể an toàn bằng kiểm tra `NOT EXISTS (SELECT 1 FROM order_items ...)` |
-| **FR15a** | Báo cáo & Thống kê kinh doanh | Admin | `A01` (`/admin`), `A02`, `A03`, `A04` | `GET /api/admin/reports/revenue`<br>`GET /api/admin/reports/brands`<br>`GET /api/admin/reports/reviews`<br>`GET /api/admin/reports/insights` | 4 báo cáo OLAP: doanh thu theo tháng (index `idx_orders_date`), doanh số thương hiệu (`GROUP BY` + `HAVING`), điểm đánh giá, khách chi tiêu trên trung bình |
-| **FR15b** | Quản lý & Tự động xét duyệt hạng thành viên | Admin | `A08` (`/admin/tiers`) | `GET/POST/PUT /api/admin/tiers`<br>`POST /api/admin/tiers/recalculate` | Quét phân hạng tự động bằng **Correlated Subquery** khớp với `customers.total_spent`; hỗ trợ chế độ kiểm tra trước (`dryRun = true`) |
-| *(Phụ 1)* | Quản lý người dùng hệ thống | Admin | `A09` (`/admin/users`) | `GET/POST/PATCH /api/admin/users` | Tạo tài khoản Sales/Admin, khóa/mở khóa tài khoản, phân quyền quản trị |
-| *(Phụ 2)* | Xem và cập nhật hồ sơ cá nhân | Customer, Sales, Admin | `C08` (`/account/profile`) | `GET/PATCH /api/users/profile` | Tra cứu thông tin cá nhân, hạng thành viên hiện tại, phần trăm chiết khấu và tổng chi tiêu lũy kế |
+| **FR14** | Quản trị danh mục, sản phẩm & biến thể | Admin | `A05`, `A06`, `A07` | `POST /api/admin/products`<br>`PATCH/DELETE /api/admin/products/:id`<br>`POST /api/admin/products/:id/variants`<br>`PATCH/DELETE /api/admin/variants/:id` | Ràng buộc khóa ngoại toàn vẹn dữ liệu (RESTRICT); xóa biến thể an toàn bằng kiểm tra `NOT EXISTS (SELECT 1 FROM order_items ...)` |
+| **FR15a** | Báo cáo & Thống kê kinh doanh | Admin | `A01` (`/admin`), `A02`, `A03`, `A04` | `GET /api/admin/reports/revenue`<br>`GET /api/admin/reports/brand-sales`<br>`GET /api/admin/reports/ratings`<br>`GET /api/admin/reports/top-customers` | 4 báo cáo OLAP: doanh thu theo tháng (index `idx_orders_date`), doanh số thương hiệu (`GROUP BY` + `HAVING`), điểm đánh giá, khách chi tiêu trên trung bình |
+| **FR15b** | Quản lý & Tự động xét duyệt hạng thành viên | Admin | `A08` (`/admin/tiers`) | `GET /api/admin/tiers`<br>`PATCH /api/admin/tiers/:id`<br>`POST /api/admin/tiers/recalculate` | Quét phân hạng tự động bằng **Correlated Subquery** khớp với `customers.total_spent`; hỗ trợ chế độ kiểm tra trước (`dryRun = true`) |
+| *(Phụ 1)* | Quản lý người dùng hệ thống | Admin | `A09` (`/admin/users`) | `GET/POST /api/admin/users`<br>`PATCH /api/admin/users/:id/status` | Tạo tài khoản Sales/Admin, khóa/mở khóa tài khoản Sales và Customer |
+| *(Phụ 2)* | Xem và cập nhật hồ sơ cá nhân | Customer, Sales, Admin | `C08` (`/account/profile`) | `GET/PATCH /api/auth/me` | Tra cứu thông tin cá nhân, hạng thành viên hiện tại, phần trăm chiết khấu và tổng chi tiêu lũy kế |
 
 ---
 
@@ -61,16 +61,16 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 - **Mục tiêu**: Tra cứu nhanh danh mục sản phẩm theo nhiều tiêu chí kết hợp.
 - **Tác nhân**: Công khai.
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
-  - Tìm kiếm toàn văn (Fulltext search) theo tên và mã sản phẩm.
+  - Tìm kiếm toàn văn theo tên sản phẩm, bộ sưu tập và nhà thiết kế qua `ftx_products_search`. Từ khóa chỉ có token ngắn dùng `LIKE` dạng chứa với ký tự wildcard được escape.
   - Lọc đa chiều kết hợp: Danh mục cha/con, Thương hiệu, Chất liệu cấu thành (truy vấn quan hệ N:M qua bảng `variant_materials` bằng `IN (SELECT DISTINCT ...)`).
   - Lọc theo khoảng giá biến thể tối thiểu và tối đa dựa trên hàm tổng hợp `MIN(pv.price)` gom nhóm theo sản phẩm kết hợp mệnh đề `HAVING`.
-  - Phân trang kết quả và sắp xếp an toàn theo danh sách whitelist (`price:asc`, `price:desc`, `newest`).
+  - Phân trang kết quả và sắp xếp an toàn theo danh sách whitelist (`newest`, `price`, `rating`, `name` với `asc` hoặc `desc`).
 
 ### FR4: Xem chi tiết sản phẩm, biến thể và cấu hình chất liệu (Product Details)
 - **Mục tiêu**: Hiển thị hồ sơ thiết kế chi tiết của một sản phẩm nội thất kiến trúc.
 - **Tác nhân**: Công khai.
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
-  - Tối ưu hóa truy vấn: Gom toàn bộ thông tin biến thể (kích thước, hoàn thiện, SKU, đơn giá) và chất liệu cấu thành trong 1 truy vấn JOIN duy nhất, loại bỏ triệt để lỗi truy vấn N+1.
+  - Tối ưu hóa truy vấn: Đọc biến thể, chất liệu, tồn kho và đánh giá bằng các truy vấn theo lô.
   - Kiểm soát hiển thị tồn kho: Guest chỉ thấy cờ trạng thái "Còn hàng" hoặc "Hết hàng". Người dùng đã đăng nhập xem được số lượng tồn khả dụng chi tiết theo từng chi nhánh/kho.
 
 ### FR5: Đặt hàng tiêu chuẩn & Giữ chỗ tồn kho (Standard Order Placement)
@@ -78,7 +78,7 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 - **Tác nhân**: Customer.
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
   - Thực thi toàn bộ trong một Transaction ACID duy nhất.
-  - Kiểm tra và tự động áp dụng mức giảm giá dựa trên hạng thành viên của khách hàng (`membership_tiers.discount_percent`).
+  - Kiểm tra và tự động áp dụng mức giảm giá dựa trên hạng thành viên của khách hàng (`membership_tiers.discount_pct`).
   - Cơ chế **Khóa lạc quan (Optimistic Locking)**: Giữ tồn kho trên bảng `inventory` bằng điều kiện so khớp phiên bản:
     ```sql
     UPDATE inventory 
@@ -93,10 +93,10 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
   - Cơ chế **Khóa bi quan (Pessimistic Locking)**: Trong Transaction ở mức cô lập `REPEATABLE READ`, sử dụng câu lệnh khóa độc quyền dòng dữ liệu:
     ```sql
-    SELECT id, serial_number, unit_number 
+    SELECT id, serial_no
     FROM edition_units 
     WHERE variant_id = ? AND status = 'available' 
-    ORDER BY unit_number ASC 
+    ORDER BY id ASC
     LIMIT 1 FOR UPDATE
     ```
   - Khóa chặt bản ghi serial khả dụng tiếp theo, ép các giao dịch đồng thời khác phải chờ cho đến khi giao dịch hiện tại commit hoặc rollback, ngăn chặn tuyệt đối tình trạng bán trùng số bản khắc.
@@ -108,17 +108,17 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
   - Cơ chế **Chuyển trạng thái nguyên tử (Atomic State Transition)**:
     ```sql
     UPDATE payments 
-    SET status = 'paid', paid_at = NOW(), transaction_ref = ? 
-    WHERE id = ? AND status = 'pending'
+    SET status = 'paid', paid_at = NOW(), method = ?
+    WHERE id = ? AND status IN ('pending', 'overdue')
     ```
-  - Kiểm tra `affectedRows === 1` nhằm ngăn chặn tình trạng thanh toán trùng lặp khi người dùng click liên tiếp hoặc nhận webhook thanh toán kép.
+  - Kiểm tra `affectedRows === 1` nhằm ngăn chặn tình trạng thanh toán trùng lặp khi người dùng click liên tiếp.
 
 ### FR7b: Lập lịch thanh toán nhiều kỳ cho đơn hàng (Payment Scheduling)
 - **Mục tiêu**: Nhân viên Sales thiết lập kế hoạch thanh toán trả chậm/trả góp nhiều giai đoạn cho các đơn hàng giá trị cao.
 - **Tác nhân**: Sales (chỉ áp dụng cho đơn hàng mình đang nhận phụ trách).
 - **Quy tắc nghiệp vụ**:
   - Thiết lập các mốc: Tiền đặt cọc ban đầu (Deposit), Thanh toán tiến độ hoàn thiện (Installment), Quyết toán bàn giao (Final).
-  - Kiểm tra điều kiện toàn vẹn tài chính: Tổng số tiền của toàn bộ các kỳ thanh toán bắt buộc phải bằng chính xác giá trị thực tế của đơn hàng (`orders.total_amount`).
+  - Kiểm tra điều kiện toàn vẹn tài chính: Tổng số tiền của toàn bộ các kỳ thanh toán đang hiệu lực không vượt `orders.total` và tối đa một khoản `final`.
 
 ### FR8: Tra cứu lịch sử đơn hàng & Tiến trình thanh toán (Order History & Timeline)
 - **Mục tiêu**: Theo dõi tình trạng thực hiện đơn hàng, chi tiết sản phẩm và các đợt đóng tiền.
@@ -132,23 +132,16 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 - **Tác nhân**: Customer (hủy đơn của mình khi trạng thái là `pending`), Sales (hủy đơn mình phụ trách khi trạng thái là `pending` hoặc `confirmed`).
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
   - Thực hiện trong Transaction hoàn tác:
-    1. Hoàn trả số lượng tồn kho khả dụng (`qty_reserved = qty_reserved - qty`).
-    2. Giải phóng các số bản khắc Limited Edition liên kết (`edition_units.status = 'available'`).
-    3. Hủy bỏ các đợt thanh toán chưa trả (`payments.status = 'cancelled'`).
-    4. Cập nhật trạng thái đơn sang `cancelled`.
+    1. Chuyển đơn sang `cancelled` với điều kiện trạng thái hiện tại vẫn khớp.
+    2. Hoàn trả tồn đã giữ và giải phóng serial.
+    3. Đổi các khoản `pending` / `overdue` sang `refunded`.
 
 ### FR10: Đánh giá xác thực sản phẩm đã mua (Verified Product Reviews)
 - **Mục tiêu**: Khách hàng gửi nhận xét, chấm điểm cho sản phẩm đã được giao thành công.
 - **Tác nhân**: Customer (tạo/xóa review của mình), Admin (xóa vi phạm/kiểm duyệt), Public (chỉ đọc).
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
-  - Chèn an toàn thông qua câu lệnh:
-    ```sql
-    INSERT INTO reviews (customer_id, product_id, order_item_id, rating, comment)
-    SELECT ?, oi.product_id, oi.id, ?, ?
-    FROM order_items oi
-    JOIN orders o ON oi.order_id = o.id
-    WHERE o.customer_id = ? AND oi.id = ? AND o.status = 'delivered'
-    ```
+  - Service đối chiếu chủ đơn, trạng thái `delivered` và đánh giá hiện có, sau đó chèn bằng prepared statement.
+  - Admin xem danh sách qua `GET /api/admin/reviews` và xóa qua `DELETE /api/reviews/:id`.
   - Ràng buộc toàn vẹn duy nhất `UNIQUE (customer_id, order_item_id)` đảm bảo mỗi món hàng đã mua chỉ được đánh giá tối đa một lần.
 
 ### FR11: Tiếp nhận và Xử lý tiến độ đơn hàng (Sales Order Claiming & Workflow)
@@ -159,9 +152,9 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
     ```sql
     UPDATE orders 
     SET sales_user_id = ?, status = 'confirmed' 
-    WHERE id = ? AND status = 'pending' AND sales_user_id IS NULL
+    WHERE id = ? AND status IN ('pending', 'overdue') AND sales_user_id IS NULL
     ```
-  - Cập nhật tiến độ theo chu trình trạng thái chuẩn: `confirmed` $\to$ `processing` $\to$ `shipped` $\to$ `delivered`.
+  - Cập nhật tiến độ theo chu trình trạng thái chuẩn: `confirmed` $\to$ `in_production` $\to$ `shipped` $\to$ `delivered`.
   - Khi đơn chuyển sang `delivered`, hệ thống tự động tích lũy doanh số vào `customers.total_spent` làm cơ sở xét duyệt hạng.
   - Chỉ mục `idx_orders_sales_status (sales_user_id, status)` tối ưu truy vấn danh sách công việc của Sales.
 
@@ -221,7 +214,7 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 - **Mục tiêu**: Thiết lập chính sách ưu đãi thành viên và tự động nâng/hạ hạng khách hàng theo tích lũy chi tiêu.
 - **Tác nhân**: Admin.
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
-  - CRUD cấu hình các hạng thành viên (`membership_tiers`): Tên hạng, mức chi tiêu tối thiểu (`min_spent`), tỷ lệ giảm giá (`discount_percent`).
+  - Xem và cập nhật cấu hình các hạng thành viên (`membership_tiers`): Tên hạng, mức chi tiêu tối thiểu (`min_spent`), tỷ lệ giảm giá (`discount_pct`).
   - Thuật toán xét duyệt nâng/hạ hạng hàng loạt sử dụng **Correlated Subquery**:
     ```sql
     UPDATE customers c
@@ -244,7 +237,7 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 ### Quản lý người dùng hệ thống (User Management)
 - **Mục tiêu**: Quản trị danh sách nhân sự nội bộ và tài khoản khách hàng.
 - **Tác nhân**: Admin.
-- **Chức năng**: Xem danh sách người dùng (`GET /api/admin/users`), tạo mới tài khoản nhân viên Sales hoặc Admin phụ tá (`POST /api/admin/users`), khóa/mở khóa tài khoản (`PATCH /api/admin/users/:id/status`), đặt lại mật khẩu.
+- **Chức năng**: Xem danh sách người dùng (`GET /api/admin/users`), tạo mới tài khoản nhân viên Sales hoặc Admin phụ tá (`POST /api/admin/users`), khóa/mở khóa tài khoản (`PATCH /api/admin/users/:id/status`). Tài khoản inactive bị từ chối khi đăng nhập và khi dùng token trên API bảo vệ.
 - **Màn hình**: `A09` (`/admin/users`).
 
 ### Xem & Cập nhật hồ sơ cá nhân (User Profile)
@@ -266,14 +259,14 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 | **FR4** | `variant.repository.ts`, `catalog.repository.ts` | `catalog.service.ts` | `catalog.routes.ts` | `P03` |
 | **FR5** | `order.repository.ts`, `inventory.repository.ts` | `order.service.ts` | `order.routes.ts` | `C01`, `C02` |
 | **FR6** | `edition.repository.ts`, `order.repository.ts` | `order.service.ts` | `order.routes.ts` | `C03`, `C02` |
-| **FR7** | `payment.repository.ts` | `payment.service.ts` | `payment.routes.ts` | `C06` |
+| **FR7** | `payment.repository.ts` | `payment.service.ts` | `payment.routes.ts` | `C04 (OrderDetailModal)` |
 | **FR7b** | `payment.repository.ts`, `order.repository.ts` | `sales.service.ts` | `order.routes.ts` | `S04` |
 | **FR8** | `order.repository.ts`, `payment.repository.ts` | `order.service.ts` | `order.routes.ts` | `C04`, `C05` |
-| **FR9** | `order.repository.ts`, `inventory.repository.ts`, `edition.repository.ts` | `order.service.ts` | `order.routes.ts` | `C05`, `S03` |
+| **FR9** | `order.repository.ts`, `inventory.repository.ts`, `edition.repository.ts` | `order.service.ts` | `order.routes.ts` | `C04`, `S03` |
 | **FR10** | `review.repository.ts` | `review.service.ts` | `review.routes.ts` | `C07`, `P03`, `A10` |
 | **FR11** | `order.repository.ts`, `customer.repository.ts` | `sales.service.ts` | `sales.routes.ts` | `S01`, `S02`, `S03` |
 | **FR12** | `inventory.repository.ts` | `sales.service.ts` | `sales.routes.ts` | `S05`, `S06` |
 | **FR13** | `payment.repository.ts` | `sales.service.ts` | `sales.routes.ts` | `S07` |
 | **FR14** | `catalog.repository.ts`, `variant.repository.ts` | `admin.service.ts` | `admin.routes.ts` | `A05`, `A06`, `A07` |
-| **FR15a**| `report.repository.ts` | `report.service.ts` | `admin.routes.ts` | `A01`, `A02`, `A03`, `A04` |
+| **FR15a**| `report.repository.ts` | `admin.service.ts` | `admin.routes.ts` | `A01`, `A02`, `A03`, `A04` |
 | **FR15b**| `tier.repository.ts` | `admin.service.ts` | `admin.routes.ts` | `A08` |

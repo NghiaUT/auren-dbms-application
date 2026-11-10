@@ -217,6 +217,14 @@ export async function findOrderHeaderById(
   return rows[0] || null;
 }
 
+export async function lockOrderForPaymentSchedule(orderId: number, conn: DbConnection) {
+  const [rows] = await conn.execute<OrderHeaderRow[]>(
+    'SELECT status, total, sales_user_id AS salesUserId FROM orders WHERE id = ? FOR UPDATE',
+    [orderId],
+  );
+  return rows[0] ?? null;
+}
+
 /**
  * [FR8] Lấy toàn bộ dòng hàng (Items) của đơn hàng, kèm số hiệu bản khắc Limited nếu có
  */
@@ -257,14 +265,15 @@ export async function findOrderItemsByOrderId(
  */
 export async function updateOrderStatus(
   orderId: number,
-  status: string,
+  status: OrderHeaderRow['status'],
+  expectedStatus: OrderHeaderRow['status'],
   conn: DbConnection,
 ): Promise<number> {
   const [result] = await conn.execute<ResultSetHeader>(
     `UPDATE orders
      SET status = ?
-     WHERE id = ?`,
-    [status, orderId],
+     WHERE id = ? AND status = ?`,
+    [status, orderId, expectedStatus],
   );
 
   return result.affectedRows;

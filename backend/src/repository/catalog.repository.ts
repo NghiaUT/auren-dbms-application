@@ -11,6 +11,7 @@
 import type { PoolConnection, RowDataPacket } from 'mysql2/promise';
 import { pool, type DbConnection } from '../config/db.js';
 import { ConflictError } from '../utils/AppError.js';
+import { containsPattern } from './likePattern.js';
 
 export interface ProductFilterParams {
   q?: string;
@@ -40,7 +41,7 @@ export interface ProductSummaryRow extends RowDataPacket {
   brandName: string;
   categoryId: number;
   categoryName: string;
-  minPrice: number | string;
+  minPrice: number | string | null;
   avgRating: number | string | null;
   reviewCount: number;
 }
@@ -134,17 +135,24 @@ export async function findAll(
 
   const conditions: string[] = ['1=1'];
   const params: any[] = [];
+  // Admin must be able to open drafts and add their first variant.
+  const variantJoin = includeInactive ? 'LEFT JOIN' : 'JOIN';
 
   // Trạng thái biến thể active
   if (!includeInactive) {
     conditions.push("pv.status = 'active'");
   }
 
-  // Tìm kiếm từ khóa q
-  if (q && q.trim()) {
-    conditions.push('(p.name LIKE ? OR p.collection_name LIKE ? OR p.designer_name LIKE ?)');
-    const searchTerm = `%${q.trim()}%`;
-    params.push(searchTerm, searchTerm, searchTerm);
+  const keyword = q?.trim().normalize('NFC');
+  if (keyword) {
+    if (/[\p{L}\p{N}_]{3}/u.test(keyword)) {
+      conditions.push('MATCH(p.name, p.collection_name, p.designer_name) AGAINST (? IN NATURAL LANGUAGE MODE)');
+      params.push(keyword);
+    } else {
+      conditions.push("(p.name LIKE ? ESCAPE '!' OR p.collection_name LIKE ? ESCAPE '!' OR p.designer_name LIKE ? ESCAPE '!')");
+      const pattern = containsPattern(keyword);
+      params.push(pattern, pattern, pattern);
+    }
   }
 
   // Lọc theo danh mục (kể cả danh mục con)
@@ -231,14 +239,14 @@ export async function findAll(
       FROM products p
       JOIN brands b ON p.brand_id = b.id
       JOIN categories c ON p.category_id = c.id
-      JOIN product_variants pv ON p.id = pv.product_id
+      ${variantJoin} product_variants pv ON p.id = pv.product_id
       WHERE ${conditions.join(' AND ')}
       GROUP BY p.id
       ${havingClause}
     ) AS filtered_products
   `;
 
-  const [countRows] = await executor.query<RowDataPacket[]>(countSql, [...params, ...havingParams]);
+  const [countRows] = await executor.execute<RowDataPacket[]>(countSql, [...params, ...havingParams]);
   const total = Number((countRows[0] as any)?.total || 0);
 
   // 2. Lấy dữ liệu theo trang
@@ -261,20 +269,20 @@ export async function findAll(
     FROM products p
     JOIN brands b ON p.brand_id = b.id
     JOIN categories c ON p.category_id = c.id
-    JOIN product_variants pv ON p.id = pv.product_id
+    ${variantJoin} product_variants pv ON p.id = pv.product_id
     LEFT JOIN reviews r ON p.id = r.product_id
     WHERE ${conditions.join(' AND ')}
     GROUP BY p.id, b.id, b.name, c.id, c.name
     ${havingClause}
-    ${orderByClause}
+    ${orderByClause}, p.id ASC
     LIMIT ? OFFSET ?
   `;
 
-  const [rows] = await executor.query<ProductSummaryRow[]>(dataSql, [
+  const [rows] = await executor.execute<ProductSummaryRow[]>(dataSql, [
     ...params,
     ...havingParams,
-    limit,
-    offset,
+    String(limit),
+    String(offset),
   ]);
 
   return { rows, total };

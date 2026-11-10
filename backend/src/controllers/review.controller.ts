@@ -11,7 +11,9 @@ import { z } from 'zod';
 import * as reviewService from '../services/review.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendSuccessRes } from '../utils/sendSuccessRes.js';
-import { UnauthorizedError, BadRequestError } from '../utils/AppError.js';
+import { UnauthorizedError } from '../utils/AppError.js';
+
+const positiveId = z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().positive().max(4_294_967_295));
 
 export const createReviewSchema = z.object({
   orderItemId: z.coerce.number().int().positive('Mã dòng sản phẩm (orderItemId) phải là số nguyên dương'),
@@ -41,10 +43,7 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response): Pr
     throw new UnauthorizedError('Yêu cầu đăng nhập để thực hiện thao tác.');
   }
 
-  const reviewId = parseInt(String(req.params.id), 10);
-  if (isNaN(reviewId)) {
-    throw new BadRequestError('Mã bài đánh giá không hợp lệ');
-  }
+  const reviewId = positiveId.parse(req.params.id);
 
   const result = await reviewService.deleteReview(req.user.id, req.user.role, reviewId);
   sendSuccessRes(res, result, 'Đã gỡ bỏ bài đánh giá thành công', 200);
@@ -59,11 +58,8 @@ export const getOrderItemReview = asyncHandler(async (req: Request, res: Respons
     throw new UnauthorizedError('Yêu cầu đăng nhập.');
   }
 
-  const orderItemId = parseInt(String(req.params.orderItemId), 10);
-  if (isNaN(orderItemId)) {
-    throw new BadRequestError('Mã dòng sản phẩm không hợp lệ');
-  }
+  const orderItemId = positiveId.parse(req.params.orderItemId);
 
-  const review = await reviewService.getReviewByOrderItem(req.user.id, orderItemId);
+  const review = await reviewService.getReviewByOrderItem(req.user.id, req.user.role, orderItemId);
   sendSuccessRes(res, review, 'Lấy thông tin đánh giá thành công', 200);
 });

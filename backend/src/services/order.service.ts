@@ -298,6 +298,8 @@ export async function getOrderDetail(orderId: number, user: AuthUser) {
     if (!customerProfile || customerProfile.id !== header.customerId) {
       throw new NotFoundError('Đơn hàng không tồn tại trong lưu trữ.');
     }
+  } else if (user.role === 'sales' && header.salesUserId !== null && header.salesUserId !== user.id) {
+    throw new NotFoundError('Đơn hàng không tồn tại trong lưu trữ.');
   }
 
   const [items, payments] = await Promise.all([
@@ -363,6 +365,9 @@ export async function cancelOrder(orderId: number, user: AuthUser) {
   }
 
   return withTransaction(async (conn) => {
+    if (!(await orderRepo.updateOrderStatus(orderId, 'cancelled', 'pending', conn))) {
+      throw new ConflictError('Trạng thái đơn hàng đã thay đổi.', 'INVALID_STATUS_TRANSITION');
+    }
     // 1. Lấy danh sách dòng hàng để hoàn trả tồn kho
     const items = await orderRepo.findOrderItemsByOrderId(orderId, conn);
 
@@ -375,9 +380,6 @@ export async function cancelOrder(orderId: number, user: AuthUser) {
 
     // 3. Huỷ bỏ các khoản thanh toán chờ thu
     await paymentRepo.cancelPendingPaymentsByOrderId(orderId, conn);
-
-    // 4. Cập nhật trạng thái đơn hàng thành 'cancelled'
-    await orderRepo.updateOrderStatus(orderId, 'cancelled', conn);
 
     return {
       id: orderId,

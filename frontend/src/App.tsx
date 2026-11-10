@@ -39,6 +39,8 @@ import { A05_ProductManagementPage } from './pages/admin/A05_ProductManagementPa
 import { A06_VariantManagementPage } from './pages/admin/A06_VariantManagementPage';
 import { A07_CatalogReferencePage } from './pages/admin/A07_CatalogReferencePage';
 import { A08_MembershipTiersPage } from './pages/admin/A08_MembershipTiersPage';
+import { A09_UserManagementPage } from './pages/admin/A09_UserManagementPage';
+import { A10_ReviewModerationPage } from './pages/admin/A10_ReviewModerationPage';
 
 const App: React.FC = () => {
   return (
@@ -208,7 +210,7 @@ const App: React.FC = () => {
         <Route path="/403" element={<Forbidden403Page />} />
         <Route path="*" element={<NotFound404Page />} />
       </Route>
-      {/* Màn hình Admin được bảo vệ (A01 - A08 | FR14, FR15a, FR15b) */}
+      {/* Màn hình Admin được bảo vệ (A01 - A10) */}
       <Route
         path="/admin"
         element={
@@ -273,6 +275,8 @@ const App: React.FC = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><A09_UserManagementPage /></ProtectedRoute>} />
+      <Route path="/admin/reviews" element={<ProtectedRoute allowedRoles={['admin']}><A10_ReviewModerationPage /></ProtectedRoute>} />
     </Routes>
   );
 };

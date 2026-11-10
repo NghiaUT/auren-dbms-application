@@ -350,9 +350,8 @@ async function seedLargeScale() {
     console.log(`   - Order Items : ${totalItemsCreated.toLocaleString()} bản ghi`);
     console.log(`   - Payments    : ${totalPaymentsCreated.toLocaleString()} bản ghi`);
     console.log(`💡 Mẹo trình bày BTL DBMS:`);
-    console.log(`   - Để so sánh Indexing: mở "database/indexes.sql", chạy khối 5 để gỡ index,`);
-    console.log(`     chạy EXPLAIN ANALYZE các câu Q1-Q5, sau đó chạy khối 1-2 để tạo index và`);
-    console.log(`     chạy lại để so sánh Query Cost và Execution Time!`);
+    console.log('   - Dùng db:indexes:drop, chạy database/explain-indexes.sql, rồi dùng db:indexes:apply.');
+    console.log('   - Chạy lại EXPLAIN trên cùng dữ liệu. Xem README cho các lệnh MySQL và FULLTEXT.');
     console.log('=====================================================================\n');
   } catch (err: any) {
     console.error('❌ Lỗi khi sinh dữ liệu lớn:', err);

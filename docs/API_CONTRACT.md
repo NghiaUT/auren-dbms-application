@@ -1,7 +1,6 @@
 # API_CONTRACT - Hợp đồng API giữa Backend và Frontend
 
-> Tài liệu là **nguồn sự thật duy nhất** cho giao tiếp giữa `backend/src/routes` và `frontend/src/api`.
-> Bộ endpoint đã được **tối giản**: 32 endpoint bắt buộc + 1 endpoint dự phòng, phủ đủ FR0–FR15.
+> Đối chiếu giao tiếp giữa `backend/src/routes` và `frontend/src/api`.
 > Đối chiếu: [ARCHITECTURE.md](./ARCHITECTURE.md), [ROLE_MATRIX.md](./ROLE_MATRIX.md), [SCREEN_INVENTORY.md](./SCREEN_INVENTORY.md), [ERD.md](./ERD.md).
 
 ---
@@ -38,7 +37,7 @@
 - Header: `Authorization: Bearer <accessToken>`
 - JWT payload: `{ "sub": <userId>, "role": "customer|sales|admin", "customerId"?: <number>, "iat", "exp" }`
 - Hạn token: 2 giờ (`JWT_EXPIRES_IN=2h`). Hết hạn → `401 TOKEN_EXPIRED`, frontend xoá token và chuyển `/login`.
-- Đăng xuất: frontend tự xoá token (không có endpoint).
+- `POST /api/auth/logout` trả xác nhận. Frontend xóa token lưu cục bộ.
 - `ProtectedRoute` ở frontend chỉ phục vụ trải nghiệm; bảo mật thực sự nằm ở backend.
 
 ---
@@ -60,9 +59,10 @@
 | HTTP | `code` | Khi nào |
 | :-: | :-- | :-- |
 | 400 | `VALIDATION_ERROR` | Body/query/params sai Zod schema (`details` liệt kê từng trường) |
-| 401 | `UNAUTHORIZED` | Thiếu token hoặc token không hợp lệ |
+| 401 | `UNAUTHORIZED` | Thiếu token |
+| 401 | `INVALID_TOKEN` | Token sai hoặc tài khoản bị khóa |
 | 401 | `TOKEN_EXPIRED` | Token hết hạn |
-| 401 | `INVALID_CREDENTIALS` | Sai email hoặc mật khẩu |
+| 401 | `INVALID_CREDENTIALS` | Sai email, mật khẩu hoặc tài khoản inactive |
 | 403 | `FORBIDDEN` | Sai role hoặc vi phạm row-level (không phải chủ dữ liệu) |
 | 404 | `NOT_FOUND` | Tài nguyên không tồn tại (hoặc bị ẩn do row-level) |
 | 409 | `DUPLICATE_EMAIL` | Email đã đăng ký |
@@ -179,13 +179,13 @@ interface PageMeta { page: number; limit: number; total: number; totalPages: num
 | 4 | GET | `/api/products` | FR2, FR3 | Public | P01, P02, A05 |
 | 5 | GET | `/api/products/:id` | FR4, FR6, FR10 | Public | P03, C01, C03, A06 |
 | 6 | POST | `/api/orders` | FR5, FR6 | customer | C02, C03 |
-| 7 | GET | `/api/orders` | FR8, FR11 | customer, sales, admin | C04, S02 |
-| 8 | GET | `/api/orders/:id` | FR7, FR8, FR11 | customer, sales, admin | C05, C06, S03, S04 |
-| 9 | POST | `/api/orders/:id/cancel` | FR9 | customer, sales | C05, S03 |
+| 7 | GET | `/api/orders` | FR8 | customer | C04 |
+| 8 | GET | `/api/orders/:id` | FR7, FR8 | customer | C04 |
+| 9 | POST | `/api/orders/:id/cancel` | FR9 | customer | C04 |
 | 10 | POST | `/api/orders/:id/payments` | FR7b | sales | S04 |
-| 11 | POST | `/api/payments/:id/pay` | FR7 | customer | C06 |
+| 11 | POST | `/api/payments/:id/pay` | FR7 | customer | C04 |
 | 12 | POST | `/api/reviews` | FR10 | customer | C07 |
-| 13 | DELETE | `/api/reviews/:id` | FR10 | customer, admin | C07, P03 |
+| 13 | DELETE | `/api/reviews/:id` | FR10 | customer, admin | C07, A10 |
 | 14 | PATCH | `/api/sales/orders/:id/claim` | FR11 | sales | S02 |
 | 15 | PATCH | `/api/sales/orders/:id/status` | FR11 | sales | S03 |
 | 16 | GET | `/api/sales/inventory` | FR12 | sales, admin | S01, S05, S06 |
@@ -205,7 +205,10 @@ interface PageMeta { page: number; limit: number; total: number; totalPages: num
 | 30 | GET | `/api/admin/tiers` | FR15b | admin | A08 |
 | 31 | PATCH | `/api/admin/tiers/:id` | FR15b | admin | A08 |
 | 32 | POST | `/api/admin/tiers/recalculate` | FR15b | admin | A08 |
-| 33 | GET | `/api/auth/me` *(dự phòng)* | — | Auth | C02, C08 |
+| 33 | GET/PATCH | `/api/auth/me` | — | Auth | C02, C08 |
+| 34 | GET/POST | `/api/admin/users` | A09 | admin | A09 |
+| 35 | PATCH | `/api/admin/users/:id/status` | A09 | admin | A09 |
+| 36 | GET | `/api/admin/reviews` | FR10 | admin | A10 |
 
 ---
 
@@ -261,7 +264,7 @@ interface PageMeta { page: number; limit: number; total: number; totalPages: num
 
 **Request Body**
 ```json
-{ "email": "silver@lux.vn", "password": "Secret@123" }
+{ "email": "customer.silver@gmail.com", "password": "password123" }
 ```
 
 **Responses**
@@ -276,12 +279,12 @@ Frontend điều hướng theo `user.role`: `customer` → `/account/orders`, `s
 
 | Status | Code | Điều kiện |
 | :-: | :-- | :-- |
-| 401 | `INVALID_CREDENTIALS` | Sai email hoặc mật khẩu (không phân biệt trường nào sai) |
+| 401 | `INVALID_CREDENTIALS` | Sai email, mật khẩu hoặc tài khoản inactive (không phân biệt trường nào sai) |
 | 429 | `RATE_LIMITED` | Thử đăng nhập quá nhiều |
 
 ---
 
-#### [2.2] Lấy hồ sơ hiện tại *(dự phòng)*
+#### [2.2] Lấy hồ sơ hiện tại
 
 | Mục | Nội dung |
 | :-- | :-- |
@@ -327,17 +330,17 @@ Frontend tự dựng cây danh mục từ `parentId`.
 | :-- | :-- |
 | **Endpoint** | `/api/products` |
 | **HTTP Method** | `GET` |
-| **Authentication & Authorization** | Public · Mặc định chỉ trả sản phẩm có ít nhất 1 biến thể `active`; `includeInactive=true` chỉ có hiệu lực với `admin` |
+| **Authentication & Authorization** | Public · Mặc định chỉ trả sản phẩm có ít nhất 1 biến thể `active`; `includeInactive=true` chỉ có hiệu lực với `admin` và bao gồm sản phẩm chưa có biến thể |
 
 **Request Params (query)**
 
 | Tên | Kiểu | Bắt buộc | Mô tả |
 | :-- | :-- | :-: | :-- |
-| `q` | string | | Tìm theo tên sản phẩm, bộ sưu tập, nhà thiết kế |
-| `categoryId` | number | | Gồm cả danh mục con |
+| `q` | string | | Tối đa 200 ký tự. FULLTEXT tên sản phẩm, bộ sưu tập và nhà thiết kế. Truy vấn chỉ có token ngắn dùng LIKE literal. |
+| `categoryId` | number | | Gồm danh mục con trực tiếp |
 | `brandId` | number[] (`1,3`) | | Lọc nhiều thương hiệu |
 | `materialId` | number[] | | Có biến thể dùng chất liệu này |
-| `minPrice`, `maxPrice` | number | | Theo giá biến thể |
+| `minPrice`, `maxPrice` | number | | Theo giá nhỏ nhất của biến thể được xét |
 | `isLimited` | boolean | | Chỉ bản giới hạn |
 | `featured` | boolean | | Bộ sưu tập nổi bật cho P01 |
 | `sort` | `newest \| price \| rating \| name` | | Whitelist, mặc định `newest` |
@@ -402,7 +405,7 @@ Frontend tự dựng cây danh mục từ `parentId`.
 | :-- | :-- |
 | **Endpoint** | `/api/orders` |
 | **HTTP Method** | `POST` |
-| **Authentication & Authorization** | `customer` · R14: `unitPrice`, `discount`, `total` do server tính từ `product_variants.price` và `membership_tiers.discountPct` |
+| **Authentication & Authorization** | `customer` · R14: `unitPrice`, `discount`, `total` do server tính từ `product_variants.price` và `membership_tiers.discount_pct` |
 | **Request Params & Headers** | `Authorization: Bearer <token>`, `Content-Type: application/json` |
 
 **Request Body**
@@ -445,14 +448,13 @@ Frontend tự dựng cây danh mục từ `parentId`.
 | :-- | :-- |
 | **Endpoint** | `/api/orders` |
 | **HTTP Method** | `GET` |
-| **Authentication & Authorization** | `customer`: chỉ đơn của mình (R1) · `sales`: `scope=unclaimed` (đơn `pending` chưa có người phụ trách) hoặc `scope=mine` (R7) · `admin`: tất cả, chỉ đọc (R10) |
+| **Authentication & Authorization** | `customer`: chỉ đơn của mình (R1). Sales dùng `GET /api/sales/orders?tab=unassigned` hoặc `tab=my_orders`. |
 
 **Request Params (query)**
 
 | Tên | Kiểu | Bắt buộc | Mô tả |
 | :-- | :-- | :-: | :-- |
 | `status` | OrderStatus | | Lọc theo trạng thái |
-| `scope` | `unclaimed \| mine` | Sales: ✔ | Bỏ qua với customer/admin |
 | `page`, `limit` | number | | Phân trang |
 | `Authorization` | header | ✔ | |
 
@@ -474,7 +476,7 @@ Frontend tự dựng cây danh mục từ `parentId`.
 | :-- | :-- |
 | **Endpoint** | `/api/orders/:id` |
 | **HTTP Method** | `GET` |
-| **Authentication & Authorization** | `customer`: chủ đơn (R1) · `sales`: đơn mình phụ trách, hoặc đơn `pending` chưa có người nhận (để xem trước khi claim) · `admin`: chỉ đọc |
+| **Authentication & Authorization** | `customer`: chủ đơn (R1). Sales và Admin dùng `GET /api/sales/orders/:id`. Sales chỉ đọc đơn của mình hoặc đơn chưa có người phụ trách. |
 | **Request Params & Headers** | path `id: number` ✔ · `Authorization` ✔ |
 | **Request Body** | Không có |
 
@@ -498,7 +500,7 @@ Frontend tự dựng cây danh mục từ `parentId`.
 | :-- | :-- |
 | **Endpoint** | `/api/orders/:id/cancel` |
 | **HTTP Method** | `POST` |
-| **Authentication & Authorization** | `customer`: chủ đơn, chỉ khi `pending` (R1, R2) · `sales`: đơn mình phụ trách, khi `pending` hoặc `confirmed` (R7, R8) |
+| **Authentication & Authorization** | `customer`: chủ đơn, chỉ khi `pending` (R1, R2) · Sales dùng `POST /api/sales/orders/:id/cancel` cho đơn của mình đang `pending` hoặc `confirmed`, hoặc đơn `pending` chưa phân công |
 | **Request Params & Headers** | path `id: number` ✔ · `Authorization` ✔ |
 
 **Request Body**
@@ -512,7 +514,7 @@ Frontend tự dựng cây danh mục từ `parentId`.
 | :-: | :-- |
 | `200` | `{ "data": { "id": 501, "status": "cancelled" } }` |
 
-**Ghi chú giao dịch**: trong một transaction — `UPDATE orders ... WHERE status IN (...)` (kiểm `affectedRows`), hoàn `qtyReserved` về kho, trả `edition_units` về `available`, chuyển các payment `pending` sang `refunded` nếu đã có lịch.
+**Ghi chú giao dịch**: trong một transaction — `UPDATE orders ... WHERE status = ?` (kiểm `affectedRows`), hoàn `qtyReserved` về kho, trả `edition_units` về `available`, chuyển các payment `pending` hoặc `overdue` sang `refunded` nếu đã có lịch.
 
 **Error Handling**
 
@@ -527,7 +529,7 @@ Frontend tự dựng cây danh mục từ `parentId`.
 
 | Mục | Nội dung |
 | :-- | :-- |
-| **Endpoint** | `/api/orders/:id/payments` |
+| **Endpoint** | `/api/sales/orders/:id/payments` hoặc `/api/orders/:id/payments` |
 | **HTTP Method** | `POST` |
 | **Authentication & Authorization** | `sales` · Đơn mình phụ trách (R7) · Đơn không ở `cancelled` |
 | **Request Params & Headers** | path `id: number` ✔ · `Authorization` ✔ |
@@ -1146,11 +1148,24 @@ Thực thi trong một transaction: mỗi khách được gán hạng có `minSp
 
 ---
 
+### 6.9 Quản lý người dùng và kiểm duyệt
+
+Các endpoint sau yêu cầu Admin. Hai endpoint danh sách trả `{ data, meta: { page, limit, total, totalPages } }`. Mặc định `page=1`, `limit=20`, tối đa 100 mục mỗi trang.
+
+| Endpoint | Input | Kết quả |
+| --- | --- | --- |
+| `GET /api/admin/users` | `q` theo email hoặc họ tên, `role` là `admin\|sales\|customer`, `page`, `limit` | `id`, `email`, `fullName`, `role`, `isActive`, `tierName`, `createdAt` |
+| `POST /api/admin/users` | `fullName`, `email`, `password` (tối thiểu 8 ký tự, tối đa 72 byte UTF-8), `role` là `sales\|admin` | 201 và hồ sơ tóm tắt. Trùng email trả 409 `DUPLICATE_EMAIL`. |
+| `PATCH /api/admin/users/:id/status` | `{ "isActive": false }` hoặc `true` | 200 với `id` và `isActive`. Khóa Admin trả 409 `ADMIN_DISABLE_FORBIDDEN`. |
+| `GET /api/admin/reviews` | `q` theo tên sản phẩm hoặc khách, `rating` (1–5), `page`, `limit` | ID đánh giá, khách, sản phẩm và dòng đơn, tên khách/sản phẩm, `rating`, `comment`, `createdAt`. Mới nhất trước. |
+
+Dùng `DELETE /api/reviews/:id` cho thao tác xóa. `GET /api/reviews/item/:orderItemId` dành cho Admin hoặc Customer sở hữu dòng đơn. Hồ sơ người dùng qua API quản trị không chứa mật khẩu hay hash.
+
 ## 7. Ma trận phủ FR ↔ Endpoint
 
 | FR | Endpoint |
 | :-- | :-- |
-| FR0 | [2] (+ [33] dự phòng) |
+| FR0 | [2] (+ [33]) |
 | FR1 | [1] |
 | FR2 | [3], [4] |
 | FR3 | [3], [4] |
@@ -1161,8 +1176,8 @@ Thực thi trong một transaction: mỗi khách được gán hạng có `minSp
 | FR7b | [10] |
 | FR8 | [7], [8] |
 | FR9 | [9] |
-| FR10 | [5] (xem), [12], [13] |
-| FR11 | [7], [8], [14], [15] |
+| FR10 | [5] (xem), [12], [13], [36] |
+| FR11 | `GET /api/sales/orders`, `GET /api/sales/orders/:id`, [14], [15] |
 | FR12 | [16], [17] |
 | FR13 | [18], [19] |
 | FR14 | [4] (danh sách admin), [20]–[28] |
@@ -1179,4 +1194,4 @@ Thực thi trong một transaction: mỗi khách được gán hạng có `minSp
 | [11] | `payment.routes.ts` | `api/payment.api.ts` |
 | [12], [13] | `review.routes.ts` | `api/review.api.ts` |
 | [14]–[19] | `sales.routes.ts` | `api/sales.api.ts` |
-| [20]–[32] | `admin.routes.ts` | `api/admin.api.ts` |
+| [20]–[32], [34]–[36] | `admin.routes.ts` | `api/admin.api.ts` |

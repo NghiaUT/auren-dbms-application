@@ -4,7 +4,7 @@
 //   - 40 Users (1 Admin, 4 Sales, 35 Khách hàng)
 //   - 3 Hạng thành viên (Silver, Gold, Black) với ngưỡng chiết khấu chuẩn xác
 //   - 10 Thương hiệu xa xỉ & 16 Danh mục nội thất phân cấp cha-con
-//   - 12 Chất liệu cao cấp & 30 Sản phẩm tiêu biểu với 75 Biến thể SKU
+//   - 12 Chất liệu cao cấp & 30 Sản phẩm tiêu biểu với 53 Biến thể SKU
 //   - 6 Địa điểm (3 Showrooms, 3 Kho tổng)
 //   - 110 Ấn bản Limited Edition có số serial duy nhất, liên kết chuẩn vào order_items
 //   - 120 Đơn hàng thực tế đủ các trạng thái, phân bổ hàng đợi Sales và khách VIP
@@ -16,6 +16,7 @@
 // Mật khẩu mặc định cho toàn bộ tài khoản: password123
 // ============================================================================
 
+import type { RowDataPacket } from 'mysql2/promise';
 import { pool } from '../config/db.js';
 
 // Mật khẩu mã hoá sẵn cho "password123" (bcrypt salt round = 10)
@@ -29,34 +30,52 @@ async function seedMediumScale() {
   const conn = await pool.getConnection();
 
   try {
+    const [locks] = await conn.query<RowDataPacket[]>(
+      "SELECT GET_LOCK(SHA2(CONCAT(DATABASE(), ':seed'), 256), 30) AS acquired",
+    );
+    if (locks[0].acquired !== 1) throw new Error('Timed out waiting for the seed lock');
+
+    const ifEmpty = process.argv.includes('--if-empty');
+    if (ifEmpty) {
+      const [users] = await conn.execute<RowDataPacket[]>('SELECT id FROM users LIMIT 1');
+      if (users.length) {
+        console.log('Database already contains accounts. Keeping existing data.');
+        return;
+      }
+    }
+
     // ------------------------------------------------------------------------
     // 1. XOÁ VÀ RESET TOÀN BỘ 16 BẢNG DỮ LIỆU THEO THỨ TỰ AN TOÀN
     // ------------------------------------------------------------------------
-    console.log('🧹 [1/8] Làm sạch toàn bộ dữ liệu cũ trong 16 bảng...');
-    await conn.query('SET FOREIGN_KEY_CHECKS = 0');
+    if (!ifEmpty) {
+      console.log('🧹 [1/8] Làm sạch toàn bộ dữ liệu cũ trong 16 bảng...');
+      await conn.query('SET FOREIGN_KEY_CHECKS = 0');
+      const tables = [
+        'reviews',
+        'payments',
+        'edition_units',
+        'order_items',
+        'orders',
+        'inventory',
+        'locations',
+        'variant_materials',
+        'product_variants',
+        'materials',
+        'products',
+        'categories',
+        'brands',
+        'customers',
+        'membership_tiers',
+        'users',
+      ];
 
-    const tables = [
-      'reviews',
-      'payments',
-      'edition_units',
-      'order_items',
-      'orders',
-      'inventory',
-      'locations',
-      'variant_materials',
-      'product_variants',
-      'materials',
-      'products',
-      'categories',
-      'brands',
-      'customers',
-      'membership_tiers',
-      'users',
-    ];
-
-    for (const table of tables) {
-      await conn.query(`TRUNCATE TABLE ${table}`);
+      for (const table of tables) {
+        await conn.query(`TRUNCATE TABLE ${table}`);
+      }
+      await conn.query('SET FOREIGN_KEY_CHECKS = 1');
     }
+
+    await conn.beginTransaction();
 
     // ------------------------------------------------------------------------
     // 2. HẠNG THÀNH VIÊN & NGƯỜI DÙNG (ADMIN, SALES, KHÁCH HÀNG)
@@ -198,9 +217,9 @@ async function seedMediumScale() {
     `);
 
     // ------------------------------------------------------------------------
-    // 4. SẢN PHẨM & BIẾN THỂ (30 SẢN PHẨM, 75 BIẾN THỂ)
+    // 4. SẢN PHẨM & BIẾN THỂ
     // ------------------------------------------------------------------------
-    console.log('🛋️ [4/8] Nạp 30 Sản phẩm tiêu biểu và 75 Biến thể SKU...');
+    console.log('🛋️ [4/8] Nạp 30 Sản phẩm tiêu biểu và 53 Biến thể SKU...');
 
     const productsData = [
       // 1-5: Phòng khách
@@ -254,7 +273,7 @@ async function seedMediumScale() {
       );
     }
 
-    // 4.2 Sinh 75 Biến thể
+    // 4.2 Sinh 53 Biến thể
     const variantsData = [
       // Product 1: Sofa Chester Moon
       { id: 1, pId: 1, sku: 'SOF-CHEST-240-COGNAC', size: '240x105x75 cm', finish: 'Cognac Tan Leather', price: 185000000, lead: 0, status: 'active' },
@@ -463,7 +482,7 @@ async function seedMediumScale() {
     for (let oId = 1; oId <= 120; oId++) {
       // 1. Phân bổ khách hàng:
       // - Customer 1 (user 6, customer.black@gmail.com): nhận nhiều đơn lớn để đạt Black Tier (>= 500M)
-      // - Customer 2 (user 7, customer.gold@gmail.com): nhận đơn để đạt Gold Tier (150M - 500M), bắt buộc có Variant 1 delivered
+      // - Customer 2 (user 7, customer.gold@gmail.com): có đơn Variant 1 delivered để demo đánh giá
       // - Customer 3 (user 8, customer.silver@gmail.com): nhận 1 đơn nhỏ (< 150M)
       // - Customer 4 (user 9, customer.newbie@gmail.com): 0 đơn (tài khoản mới hoàn toàn)
       // - Customer 5 (user 10, customer.loyal@gmail.com): nhận đơn Gold Tier
@@ -847,7 +866,7 @@ async function seedMediumScale() {
       );
     }
 
-    await conn.query('SET FOREIGN_KEY_CHECKS = 1');
+    await conn.commit();
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log('\n=====================================================================');
@@ -857,22 +876,25 @@ async function seedMediumScale() {
     console.log('  - Users             : 40 (1 Admin, 4 Sales, 35 Customers)');
     console.log('  - Membership Tiers  : 3 Hạng (Silver, Gold, Black)');
     console.log('  - Brands & Cats     : 10 Thương hiệu xa xỉ, 16 Danh mục đa tầng');
-    console.log('  - Materials & Prod  : 12 Chất liệu cao cấp, 30 Sản phẩm tiêu biểu, 75 Biến thể');
-    console.log('  - Locations & Inv   : 6 Địa điểm (3 Showrooms, 3 Kho), 450 Bản ghi tồn kho chuẩn xác');
+    console.log(`  - Materials & Prod  : 12 Chất liệu, ${productsData.length} Sản phẩm, ${variantsData.length} Biến thể`);
+    console.log(`  - Locations & Inv   : 6 Địa điểm (3 Showrooms, 3 Kho), ${6 * variantsData.length} Bản ghi tồn kho`);
     console.log(`  - Limited Editions  : 110 Bản đánh số (${limitedVariantConfigs.length} SKUs), gắn chuẩn Order Items`);
     console.log(`  - Orders & Items    : 120 Đơn hàng, ${orderItemIdCounter - 1} Dòng đơn hàng kèm Monogram`);
     console.log(`  - Payments & Reviews: ${paymentsToInsert.length} Lịch thanh toán (đủ trạng thái), ${reviewsToInsert.length} Đánh giá`);
     console.log('  - Tài khoản Demo    : admin@luxury.com / sales.nam@luxury.com / customer.black@gmail.com');
     console.log('  - Mật khẩu mặc định : "password123" cho tất cả người dùng');
     console.log('=====================================================================\n');
-  } catch (err: any) {
-    await conn.query('SET FOREIGN_KEY_CHECKS = 1');
-    console.error('❌ Lỗi trong quá trình nạp dữ liệu seed:', err);
-    process.exit(1);
+  } catch (err) {
+    await conn.rollback();
+    throw err;
   } finally {
-    conn.release();
-    await pool.end();
+    conn.destroy();
   }
 }
 
-seedMediumScale();
+seedMediumScale()
+  .catch((err) => {
+    console.error('Seed failed:', err.code ?? err.message);
+    process.exitCode = 1;
+  })
+  .finally(() => pool.end());

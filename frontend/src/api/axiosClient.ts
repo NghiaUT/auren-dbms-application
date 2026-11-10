@@ -34,10 +34,12 @@ axiosClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError<{ error?: { code?: string; message?: string } }>) => {
+    if (axios.isCancel(error)) return Promise.reject(error);
+
     // 1. Bắt lỗi hết hạn phiên đăng nhập
     if (error.response?.status === 401) {
       const code = error.response.data?.error?.code;
-      if (code === 'TOKEN_EXPIRED') {
+      if (code === 'TOKEN_EXPIRED' || code === 'INVALID_TOKEN') {
         localStorage.removeItem('auren_token');
         localStorage.removeItem('auren_user');
         window.dispatchEvent(new CustomEvent('auth:expired'));
