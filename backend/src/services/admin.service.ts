@@ -8,12 +8,53 @@
 // Quy tắc: Chứa logic nghiệp vụ và quản lý transaction, không viết câu lệnh SQL.
 // ============================================================================
 
+import bcrypt from 'bcryptjs';
 import { withTransaction } from '../config/db.js';
 import { ValidationError, NotFoundError, ConflictError } from '../utils/AppError.js';
 import * as catalogRepo from '../repository/catalog.repository.js';
 import * as variantRepo from '../repository/variant.repository.js';
 import * as reportRepo from '../repository/report.repository.js';
 import * as tierRepo from '../repository/tier.repository.js';
+import * as userRepo from '../repository/user.repository.js';
+import * as reviewRepo from '../repository/review.repository.js';
+
+export async function listUsers(filters: Parameters<typeof userRepo.listUsers>[0]) {
+  return userRepo.listUsers(filters);
+}
+
+export async function createInternalUser(data: {
+  email: string;
+  fullName: string;
+  password: string;
+  role: 'admin' | 'sales';
+}) {
+  const { email, fullName, password, role } = data;
+  const passwordHash = await bcrypt.hash(password, 10);
+  try {
+    const id = await userRepo.createUser({ email, fullName, passwordHash, role });
+    return { id, email, fullName, role, isActive: true };
+  } catch (err) {
+    if ((err as { code?: string }).code === 'ER_DUP_ENTRY') {
+      throw new ConflictError('Email đã được đăng ký trong hệ thống', 'DUPLICATE_EMAIL');
+    }
+    throw err;
+  }
+}
+
+export async function setUserActive(id: number, isActive: boolean) {
+  if (!(await userRepo.setUserActive(id, isActive))) {
+    const user = await userRepo.findById(id);
+    if (!user) throw new NotFoundError('Tài khoản không tồn tại');
+    if (!isActive && user.role === 'admin') {
+      throw new ConflictError('Không thể khóa tài khoản quản trị viên', 'ADMIN_DISABLE_FORBIDDEN');
+    }
+  }
+  return { id, isActive };
+}
+
+export async function listReviews(filters: Parameters<typeof reviewRepo.listReviews>[0]) {
+  return reviewRepo.listReviews(filters);
+}
 
 // ============================================================================
 // NHÓM 1: QUẢN TRỊ CATALOG (FR14) - SẢN PHẨM & BIẾN THỂ

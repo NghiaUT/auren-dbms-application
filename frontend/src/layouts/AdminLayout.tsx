@@ -19,6 +19,8 @@ import {
   LogOut,
   ExternalLink,
   Layers,
+  Users,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../auth/useAuth';
 
@@ -60,6 +62,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: 'Hạng thành viên',
       items: [
         { label: 'Cấu hình Hạng & Nâng hạng', path: '/admin/tiers', exact: false, icon: ShieldCheck },
+      ],
+    },
+    {
+      group: 'Quản trị hệ thống',
+      name: 'Hệ thống',
+      items: [
+        { label: 'Người dùng', path: '/admin/users', exact: false, icon: Users },
+        { label: 'Kiểm duyệt đánh giá', path: '/admin/reviews', exact: false, icon: MessageSquare },
       ],
     },
   ];

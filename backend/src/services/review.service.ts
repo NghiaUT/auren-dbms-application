@@ -10,6 +10,7 @@
 import * as reviewRepo from '../repository/review.repository.js';
 import * as customerRepo from '../repository/customer.repository.js';
 import { NotFoundError, ForbiddenError, ConflictError, BadRequestError } from '../utils/AppError.js';
+import type { UserRole } from '../types/index.js';
 
 export interface CreateReviewInput {
   orderItemId: number;
@@ -99,12 +100,17 @@ export async function deleteReview(userId: number, role: string, reviewId: numbe
 /**
  * Lấy đánh giá của một dòng sản phẩm (dùng cho giao diện viết/sửa đánh giá)
  */
-export async function getReviewByOrderItem(userId: number, orderItemId: number) {
-  const customer = await customerRepo.findWithTierByUserId(userId);
-  if (!customer) {
-    throw new ForbiddenError('Yêu cầu tài khoản khách hàng');
+export async function getReviewByOrderItem(userId: number, role: UserRole, orderItemId: number) {
+  if (role === 'customer') {
+    const customer = await customerRepo.findWithTierByUserId(userId);
+    const item = await reviewRepo.checkReviewEligibility(orderItemId);
+    if (!item) throw new NotFoundError('Dòng sản phẩm trong đơn hàng không tồn tại');
+    if (!customer || item.orderCustomerId !== customer.id) {
+      throw new ForbiddenError('Quý khách chỉ có thể truy cập đánh giá trong đơn hàng của mình');
+    }
+  } else if (role !== 'admin') {
+    throw new ForbiddenError();
   }
 
-  const review = await reviewRepo.findReviewByOrderItemId(orderItemId);
-  return review;
+  return reviewRepo.findReviewByOrderItemId(orderItemId);
 }

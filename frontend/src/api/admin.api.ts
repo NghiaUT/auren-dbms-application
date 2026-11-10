@@ -8,6 +8,46 @@
 // ============================================================================
 
 import axiosClient from './axiosClient';
+import type { UserRole } from '../types';
+import type { ReviewItem } from './review.api';
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  isActive: boolean;
+  tierName: string | null;
+  createdAt: string;
+}
+
+export interface AdminPage<T> {
+  data: T[];
+  meta: PageMeta;
+}
+
+export type InternalUserInput = {
+  fullName: string;
+  email: string;
+  password: string;
+  role: 'sales' | 'admin';
+};
+
+export async function getAdminUsers(params: { page: number; q: string; role?: UserRole }, signal: AbortSignal) {
+  return (await axiosClient.get<AdminPage<AdminUser>>('/admin/users', { params, signal })).data;
+}
+
+export async function createInternalUser(input: InternalUserInput) {
+  await axiosClient.post('/admin/users', input);
+}
+
+export async function setUserActive(id: number, isActive: boolean) {
+  await axiosClient.patch(`/admin/users/${id}/status`, { isActive });
+}
+
+export async function getAdminReviews(params: { page: number; q: string; rating?: number }, signal: AbortSignal) {
+  return (await axiosClient.get<AdminPage<ReviewItem>>('/admin/reviews', { params, signal })).data;
+}
 import type {
   AdminProduct,
   AdminTier,
