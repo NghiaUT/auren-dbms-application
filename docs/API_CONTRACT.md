@@ -68,7 +68,7 @@
 | 409 | `DUPLICATE_EMAIL` | Email đã đăng ký |
 | 409 | `DUPLICATE_ENTRY` | Trùng giá trị UNIQUE (SKU, slug, tên brand/material/tier) |
 | 409 | `OUT_OF_STOCK` | Không đủ tồn kho khả dụng |
-| 409 | `VERSION_CONFLICT` | Xung đột `inventory.version` (optimistic locking) |
+| 409 | `VERSION_CONFLICT` | Restock dùng `inventory.version` đã cũ (optimistic locking) |
 | 409 | `EDITION_SOLD_OUT` | Không còn bản Limited Edition `available` |
 | 409 | `INVALID_STATUS_TRANSITION` | Chuyển trạng thái đơn/khoản thu không hợp lệ |
 | 409 | `ALREADY_CLAIMED` | Đơn đã có Sales khác nhận |
@@ -429,15 +429,14 @@ Frontend tự dựng cây danh mục từ `parentId`.
 | :-: | :-- |
 | `201` | `{ "data": OrderDetail }` (status `pending`, `items[].serialNo` có giá trị cho bản Limited) |
 
-**Ghi chú giao dịch & đồng thời**: toàn bộ chạy trong **một transaction**. Biến thể thường: giữ hàng bằng optimistic locking (`version` + `qtyOnHand - qtyReserved >= quantity`). Biến thể limited: `SELECT ... FOR UPDATE` lấy một `edition_unit` `available` và gán vào `order_item`. Khoá theo thứ tự `variantId` tăng dần để tránh deadlock. Bất kỳ dòng nào lỗi → rollback toàn bộ.
+**Ghi chú giao dịch & đồng thời**: toàn bộ chạy trong **một transaction**. Giữ tồn kho bằng atomic conditional UPDATE (`qtyOnHand - qtyReserved >= quantity`), không có version predicate hay retry loop. Limited dùng thêm `SELECT ... FOR UPDATE`, đánh dấu serial reserved ngay rồi gán vào từng `order_item`. Khoá theo `(variantId, locationId)` tăng dần để giảm nguy cơ deadlock. Bất kỳ dòng nào lỗi → rollback toàn bộ. Restock vẫn dùng optimistic version check.
 
 **Error Handling**
 
 | Status | Code | Điều kiện | Hành vi frontend |
 | :-: | :-- | :-- | :-- |
-| 404 | `NOT_FOUND` | Variant/location không tồn tại hoặc `discontinued` | Xoá dòng khỏi giỏ |
-| 409 | `OUT_OF_STOCK` | Không đủ hàng khả dụng (`details[].variantId`) | Báo hết hàng, gợi ý kho khác |
-| 409 | `VERSION_CONFLICT` | Xung đột phiên bản tồn kho | Toast "Vui lòng thử lại" |
+| 404 | `NOT_FOUND` | Variant không tồn tại hoặc `discontinued` | Hiện thông báo từ API |
+| 409 | `OUT_OF_STOCK` | Không đủ hàng hoặc không có dòng inventory tại kho đã chọn | Hiện thông báo hết hàng từ API |
 | 409 | `EDITION_SOLD_OUT` | Hết bản Limited | Thông báo "vừa có người mua trước" |
 
 ---
@@ -652,7 +651,8 @@ Ràng buộc: `amount > 0`; tổng các khoản chưa `refunded` (cũ + mới) *
 
 | Status | Code | Điều kiện |
 | :-: | :-- | :-- |
-| 404 | `NOT_FOUND` | Review không tồn tại hoặc không phải của customer gọi |
+| 404 | `NOT_FOUND` | Review không tồn tại |
+| 403 | `FORBIDDEN` | Customer gọi xoá review của người khác |
 
 ---
 
@@ -948,7 +948,7 @@ Thực thi: `UPDATE payments ... SET status='overdue' WHERE status='pending' AND
     { "materialId": 1, "portion": 70, "finishNote": "Oiled" },
     { "materialId": 3, "portion": 30 }
   ],
-  "editionSize": 50                       // chỉ khi product.isLimited: sinh serial 01/50…50/50
+  "editionSize": 50                       // chỉ khi product.isLimited: sinh serial <variantId>-01/50…<variantId>-50/50
 }
 ```
 

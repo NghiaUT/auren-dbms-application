@@ -90,7 +90,7 @@ dbms-application/
 │       │   ├── tier.repository.ts
 │       │   ├── catalog.repository.ts     # products, brands, categories, materials
 │       │   ├── variant.repository.ts     # product_variants, variant_materials
-│       │   ├── inventory.repository.ts   # inventory (optimistic locking)
+│       │   ├── inventory.repository.ts   # atomic reservation; optimistic restock
 │       │   ├── edition.repository.ts     # edition_units (FOR UPDATE)
 │       │   ├── order.repository.ts       # orders, order_items
 │       │   ├── payment.repository.ts
@@ -152,7 +152,7 @@ dbms-application/
 
 ## 4. Tầng Service và giao dịch đặt hàng
 
-`order.service.placeOrder` lấy giá từ biến thể và tỷ lệ giảm từ hạng hiện tại. Service giữ tồn kho với optimistic locking, khóa serial khả dụng cho Limited Edition rồi ghi đơn, dòng hàng và lịch thanh toán trong một transaction.
+`order.service.placeOrder` lấy giá từ biến thể và tỷ lệ giảm từ hạng hiện tại. Service giữ tồn kho bằng atomic conditional UPDATE theo số lượng khả dụng, khóa và đánh dấu reserved ngay serial khả dụng cho Limited Edition rồi ghi đơn, dòng hàng và lịch thanh toán trong một transaction. Thứ tự khóa theo `(variantId, locationId)`. Mỗi dòng Limited nhận serial riêng, kể cả khi cùng variant xuất hiện nhiều lần. Reservation không dùng version predicate hay retry loop; restock vẫn kiểm version.
 
 Khi hủy hoặc bàn giao, câu lệnh đầu tiên chỉ chuyển trạng thái nếu trạng thái đã đọc vẫn khớp. Sau đó mới hoàn/trừ tồn kho, cập nhật serial và ghi nhận tổng chi tiêu trong cùng transaction.
 
@@ -168,7 +168,7 @@ Xem [API_CONTRACT.md](API_CONTRACT.md) cho endpoint, request, response và mã l
 
 | Tình huống                                  | Cơ chế                                                                       | Vị trí                                 |
 | ------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
-| Hai khách đặt cùng biến thể, tồn kho còn ít | Optimistic locking (`version`) + điều kiện `qty_on_hand - qty_reserved >= ?` | `inventory.repository.reserveStock`    |
+| Hai khách đặt cùng biến thể, tồn kho còn ít | Atomic UPDATE với `qty_on_hand - qty_reserved >= ?`; tăng version như change token | `inventory.repository.reserveStockIfAvailable` |
 | Hai khách mua chiếc Limited Edition cuối    | Pessimistic locking `SELECT ... FOR UPDATE`                                  | `edition.repository.lockAvailableUnit` |
 | Huỷ đơn đồng thời với Sales xác nhận        | `UPDATE ... WHERE status = ?`, kiểm `affectedRows`                   | `order.repository`                     |
 | Hai Sales cùng nhận một đơn                 | `UPDATE ... WHERE sales_user_id IS NULL`                                     | `sales.repository.claimOrderAtomic`          |
