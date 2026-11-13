@@ -76,6 +76,10 @@ dbms-application/
 
 ## 3. Hướng dẫn Khởi chạy qua Docker Compose (Khuyên dùng)
 
+Trên Windows, chạy [script kiểm Docker Engine](docs/DOCKER_WINDOWS.md) trước khi
+dùng Compose. Script dùng Docker Desktop CLI, tránh mở thêm instance và báo lỗi
+rõ khi Codex sandbox không truy cập được phiên Windows thường.
+
 ```bash
 docker compose up -d
 docker compose ps -a
@@ -378,4 +382,4 @@ Smoke test ghi dữ liệu. Dùng một schema sạch có tên kết thúc bằn
 docker compose exec -T -e DB_NAME=auren_smoke_test -e NODE_ENV=test -e SQL_LOG=off api sh -c 'npm run db:setup && npm run test:all'
 ```
 
-Dùng tên schema mới mỗi lần cần chạy lại từ dữ liệu sạch. `test:smoke` chạy tuần tự core, Customer, Sales, Admin và HTTP API. `test:concurrency` dùng fixture riêng, kiểm stock 800/800 và 100/800, rollback, claim/payment/schedule/delivery/cancellation, serial và duplicate review. `test:all` chạy cả hai suite; yêu cầu `NODE_ENV=test`, `DB_NAME` kết thúc `_test`. Pipeline [CI](.github/workflows/ci.yml) chạy build/typecheck/smoke/concurrency với Node 20 và MySQL 8.0 trên pull request và push vào `main` hoặc `chore/demo-readiness`.
+Dùng tên schema mới mỗi lần cần chạy lại từ dữ liệu sạch. `test:smoke` chạy tuần tự core, Customer, Sales, Admin và HTTP API. `test:concurrency` dùng fixture riêng, kiểm stock 800/800 và 100/800, rollback, claim/payment/schedule/delivery/cancellation, serial và duplicate review. `test:all` chạy cả hai suite; yêu cầu `NODE_ENV=test`, `DB_NAME` kết thúc `_test`. Pipeline [CI](.github/workflows/ci.yml) chạy build/typecheck/smoke/concurrency với Node 20 và MySQL 8.0 trên pull request và push vào `main`, `chore/demo-readiness` hoặc `fix/final-app-hardening`.

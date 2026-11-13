@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, chore/demo-readiness]
+    branches: [main, chore/demo-readiness, fix/final-app-hardening]
 
 permissions:
   contents: read
