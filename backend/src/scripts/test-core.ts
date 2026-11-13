@@ -4,9 +4,12 @@ import { pool, withTransaction, testDbConnection } from '../config/db.js';
 import { signAccessToken, verifyAccessToken } from '../utils/jwt.js';
 import { AppError, NotFoundError, ConflictError } from '../utils/AppError.js';
 import { requireTestDatabase } from './test-database.js';
+import { analyzeQuery } from '../utils/sqlLogger.js';
 
 async function run() {
   requireTestDatabase();
+  assert.equal(analyzeQuery('UPDATE inventory SET qty_reserved=qty_reserved+?, version=version+1 WHERE variant_id=? AND location_id=? AND (qty_on_hand-qty_reserved)>=?').isOptimistic, false);
+  assert.equal(analyzeQuery('UPDATE inventory SET qty_on_hand=qty_on_hand+?, version=version+1 WHERE variant_id=? AND location_id=? AND version=?').isOptimistic, true);
   await testDbConnection();
   const [rows] = await pool.execute<RowDataPacket[]>('SELECT id, name FROM membership_tiers ORDER BY id LIMIT 1');
   const tier = rows[0];

@@ -20,7 +20,9 @@
     "test:sales": "tsx src/scripts/test-sales.ts",
     "test:admin": "tsx src/scripts/test-admin.ts",
     "test:api": "tsx src/scripts/test-api.ts",
-    "test:smoke": "npm run test:core && npm run test:customer && npm run test:sales && npm run test:admin && npm run test:api"
+    "test:smoke": "npm run test:core && npm run test:customer && npm run test:sales && npm run test:admin && npm run test:api",
+    "test:concurrency": "tsx src/scripts/test-concurrency.ts",
+    "test:all": "npm run test:smoke && npm run test:concurrency"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

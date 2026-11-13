@@ -51,3 +51,4 @@ jobs:
       - run: npm --prefix frontend run typecheck
       - run: npm --prefix frontend run build
       - run: npm --prefix backend run test:smoke
+      - run: npm --prefix backend run test:concurrency

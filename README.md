@@ -27,7 +27,7 @@
 - **100% SQL Thuần tại Tầng Repository (`backend/src/repository/`)**: Không sử dụng ORM (Prisma/TypeORM/Sequelize). Mọi thao tác dữ liệu đều viết bằng SQL thuần qua `mysql2/promise` với **Prepared Statements (`?`)** và **Whitelist `ORDER BY`** chống SQL Injection.
 - **Quản lý Giao dịch ACID (`withTransaction`)**: Đảm bảo tính nguyên tử (Atomicity) và cô lập (`REPEATABLE READ`) cho các luồng nghiệp vụ phức tạp như đặt hàng đa chi nhánh, phát hành lịch thanh toán trả góp, hủy đơn hoàn tồn kho và tính lại hạng thành viên.
 - **Kiểm soát Đồng thời (Concurrency Control)**:
-  - **Optimistic Locking (Khóa lạc quan)** qua cột `version` trên bảng `inventory` khi giữ tồn kho (`FR5`) và nhập kho (`FR12`).
+  - **Atomic conditional UPDATE** giữ tồn kho theo số lượng khả dụng (`FR5`); InnoDB serialize writer trên cùng dòng. **Optimistic Locking** qua `version` chỉ dùng khi nhập kho (`FR12`).
   - **Pessimistic Locking (Khóa bi quan)** qua `SELECT ... FOR UPDATE` trên bảng `edition_units` khi nhiều khách hàng cùng đặt mua ấn bản giới hạn đánh số độc bản (`FR6`).
   - **Atomic State Transition (`WHERE status = ...`)** chống nhận đơn trùng giữa các Sales (`FR11`) và chống thanh toán hai lần (`FR7`).
 - **Tối ưu hóa Truy vấn & Đánh chỉ mục (`database/indexes.sql`)**: Tách riêng tập lệnh Secondary B-Tree Composite Indexes và Fulltext Index kèm bộ công cụ sinh dữ liệu lớn (`seed-large.ts` từ `10.000` đến `100.000+` đơn hàng) để đo kiểm `EXPLAIN ANALYZE` trước và sau khi đánh index.
@@ -178,9 +178,9 @@ LIMIT ? OFFSET ?;
 
 ---
 
-#### ② Kiểm soát Đồng thời bằng Optimistic Locking khi Giữ tồn kho (FR5)
-- **File**: `backend/src/repository/inventory.repository.ts` (`checkAndReserveStock`)
-- **Điểm nhấn DBMS**: Không khóa cứng bảng khi nhiều khách đặt hàng thường cùng lúc. Sử dụng cột `version` kèm điều kiện kiểm tra tồn kho khả dụng `(qty_on_hand - qty_reserved) >= ?`. Nếu `affectedRows === 0`, Service lập tức rollback transaction và trả về mã `409 Conflict`:
+#### ② Giữ tồn kho bằng atomic conditional UPDATE (FR5)
+- **File**: `backend/src/repository/inventory.repository.ts` (`reserveStockIfAvailable`)
+- **Điểm nhấn DBMS**: InnoDB khóa dòng và đánh giá điều kiện tồn kho trên trạng thái hiện tại khi writer được chạy. Không dùng version đọc trước hay retry loop. `affectedRows === 0` nghĩa là thiếu hàng hoặc không có dòng tồn kho; Service rollback và trả `409 OUT_OF_STOCK`. `version` vẫn tăng làm change token cho restock:
 
 ```sql
 UPDATE inventory
@@ -188,7 +188,6 @@ SET qty_reserved = qty_reserved + ?,
     version = version + 1
 WHERE variant_id = ?
   AND location_id = ?
-  AND version = ?
   AND (qty_on_hand - qty_reserved) >= ?;
 ```
 
@@ -207,11 +206,14 @@ ORDER BY id ASC
 LIMIT 1
 FOR UPDATE;
 
--- Bước 2: Gán bản khắc vào dòng đơn hàng vừa tạo
+-- Bước 2: Đánh dấu reserved ngay, trước khi chọn serial cho dòng tiếp theo
+UPDATE edition_units SET status = 'reserved' WHERE id = ?;
+
+-- Bước 3: Gán bản khắc đã giữ vào dòng đơn hàng vừa tạo
 UPDATE edition_units
 SET order_item_id = ?,
     status = 'reserved'
-WHERE id = ? AND status = 'available';
+WHERE id = ? AND status = 'reserved' AND order_item_id IS NULL;
 ```
 
 ---
@@ -373,7 +375,7 @@ npm --prefix frontend run build
 Smoke test ghi dữ liệu. Dùng một schema sạch có tên kết thúc bằng `_test` và `NODE_ENV=test`. Ví dụ khi Compose đang chạy:
 
 ```bash
-docker compose exec -T -e DB_NAME=auren_smoke_test -e NODE_ENV=test -e SQL_LOG=off api sh -c 'npm run db:setup && npm run test:smoke'
+docker compose exec -T -e DB_NAME=auren_smoke_test -e NODE_ENV=test -e SQL_LOG=off api sh -c 'npm run db:setup && npm run test:all'
 ```
 
-Dùng tên schema mới mỗi lần cần chạy lại từ dữ liệu sạch. `test:smoke` chạy tuần tự core, Customer, Sales, Admin và HTTP API. Pipeline [CI](.github/workflows/ci.yml) chạy cùng quy trình với Node 20 và MySQL 8.0 trên pull request và push vào `main`.
+Dùng tên schema mới mỗi lần cần chạy lại từ dữ liệu sạch. `test:smoke` chạy tuần tự core, Customer, Sales, Admin và HTTP API. `test:concurrency` dùng fixture riêng, kiểm stock 800/800 và 100/800, rollback, claim/payment/schedule/delivery/cancellation, serial và duplicate review. `test:all` chạy cả hai suite; yêu cầu `NODE_ENV=test`, `DB_NAME` kết thúc `_test`. Pipeline [CI](.github/workflows/ci.yml) chạy build/typecheck/smoke/concurrency với Node 20 và MySQL 8.0 trên pull request và push vào `main` hoặc `chore/demo-readiness`.
