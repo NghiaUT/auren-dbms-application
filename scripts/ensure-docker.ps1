@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [ValidateRange(1, 180)][int]$TimeoutSeconds = 180,
-    [string]$LogDirectory = 'D:\DockerTools\logs'
+    [string]$LogDirectory = 'C:\DockerTools\logs'
 )
 
 $ErrorActionPreference = 'Stop'

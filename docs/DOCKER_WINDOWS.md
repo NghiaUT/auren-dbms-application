@@ -8,11 +8,12 @@ và chỉ trả exit 0 khi `docker info` thành công.
 
 ## Cài đặt và sử dụng
 
-Ví dụ dưới dùng ổ D:. Nếu máy không có D:, chọn một thư mục trên ổ đang có;
-không tạo drive mapping hoặc chuyển Docker data chỉ để chạy script.
+Máy kiểm tra không có ổ D:, nên dùng `C:\DockerTools` theo lựa chọn của người dùng.
+Đây chỉ là vị trí script/log, không phải vị trí Docker data. Có thể đổi thư mục
+log bằng `-LogDirectory`; không cần chuyển Docker data hoặc tạo drive mapping.
 
 ```powershell
-$tools = 'D:\DockerTools'
+$tools = 'C:\DockerTools'
 New-Item -ItemType Directory -Path "$tools\logs" -Force | Out-Null
 Copy-Item .\scripts\ensure-docker.ps1 "$tools\ensure-docker.ps1"
 
