@@ -15,7 +15,7 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 | **FR2** | Xem danh mục sản phẩm & thương hiệu | Công khai | `P01` (`/`), `P02` (`/products`) | `GET /api/products`<br>`GET /api/categories`<br>`GET /api/brands` | Phân cấp danh mục cha - con (`parent_id`), nạp dữ liệu phân trang |
 | **FR3** | Tìm kiếm & Lọc nâng cao đa chiều | Công khai | `P02` (`/products`) | `GET /api/products` (query params) | `JOIN` 5 bảng, `IN (SELECT DISTINCT ...)`, `GROUP BY` & `HAVING MIN(pv.price) BETWEEN ? AND ?`, Composite B-Tree & Fulltext Index |
 | **FR4** | Xem chi tiết sản phẩm & biến thể | Công khai | `P03` (`/products/:id`) | `GET /api/products/:id` | Đọc biến thể, chất liệu và tồn kho theo lô; Guest chỉ thấy cờ Còn/Hết, User thấy số lượng tồn chi tiết |
-| **FR5** | Đặt hàng tiêu chuẩn & Giữ tồn kho | Customer | `C01` (`/cart`), `C02` (`/checkout`) | `POST /api/orders` | **Optimistic Locking** qua cột `version` trên bảng `inventory` khi giữ chỗ kho; Transaction tự động tính chiết khấu theo hạng |
+| **FR5** | Đặt hàng tiêu chuẩn & Giữ tồn kho | Customer | `C01` (`/cart`), `C02` (`/checkout`) | `POST /api/orders` | **Atomic conditional UPDATE** theo tồn khả dụng; version tăng như change token cho restock; Transaction tính chiết khấu theo hạng |
 | **FR6** | Mua tác phẩm Limited Edition | Customer | `C03` (`/limited/:variantId`), `C02` | `POST /api/orders` | **Pessimistic Locking** (`SELECT ... FOR UPDATE`) trên bảng `edition_units` ở mức `REPEATABLE READ`, cấp bản khắc serial duy nhất |
 | **FR7** | Khách hàng thanh toán trả khoản | Customer | `OrderDetailModal` trong `C04` (`/account/orders`) | `POST /api/payments/:id/pay` | **Atomic State Transition** (`UPDATE payments ... WHERE status IN ('pending', 'overdue')`), chống double-payment, bảo mật row-level |
 | **FR7b** | Lập lịch thanh toán nhiều kỳ cho đơn hàng | Sales | `S04` (`/sales/orders/:id/payments`) | `POST /api/sales/orders/:id/payments` | Chia kỳ thanh toán (đặt cọc, đợt sản xuất, quyết toán); kiểm tra tổng các đợt không vượt `orders.total` |
@@ -79,13 +79,13 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 - **Quy tắc nghiệp vụ & Điểm nhấn DBMS**:
   - Thực thi toàn bộ trong một Transaction ACID duy nhất.
   - Kiểm tra và tự động áp dụng mức giảm giá dựa trên hạng thành viên của khách hàng (`membership_tiers.discount_pct`).
-  - Cơ chế **Khóa lạc quan (Optimistic Locking)**: Giữ tồn kho trên bảng `inventory` bằng điều kiện so khớp phiên bản:
+  - Cơ chế **atomic conditional UPDATE**: Giữ tồn kho theo số lượng khả dụng, không dùng version predicate đọc trước. InnoDB serialize concurrent writer trên cùng dòng; version vẫn tăng như change token cho restock:
     ```sql
     UPDATE inventory 
     SET qty_reserved = qty_reserved + ?, version = version + 1 
-    WHERE id = ? AND version = ? AND (qty_on_hand - qty_reserved) >= ?
+    WHERE variant_id = ? AND location_id = ? AND (qty_on_hand - qty_reserved) >= ?
     ```
-  - Nếu `affectedRows === 0` (xung đột tồn kho hoặc có người mua trước làm cạn hàng khả dụng), hệ thống lập tức rollback và phản hồi mã lỗi `409 Conflict`.
+  - Nếu `affectedRows === 0` (thiếu hàng hoặc không có dòng inventory), rollback và trả `409 OUT_OF_STOCK`. Reservation không trả `VERSION_CONFLICT` và không dùng retry loop; FR12 nhập kho vẫn dùng version optimistic locking.
 
 ### FR6: Mua tác phẩm giới hạn & Cấp bản khắc độc bản (Limited Edition Order)
 - **Mục tiêu**: Khách hàng đặt mua các tuyệt tác giới hạn có khắc số sê-ri độc bản (VD: 01/15 đến 15/15).
@@ -118,7 +118,7 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
 - **Tác nhân**: Sales (chỉ áp dụng cho đơn hàng mình đang nhận phụ trách).
 - **Quy tắc nghiệp vụ**:
   - Thiết lập các mốc: Tiền đặt cọc ban đầu (Deposit), Thanh toán tiến độ hoàn thiện (Installment), Quyết toán bàn giao (Final).
-  - Kiểm tra điều kiện toàn vẹn tài chính: Tổng số tiền của toàn bộ các kỳ thanh toán đang hiệu lực không vượt `orders.total` và tối đa một khoản `final`.
+  - Khóa dòng order bằng `SELECT ... FOR UPDATE` trước khi đọc payment trong cùng transaction. Tổng các kỳ không refunded không vượt `orders.total` và tối đa một khoản `final`; request đồng thời phải chờ và kiểm tra lại.
 
 ### FR8: Tra cứu lịch sử đơn hàng & Tiến trình thanh toán (Order History & Timeline)
 - **Mục tiêu**: Theo dõi tình trạng thực hiện đơn hàng, chi tiết sản phẩm và các đợt đóng tiền.
@@ -143,6 +143,7 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
   - Service đối chiếu chủ đơn, trạng thái `delivered` và đánh giá hiện có, sau đó chèn bằng prepared statement.
   - Admin xem danh sách qua `GET /api/admin/reviews` và xóa qua `DELETE /api/reviews/:id`.
   - Ràng buộc toàn vẹn duy nhất `UNIQUE (customer_id, order_item_id)` đảm bảo mỗi món hàng đã mua chỉ được đánh giá tối đa một lần.
+  - Duplicate INSERT đồng thời được đổi thành `409 DUPLICATE_REVIEW`; precheck chỉ hỗ trợ thông báo sớm.
 
 ### FR11: Tiếp nhận và Xử lý tiến độ đơn hàng (Sales Order Claiming & Workflow)
 - **Mục tiêu**: Nhân viên Sales tiếp nhận đơn hàng mới và cập nhật trạng thái đơn trong suốt vòng đời bàn giao.
@@ -152,7 +153,7 @@ Hệ thống bao gồm **15 FR cốt lõi**, **1 FR bổ trợ quy trình (FR7b)
     ```sql
     UPDATE orders 
     SET sales_user_id = ?, status = 'confirmed' 
-    WHERE id = ? AND status IN ('pending', 'overdue') AND sales_user_id IS NULL
+    WHERE id = ? AND status = 'pending' AND sales_user_id IS NULL
     ```
   - Cập nhật tiến độ theo chu trình trạng thái chuẩn: `confirmed` $\to$ `in_production` $\to$ `shipped` $\to$ `delivered`.
   - Khi đơn chuyển sang `delivered`, hệ thống tự động tích lũy doanh số vào `customers.total_spent` làm cơ sở xét duyệt hạng.

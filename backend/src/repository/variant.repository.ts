@@ -309,12 +309,13 @@ export async function createVariantWithMaterials(
     }
   }
 
-  // 4. Nếu là Limited Edition và có editionSize, sinh các serial units: 01/N, 02/N...
+  // 4. Limited Edition: serial <variantId>-01/N, <variantId>-02/N...
   if (isLimited && data.editionSize && data.editionSize > 0) {
     const total = data.editionSize;
     const padLen = total >= 100 ? 3 : 2;
     for (let i = 1; i <= total; i++) {
-      const serialNo = `${String(i).padStart(padLen, '0')}/${total}`;
+      // serial_no is globally UNIQUE, so each variant needs its own namespace.
+      const serialNo = `${variantId}-${String(i).padStart(padLen, '0')}/${total}`;
       await conn.execute(
         `INSERT INTO edition_units (variant_id, serial_no, status)
          VALUES (?, ?, 'available')`,

@@ -45,7 +45,7 @@ Số FR: TV1 = 2 (cộng nền tảng nặng), TV2 = 4, TV3 = 4, TV4 = 5, TV5 = 
 
 | Giao điểm                          | Bên liên quan  | Thoả thuận                                                                                                                                                      |
 | ---------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `placeOrder` gọi `reserveStock`    | TV3 ↔ TV4      | Chữ ký: `reserveStock(variantId, locationId, qty, version, conn)` trả `affectedRows`. TV4 giao hàm này ở Giai đoạn 2 đầu tiên, TV3 dùng bản giả (stub) trước đó |
+| `placeOrder` gọi `reserveStockIfAvailable`    | TV3 ↔ TV4      | Chữ ký: `reserveStockIfAvailable(variantId, locationId, qty, conn)` trả `affectedRows`. TV4 giao hàm này ở Giai đoạn 2 đầu tiên, TV3 dùng bản giả (stub) trước đó |
 | Huỷ đơn có serial Limited          | TV3 ↔ TV4      | TV4 cung cấp `releaseUnitsByOrderId(orderId, conn)` trong `edition.repository.ts`                                                                       |
 | Cộng `total_spent` khi `delivered` | TV4 ↔ TV1      | `customer.repository.addSpent(customerId, amount, conn)` do TV1 viết, TV4 gọi trong `sales.service`                                                             |
 | Đọc biến thể để tính giá           | TV3, TV4 ↔ TV5 | `variant.repository.findActiveById(id, conn)` do TV5 viết sớm                                                                                                   |

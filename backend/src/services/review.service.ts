@@ -61,13 +61,22 @@ export async function createReview(userId: number, input: CreateReviewInput) {
   }
 
   // 4. Tạo bài đánh giá
-  const reviewId = await reviewRepo.createReview({
-    customerId: customer.id,
-    productId: eligibility.productId,
-    orderItemId: input.orderItemId,
-    rating: Math.floor(input.rating),
-    comment: input.comment?.trim() || null,
-  });
+  let reviewId: number;
+  try {
+    reviewId = await reviewRepo.createReview({
+      customerId: customer.id,
+      productId: eligibility.productId,
+      orderItemId: input.orderItemId,
+      rating: Math.floor(input.rating),
+      comment: input.comment?.trim() || null,
+    });
+  } catch (err) {
+    // UNIQUE(customer_id, order_item_id) is authoritative under concurrent INSERTs.
+    if ((err as { code?: string }).code === 'ER_DUP_ENTRY') {
+      throw new ConflictError('Quý khách đã gửi đánh giá cho dòng hàng này', 'DUPLICATE_REVIEW');
+    }
+    throw err;
+  }
 
   const createdReview = await reviewRepo.findReviewById(reviewId);
   return createdReview;

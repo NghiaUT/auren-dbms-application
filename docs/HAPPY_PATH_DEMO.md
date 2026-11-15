@@ -97,7 +97,7 @@ Ba tài khoản sau có nút điền nhanh tại `/login`. Để đối chiếu 
 ---
 
 ### GIAI ĐOẠN 2: ĐẶT MUA TÁC PHẨM & KIỂM SOÁT GIAO DỊCH ĐỒNG THỜI
-> **Mục tiêu**: Thể hiện tính toàn vẹn Transaction ACID, chèn dữ liệu JSON đa bảng, và 2 cơ chế khóa: **Optimistic Locking** (hàng thường) cùng **Pessimistic Locking** (bản giới hạn).
+> **Mục tiêu**: Thể hiện tính toàn vẹn Transaction ACID, chèn dữ liệu JSON đa bảng, và 2 cơ chế khóa: **atomic conditional UPDATE** (hàng thường) cùng **Pessimistic Locking** (bản giới hạn).
 
 1. **Thao tác trên màn hình**:
    - Bấm **Đăng nhập** $\to$ Chọn thẻ điền nhanh **Khách hàng** (`customer.silver@gmail.com`).
@@ -110,11 +110,11 @@ Ba tài khoản sau có nút điền nhanh tại `/login`. Để đối chiếu 
    - **Loại (a) — `INSERT` trong Transaction**:
      - Chèn đồng thời vào `orders`, `order_items` (lưu thuộc tính cấu hình `customization` dạng cột **MySQL `JSON`**), và tự động phân rã 2 đợt thanh toán vào bảng `payments` (`order.repository.ts`).
    - **Loại (c) — `UPDATE` & Locking**:
-     - **Optimistic Locking (Hàng thường)**: Kiểm soát tồn kho bằng cột `version` (`inventory.repository.ts`):
+     - **Atomic conditional UPDATE (Hàng thường)**: Giữ tồn kho theo số lượng khả dụng, tăng `version` làm change token cho restock (`inventory.repository.ts`):
        ```sql
        UPDATE inventory 
        SET qty_reserved = qty_reserved + ?, version = version + 1 
-       WHERE variant_id = ? AND location_id = ? AND version = ? AND (qty_on_hand - qty_reserved) >= ?;
+       WHERE variant_id = ? AND location_id = ? AND (qty_on_hand - qty_reserved) >= ?;
        ```
      - **Pessimistic Locking (Bản Limited Edition)**: Khóa độc quyền bản đánh số serial nhỏ nhất bằng `FOR UPDATE` trong giao dịch `REPEATABLE READ` (`edition.repository.ts`):
        ```sql
@@ -127,7 +127,7 @@ Ba tài khoản sau có nút điền nhanh tại `/login`. Để đối chiếu 
      - Cơ chế Safe Delete kiểm tra ràng buộc `RESTRICT` đối với danh mục/sản phẩm tại `catalog.repository.ts`.
 
 3. **Gợi ý lời thuyết minh với Giảng viên**:
-   > *"Dạ thưa Thầy/Cô, toàn bộ quy trình đặt hàng được bao bọc trong một Transaction duy nhất. Nhóm phân chia thành 2 bài toán đồng thời kinh điển: với hàng sản xuất thường, dùng Optimistic Locking kiểm tra cột version để tối đa hóa throughput; còn với bản khắc Limited Edition (ví dụ số 01/15), nhóm dùng Pessimistic Lock `SELECT ... FOR UPDATE` để đảm bảo tuyệt đối không bao giờ xảy ra tình trạng 2 khách hàng mua trùng một số serial."*
+   > *"Dạ thưa Thầy/Cô, toàn bộ quy trình đặt hàng được bao bọc trong một Transaction duy nhất. Nhóm phân chia thành 2 bài toán đồng thời kinh điển: với hàng sản xuất thường, dùng một atomic UPDATE kiểm tra tồn khả dụng để tránh stale-version false conflict; nhập kho vẫn kiểm version; còn với bản khắc Limited Edition (ví dụ số 01/15), nhóm dùng Pessimistic Lock `SELECT ... FOR UPDATE` để đảm bảo tuyệt đối không bao giờ xảy ra tình trạng 2 khách hàng mua trùng một số serial."*
 
 ---
 
@@ -239,7 +239,7 @@ Bảng tổng hợp vị trí triển khai chính xác để mở mã nguồn kh
 | :---: | :--- | :---: | :--- | :--- |
 | **Loại (a)** | **`INSERT`** đa bảng trong Transaction | Đặt hàng (`/cart`, `/limited/:variantId`) | `backend/src/repository/order.repository.ts`<br/>`createOrder`, `createOrderItem` | `INSERT INTO orders ...`, `INSERT INTO order_items ...` (lưu cột `customization` kiểu `JSON`) |
 | **Loại (b)** | **`DELETE`** an toàn (Safe / Restrict) | Đơn hàng (`/account/orders`), Admin (`/admin/products`) | `backend/src/repository/review.repository.ts`<br/>`deleteReview`<br/>`backend/src/repository/catalog.repository.ts`<br/>`deleteProductSafe` | `DELETE FROM reviews WHERE id = ? AND customer_id = ?`<br/>`DELETE FROM products WHERE id = ? AND id NOT IN (...)` |
-| **Loại (c)** | **`UPDATE` & Locking** (Optimistic & Pessimistic) | Đặt hàng & Đổi trạng thái đơn hàng | `backend/src/repository/inventory.repository.ts`<br/>`checkAndReserveStock`<br/>`backend/src/repository/edition.repository.ts`<br/>`lockAvailableUnit` | `UPDATE inventory ... WHERE version = ? ...`<br/>`SELECT ... FROM edition_units ... FOR UPDATE` |
+| **Loại (c)** | **`UPDATE` & Locking** (atomic reservation, pessimistic serial) | Đặt hàng & Đổi trạng thái đơn hàng | `backend/src/repository/inventory.repository.ts`<br/>`reserveStockIfAvailable`<br/>`backend/src/repository/edition.repository.ts`<br/>`lockAvailableUnit` | `UPDATE inventory ... WHERE (qty_on_hand - qty_reserved) >= ?`<br/>`SELECT ... FROM edition_units ... FOR UPDATE` |
 | **Loại (d)** | **`SELECT` & Dynamic Filter** | Danh mục tác phẩm (`/products`) | `backend/src/repository/catalog.repository.ts`<br/>`findAll` | `SELECT ... WHERE pv.status = 'active' AND ... ORDER BY ... LIMIT ? OFFSET ?` |
 | **Loại (e)** | **Date/Time Query** | Sổ nợ Sales (`/sales/receivables`), Báo cáo (`/admin/reports/revenue`) | `backend/src/repository/payment.repository.ts`<br/>`findReceivables`<br/>`backend/src/repository/report.repository.ts`<br/>`getMonthlyRevenueReport` | `DATEDIFF(CURDATE(), p.due_date)`<br/>`DATE_FORMAT(o.order_date, '%Y-%m')` |
 | **Loại (f)** | **Multi-table `JOIN`** (3 - 5 bảng) | Chi tiết sản phẩm (`/products/1`), Báo cáo thương hiệu (`/admin/reports/brands`) | `backend/src/repository/report.repository.ts`<br/>`getBrandSalesReport`<br/>`backend/src/repository/catalog.repository.ts`<br/>`findProductDetailById` | `FROM brands b JOIN products p ... JOIN product_variants pv ... JOIN order_items oi ... JOIN orders o ...` |

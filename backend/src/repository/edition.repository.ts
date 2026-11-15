@@ -18,7 +18,8 @@ export interface AvailableUnitRow extends RowDataPacket {
 
 /**
  * [FR6] Khóa và chọn bản đánh số Limited Edition còn khả dụng đầu tiên bằng FOR UPDATE.
- * Sắp xếp theo id tăng dần để đảm bảo tính nhất quán.
+ * Đánh dấu reserved ngay trong transaction để dòng hàng kế tiếp không chọn lại
+ * cùng serial. Rollback tự hoàn trả nếu giữ tồn kho hoặc tạo đơn thất bại.
  */
 export async function lockAvailableUnit(
   variantId: number,
@@ -34,7 +35,10 @@ export async function lockAvailableUnit(
     [variantId],
   );
 
-  return rows[0] || null;
+  const unit = rows[0];
+  if (!unit) return null;
+  await conn.execute("UPDATE edition_units SET status = 'reserved' WHERE id = ?", [unit.id]);
+  return unit;
 }
 
 /**
@@ -49,7 +53,7 @@ export async function assignUnitToOrderItem(
     `UPDATE edition_units
      SET order_item_id = ?,
          status = 'reserved'
-     WHERE id = ? AND status = 'available'`,
+     WHERE id = ? AND status = 'reserved' AND order_item_id IS NULL`,
     [orderItemId, unitId],
   );
 

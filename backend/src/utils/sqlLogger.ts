@@ -374,16 +374,14 @@ export function analyzeQuery(sql: string, params?: any): QueryAnalysis {
   // Khóa lạc quan
   const bump = /\bversion\s*=\s*version\s*\+\s*1\b/i.test(clean);
   const check = /\bWHERE\b.*\bversion\s*=\s*\?/i.test(clean);
-  const isOptimistic = bump;
-  if (bump) {
+  const isOptimistic = bump && check;
+  if (isOptimistic) {
     tags.push({
-      text: `OPTIMISTIC LOCK: version${check ? ' check+bump' : ' bump'}`,
+      text: 'OPTIMISTIC LOCK: version check+bump',
       color: C.brightCyan,
     });
-    if (!check)
-      warnings.push(
-        'Có version+1 nhưng WHERE không so sánh version = ? → mất tác dụng khóa lạc quan',
-      );
+  } else if (bump) {
+    tags.push({ text: 'VERSION CHANGE TOKEN', color: C.brightCyan });
   }
 
   // Khóa bi quan

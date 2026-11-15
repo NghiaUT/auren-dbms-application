@@ -71,7 +71,7 @@ async function runAdminSmokeTests() {
       price: 65000000,
       leadTimeDays: 14,
       status: 'active',
-      editionSize: 5, // Sinh 5 serial: 01/5 to 05/5
+      editionSize: 5, // Sinh 5 serial có prefix variantId để duy nhất toàn hệ thống
     });
     console.log(`  - Tạo Biến thể thành công: ID #${newVariant.id} (SKU: ${newVariant.sku})`);
 

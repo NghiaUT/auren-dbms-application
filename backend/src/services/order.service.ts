@@ -2,7 +2,7 @@
 // File: backend/src/services/order.service.ts
 // Vai trò: Tầng Service — Xử lý nghiệp vụ đặt hàng và vòng đời đơn của Customer:
 //   - FR5: Đặt hàng thường trong một Transaction (lấy giá từ DB, giữ tồn kho
-//          bằng Optimistic Locking qua version, tính chiết khấu theo hạng thành viên,
+//          bằng atomic conditional UPDATE, tính chiết khấu theo hạng thành viên,
 //          tạo đơn và các dòng hàng).
 //   - FR6: Đặt mua bản Limited Edition trong Transaction với Pessimistic Locking
 //          (SELECT ... FOR UPDATE) để cấp phát số serial duy nhất.
@@ -55,8 +55,8 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
 
   // 2. Chạy toàn bộ luồng trong 1 Transaction ACID
   return withTransaction(async (conn) => {
-    // Sắp xếp các item theo variantId tăng dần để triệt tiêu nguy cơ Deadlock khi khóa
-    const sortedItems = [...payload.items].sort((a, b) => a.variantId - b.variantId);
+    // Khóa theo (variantId, locationId) tăng dần để giảm nguy cơ deadlock đa kho.
+    const sortedItems = [...payload.items].sort((a, b) => a.variantId - b.variantId || a.locationId - b.locationId);
 
     // Lấy thông tin chi tiết toàn bộ biến thể từ CSDL (chống gian lận giá R14)
     const variantIds = sortedItems.map((i) => i.variantId);
@@ -107,27 +107,18 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
         lockedUnits.push({ itemIndex: idx, unitId: unit.id, serialNo: unit.serialNo });
       }
 
-      // Giữ hàng tồn kho thông qua Optimistic Locking (FR5)
-      const inv = await inventoryRepo.findInventoryByVariantAndLocation(v.id, item.locationId, conn);
-      if (!inv || (inv.qtyOnHand - inv.qtyReserved) < item.quantity) {
-        throw new ConflictError(
-          `Sản phẩm ${v.productName} (${v.finish}) không đủ tồn kho khả dụng tại chi nhánh đã chọn.`,
-          'OUT_OF_STOCK',
-        );
-      }
-
-      const reservedRows = await inventoryRepo.checkAndReserveStock(
+      // Predicate được đánh giá trên tồn kho hiện tại sau khi lấy row lock (FR5).
+      const reservedRows = await inventoryRepo.reserveStockIfAvailable(
         v.id,
         item.locationId,
         item.quantity,
-        inv.version,
         conn,
       );
 
       if (reservedRows === 0) {
         throw new ConflictError(
-          `Xung đột trạng thái tồn kho cho tác phẩm ${v.productName}. Vui lòng thử lại.`,
-          'VERSION_CONFLICT',
+          `Sản phẩm ${v.productName} (${v.finish}) không đủ tồn kho khả dụng tại chi nhánh đã chọn.`,
+          'OUT_OF_STOCK',
         );
       }
     }
@@ -166,7 +157,9 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
       // Nếu là bản Limited, liên kết order_item_id vào bản ghi edition_units
       const matchedUnit = lockedUnits.find((u) => u.itemIndex === idx);
       if (matchedUnit) {
-        await editionRepo.assignUnitToOrderItem(matchedUnit.unitId, orderItemId, conn);
+        if (!(await editionRepo.assignUnitToOrderItem(matchedUnit.unitId, orderItemId, conn))) {
+          throw new ConflictError('Bản đánh số không còn khả dụng.', 'EDITION_SOLD_OUT');
+        }
       }
 
       createdItems.push({
@@ -178,6 +171,7 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
         size: v.size,
         quantity: item.quantity,
         unitPrice: Number(v.price),
+        locationId: item.locationId,
         customization: item.customization ?? null,
         serialNo: matchedUnit?.serialNo ?? null,
       });
@@ -186,6 +180,8 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
     // 7. Sinh lịch thanh toán tự động (Mặc định: Đợt 1 Đặt cọc 50%, Đợt 2 Thanh toán 50%)
     const depositAmount = Math.round(total * 0.5);
     const finalAmount = total - depositAmount;
+    const depositDueDate = getVietnamDateString();
+    const finalDueDate = payload.deliveryDate ? String(payload.deliveryDate).split('T')[0] : getVietnamFutureDateString(30);
 
     // Khoản 1: Đặt cọc (Deposit) - hạn trả ngay hôm nay (theo ngày giờ Việt Nam)
     const depositId = await paymentRepo.createPayment(
@@ -193,28 +189,32 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
         orderId,
         type: 'deposit',
         amount: depositAmount,
-        dueDate: getVietnamDateString(),
+        dueDate: depositDueDate,
         status: 'pending',
       },
       conn,
     );
 
     // Khoản 2: Quyết toán (Final) - hạn trả sau 30 ngày hoặc theo ngày giao
-    const thirtyDaysLater = getVietnamFutureDateString(30);
     const finalId = await paymentRepo.createPayment(
       {
         orderId,
         type: 'final',
         amount: finalAmount,
-        dueDate: payload.deliveryDate ? String(payload.deliveryDate).split('T')[0] : thirtyDaysLater,
+        dueDate: finalDueDate,
         status: 'pending',
       },
       conn,
     );
 
+    const header = await orderRepo.findOrderHeaderById(orderId, conn);
+    if (!header) throw new NotFoundError('Không tìm thấy đơn hàng vừa tạo.');
     return {
       id: orderId,
       customerId: customerProfile.id,
+      customerName: header.customerName,
+      customerEmail: header.customerEmail,
+      salesUserId: null,
       orderDate: new Date().toISOString(),
       status: 'pending',
       subtotal,
@@ -224,8 +224,8 @@ export async function placeOrder(user: AuthUser, payload: PlaceOrderPayload) {
       deliveryDate: payload.deliveryDate ?? null,
       items: createdItems,
       payments: [
-        { id: depositId, type: 'deposit', amount: depositAmount, status: 'pending' },
-        { id: finalId, type: 'final', amount: finalAmount, status: 'pending' },
+        { id: depositId, type: 'deposit', amount: depositAmount, dueDate: depositDueDate, status: 'pending' },
+        { id: finalId, type: 'final', amount: finalAmount, dueDate: finalDueDate, status: 'pending' },
       ],
     };
   });

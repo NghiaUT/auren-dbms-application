@@ -41,6 +41,10 @@ withSmokeApi(async (request) => {
   await submit(regular, -1, 400);
   await submit(regular, regularBefore.qty_on_hand + 1, 409);
   const { data: standard } = await submit(regular, 1);
+  const { data: detail } = await request(`/orders/${standard.id}`, { token: customerToken });
+  for (const key of ['customerName', 'customerEmail', 'salesUserId']) assert.equal(standard[key], detail[key]);
+  assert.deepEqual(standard.payments.map((p: { dueDate: string }) => p.dueDate), detail.payments.map((p: { dueDate: string }) => p.dueDate));
+  assert.equal(standard.items[0].locationId, regular.locationId);
   assert.equal(standard.subtotal, regular.price);
   assert.equal((await stock(regular)).qty_reserved, regularBefore.qty_reserved + 1);
   const paymentId = standard.payments[0].id;

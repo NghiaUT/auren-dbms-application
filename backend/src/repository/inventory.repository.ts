@@ -2,7 +2,7 @@
 // File: backend/src/repository/inventory.repository.ts
 // Vai trò: Tầng Repository — Chứa toàn bộ truy vấn SQL thuần thao tác trên bảng
 //          `inventory`:
-//   - Giữ hàng (checkAndReserveStock) bằng cơ chế Optimistic Locking qua cột `version`
+//   - Giữ hàng nguyên tử theo tồn khả dụng (reserveStockIfAvailable)
 //   - Hoàn trả tồn kho khi huỷ đơn (releaseStock)
 //   - Tra cứu số lượng tồn kho khả dụng tại một địa điểm
 //   - Tra cứu danh sách tồn kho theo showroom và cảnh báo sắp hết (S05, S06)
@@ -59,16 +59,15 @@ export async function findInventoryByVariantAndLocation(
 }
 
 /**
- * [FR5] Giữ hàng bằng Optimistic Locking qua cột version
- * Chỉ cập nhật thành công nếu version khớp và số lượng khả dụng (qty_on_hand - qty_reserved) >= quantity.
+ * [FR5] Giữ hàng bằng atomic conditional UPDATE; InnoDB serialize các writer.
+ * version tăng như change token cho restock, không phải điều kiện reservation.
  *
- * @returns affectedRows: 1 nếu thành công, 0 nếu xung đột version hoặc hết hàng
+ * @returns affectedRows: 1 nếu thành công, 0 nếu thiếu hàng hoặc không có dòng tồn kho
  */
-export async function checkAndReserveStock(
+export async function reserveStockIfAvailable(
   variantId: number,
   locationId: number,
   quantity: number,
-  version: number,
   conn: DbConnection,
 ): Promise<number> {
   const [result] = await conn.execute<ResultSetHeader>(
@@ -77,9 +76,8 @@ export async function checkAndReserveStock(
          version = version + 1
      WHERE variant_id = ?
        AND location_id = ?
-       AND version = ?
        AND (qty_on_hand - qty_reserved) >= ?`,
-    [quantity, variantId, locationId, version, quantity],
+    [quantity, variantId, locationId, quantity],
   );
 
   return result.affectedRows;

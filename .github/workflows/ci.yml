@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, chore/demo-readiness]
+    branches: [main, chore/demo-readiness, fix/final-app-hardening]
 
 permissions:
   contents: read
@@ -51,3 +51,4 @@ jobs:
       - run: npm --prefix frontend run typecheck
       - run: npm --prefix frontend run build
       - run: npm --prefix backend run test:smoke
+      - run: npm --prefix backend run test:concurrency
